@@ -1,0 +1,119 @@
+========================================================================
+RELATÓRIO DE TESTES — ViaCEP + JSONPlaceholder (APIs públicas)
+========================================================================
+Sistema:      ViaCEP + JSONPlaceholder (APIs públicas)
+Versão:       API REST
+Data:         20/11/2026 19:38
+Responsável:  Mateus
+Ambiente:     APIs públicas de teste (HTTP (urllib) · Windows 11)
+Alvo:         https://viacep.com.br
+Roteiro:      api_viacep.yaml
+Finalidade:   -
+Duração:      2s
+
+RESUMO
+  Casos: 4 | Aprovados: 4 | Reprovados: 0 | Taxa: 100%
+  Defeitos: 0 | Observações: 0 | Sugestões da IA: 6
+
+OBJETIVO
+  Validar status HTTP, contrato do JSON, tempo de resposta e tratamento de entradas inválidas.
+
+FUNCIONALIDADES E CRITÉRIOS DE ACEITAÇÃO
+  F01 - Consulta de CEP
+     • CEP existente retorna 200 com logradouro, cidade e UF
+     • CEP com formato inválido retorna 400
+     • CEP inexistente retorna o campo "erro"
+  F02 - Criação de recurso (POST)
+     • POST com JSON válido retorna 201 e o id criado
+
+CASOS DE TESTE
+  [APROVADO] CT01 — Consultar CEP existente (Praça da Sé, São Paulo)
+     Passos:
+       1. Requisição GET /ws/01001000/json/
+       2. Verificar se o status HTTP é 200
+       3. Verificar o cabeçalho 'content-type'
+       4. Verificar o campo JSON 'cep' = '01001-000'
+       5. Verificar o campo JSON 'localidade' = 'São Paulo'
+       6. Verificar o campo JSON 'uf' = 'SP'
+       7. Verificar o campo JSON 'logradouro'
+       8. Verificar se respondeu em até 5000 ms
+     Esperado: HTTP 200, localidade São Paulo, UF SP
+     Obtido:   Status HTTP 200; Cabeçalho 'content-type': application/json; charset=utf-8; 'cep' = '01001-000'; 'localidade' = 'São Paulo'; 'uf' = 'SP'; 'logradouro' contém 'Praça da Sé'; Respondeu em 395 ms (≤ 5000)
+     Evidência: prints/001_CT01_resposta.json
+
+  [APROVADO] CT02 — CEP com formato inválido (3 dígitos)
+     Passos:
+       1. Requisição GET /ws/123/json/
+       2. Verificar se o status HTTP é 400
+     Esperado: HTTP 400 (requisição inválida)
+     Obtido:   Status HTTP 400
+     Evidência: prints/009_CT02_resposta.json
+
+  [APROVADO] CT03 — CEP com formato válido mas inexistente
+     Passos:
+       1. Requisição GET /ws/99999999/json/
+       2. Verificar se o status HTTP é 200
+       3. Verificar o campo JSON 'erro' = 'True'
+       4. Verificar o campo JSON 'logradouro'
+     Esperado: HTTP 200 com o campo "erro"
+     Obtido:   Status HTTP 200; 'erro' = 'true'; Campo 'logradouro' ausente (correto)
+     Evidência: prints/011_CT03_resposta.json
+
+  [APROVADO] CT04 — Criar post (POST) e consultar um post existente
+     Passos:
+       1. Requisição POST https://jsonplaceholder.typicode.com/posts
+       2. Verificar se o status HTTP é 201
+       3. Verificar o campo JSON 'id'
+       4. Verificar o campo JSON 'title' = 'Teste do Sentinela QA'
+       5. Guardar 'userId' como {dados.usuario}
+       6. Requisição GET https://jsonplaceholder.typicode.com/users/{dados.usuario}
+       7. Verificar se o status HTTP é [200, 299]
+       8. Verificar o campo JSON 'address.city'
+     Esperado: HTTP 201 com id; GET do post 1 retorna userId 1
+     Obtido:   Status HTTP 201; 'id' é do tipo numero; 'title' = 'Teste do Sentinela QA'; Status 200 dentro de 200–299; Campo 'address.city' existe
+     Evidência: prints/020_CT04_resposta.json
+
+DEFEITOS
+  Nenhum defeito encontrado.
+O QUE FOI ENCONTRADO (OBSERVAÇÕES)
+  Nenhuma observação.
+
+MELHORIAS E IDEIAS (SUGESTÕES DA IA — avaliar antes de aplicar)
+  [Usabilidade | prioridade Média] Exibição do tempo de resposta em todos os passos de requisição
+     Adicionar o tempo exato de resposta em milissegundos para todas as requisições HTTP no log de execução (e não apenas na validação do CT01), facilitando a identificação de gargalos de performance e diagnósticos rápidos pelo time de QA.
+  [Texto | prioridade Média] Padronização da casing na validação do atributo booleano de erro
+     No passo 13, a checagem é descrita como 'erro = True' (com maiúscula), enquanto no retorno do JSON original do ViaCEP a chave/valor é representada em minúsculo ('erro' = 'true' ou valor booleano true). É importante padronizar a escrita no log para refletir a especificação real da API.
+  [Funcionalidade | prioridade Alta] Restrição do código de status HTTP na consulta de usuários
+     No passo 21 do CT04, a asserção aceita qualquer status no intervalo [200, 299]. Para consultas GET de recursos existentes, deve-se validar estritamente o status HTTP 200 OK, evitando que respostas como 204 (No Content) ou 202 (Accepted) passem indevidamente como sucesso de busca.
+  [Funcionalidade | prioridade Média] Ajuste do SLA de tempo de resposta para consultas de API
+     O CT01 utiliza um limite máximo de tolerância de 5000 ms. Para requisições de consulta de CEP em microsserviços, recomenda-se reduzir o threshold de tempo limite para 1000 ms ou 2000 ms, garantindo a detecção precoce de degradação de desempenho.
+  [Funcionalidade | prioridade Média] Validação completa de schema JSON (JSON Schema Validation)
+     Substituir ou complementar a verificação pontual de campos isolados (ex: 'cep', 'localidade', 'address.city') por uma validação completa baseada em JSON Schema, garantindo a verificação rigorosa de tipos, campos obrigatórios e estrutura de contrato das APIs.
+  [Acessibilidade | prioridade Baixa] Padronização de corpos de resposta de erro HTTP 400 (Problem Details)
+     Garantir que a resposta da API para CEP com formato inválido (HTTP 400) retorne um payload estruturado no padrão RFC 7807 (Problem Details), fornecendo mensagens claras e descritivas legíveis por leitores de tela em painéis/dashboards que consomem a API.
+
+CAMINHO PERCORRIDO
+    1. 19:38:33 [CT01] Requisição GET /ws/01001000/json/ -> OK (397 ms) prints/001_CT01_resposta.json
+    2. 19:38:33 [CT01] Verificar se o status HTTP é 200 -> OK (0 ms) prints/001_CT01_resposta.json
+    3. 19:38:33 [CT01] Verificar o cabeçalho 'content-type' -> OK (0 ms) prints/001_CT01_resposta.json
+    4. 19:38:33 [CT01] Verificar o campo JSON 'cep' = '01001-000' -> OK (0 ms) prints/001_CT01_resposta.json
+    5. 19:38:33 [CT01] Verificar o campo JSON 'localidade' = 'São Paulo' -> OK (0 ms) prints/001_CT01_resposta.json
+    6. 19:38:33 [CT01] Verificar o campo JSON 'uf' = 'SP' -> OK (0 ms) prints/001_CT01_resposta.json
+    7. 19:38:33 [CT01] Verificar o campo JSON 'logradouro' -> OK (0 ms) prints/001_CT01_resposta.json
+    8. 19:38:33 [CT01] Verificar se respondeu em até 5000 ms -> OK (0 ms) prints/001_CT01_resposta.json
+    9. 19:38:33 [CT02] Requisição GET /ws/123/json/ -> OK (366 ms) prints/009_CT02_resposta.json
+   10. 19:38:33 [CT02] Verificar se o status HTTP é 400 -> OK (0 ms) prints/009_CT02_resposta.json
+   11. 19:38:33 [CT03] Requisição GET /ws/99999999/json/ -> OK (367 ms) prints/011_CT03_resposta.json
+   12. 19:38:33 [CT03] Verificar se o status HTTP é 200 -> OK (0 ms) prints/011_CT03_resposta.json
+   13. 19:38:33 [CT03] Verificar o campo JSON 'erro' = 'True' -> OK (0 ms) prints/011_CT03_resposta.json
+   14. 19:38:33 [CT03] Verificar o campo JSON 'logradouro' -> OK (0 ms) prints/011_CT03_resposta.json
+   15. 19:38:34 [CT04] Requisição POST https://jsonplaceholder.typicode.com/posts -> OK (318 ms) prints/015_CT04_resposta.json
+   16. 19:38:34 [CT04] Verificar se o status HTTP é 201 -> OK (0 ms) prints/015_CT04_resposta.json
+   17. 19:38:34 [CT04] Verificar o campo JSON 'id' -> OK (0 ms) prints/015_CT04_resposta.json
+   18. 19:38:34 [CT04] Verificar o campo JSON 'title' = 'Teste do Sentinela QA' -> OK (0 ms) prints/015_CT04_resposta.json
+   19. 19:38:34 [CT04] Guardar 'userId' como {dados.usuario} -> OK (0 ms) prints/015_CT04_resposta.json
+   20. 19:38:34 [CT04] Requisição GET https://jsonplaceholder.typicode.com/users/{dados.usuario} -> OK (169 ms) prints/020_CT04_resposta.json
+   21. 19:38:34 [CT04] Verificar se o status HTTP é [200, 299] -> OK (0 ms) prints/020_CT04_resposta.json
+   22. 19:38:34 [CT04] Verificar o campo JSON 'address.city' -> OK (0 ms) prints/020_CT04_resposta.json
+
+Gerado por Sentinela QA v1.0.0

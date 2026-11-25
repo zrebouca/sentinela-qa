@@ -1,0 +1,75 @@
+# Roteiro de exemplo — TESTES DE API (sem navegador).
+# ViaCEP: API pública e gratuita de CEPs (a mesma que eu usava na minha automação antiga).
+# JSONPlaceholder: API falsa feita para testes (os POSTs não gravam nada de verdade).
+
+sistema: ViaCEP + JSONPlaceholder (APIs públicas)
+versao: "API REST"
+responsavel: Mateus
+ambiente: APIs públicas de teste
+tipo: api
+objetivo: Validar status HTTP, contrato do JSON, tempo de resposta e tratamento de entradas inválidas.
+alvo: https://viacep.com.br
+tempo_limite: 15
+
+funcionalidades:
+  - id: F01
+    nome: Consulta de CEP
+    criterios:
+      - CEP existente retorna 200 com logradouro, cidade e UF
+      - CEP com formato inválido retorna 400
+      - CEP inexistente retorna o campo "erro"
+  - id: F02
+    nome: Criação de recurso (POST)
+    criterios:
+      - POST com JSON válido retorna 201 e o id criado
+
+casos:
+  - id: CT01
+    funcionalidade: F01
+    descricao: Consultar CEP existente (Praça da Sé, São Paulo)
+    esperado: HTTP 200, localidade São Paulo, UF SP
+    severidade: Crítica
+    passos:
+      - requisitar: GET /ws/01001000/json/
+      - verificar_status: 200
+      - verificar_cabecalho: { nome: content-type, contem: json }
+      - verificar_json: { campo: cep, valor: "01001-000" }
+      - verificar_json: { campo: localidade, valor: São Paulo }
+      - verificar_json: { campo: uf, valor: SP }
+      - verificar_json: { campo: logradouro, contem: Praça da Sé }
+      - verificar_tempo: { maximo_ms: 5000 }
+
+  - id: CT02
+    funcionalidade: F01
+    descricao: CEP com formato inválido (3 dígitos)
+    esperado: HTTP 400 (requisição inválida)
+    passos:
+      - requisitar: GET /ws/123/json/
+      - verificar_status: 400
+
+  - id: CT03
+    funcionalidade: F01
+    descricao: CEP com formato válido mas inexistente
+    esperado: HTTP 200 com o campo "erro"
+    passos:
+      - requisitar: GET /ws/99999999/json/
+      - verificar_status: 200
+      - verificar_json: { campo: erro, valor: true }
+      - verificar_json: { campo: logradouro, existe: false }
+
+  - id: CT04
+    funcionalidade: F02
+    descricao: Criar post (POST) e consultar um post existente
+    esperado: HTTP 201 com id; GET do post 1 retorna userId 1
+    passos:
+      - requisitar:
+          metodo: POST
+          url: https://jsonplaceholder.typicode.com/posts
+          corpo: { title: "Teste do Sentinela QA", body: "{faker.sentence}", userId: 1 }
+      - verificar_status: 201
+      - verificar_json: { campo: id, tipo: numero }
+      - verificar_json: { campo: title, valor: "Teste do Sentinela QA" }
+      - guardar: { campo: userId, como: usuario }
+      - requisitar: GET https://jsonplaceholder.typicode.com/users/{dados.usuario}
+      - verificar_status: { entre: [200, 299] }
+      - verificar_json: { campo: address.city, existe: true }

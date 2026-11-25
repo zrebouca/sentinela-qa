@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block titulo %}Tipos de teste{% endblock %}
+{% block cabecalho %}Tipos de teste{% endblock %}
+{% block subtitulo %}Todos os tipos de teste de QA e como o Sentinela cobre cada um{% endblock %}
+{% block conteudo %}
+<div class="grade g4">
+  <div class="card metrica"><div class="topo-m"><span class="ic c-verde">{{ icone('check', 20) }}</span></div>
+    <div class="v">{{ catalogo|selectattr(3, 'equalto', 'nativo')|list|length }}</div><div class="l">Nativos</div><div class="s">rodam direto no Sentinela</div></div>
+  <div class="card metrica"><div class="topo-m"><span class="ic c-azul">{{ icone('camada', 20) }}</span></div>
+    <div class="v">{{ catalogo|selectattr(3, 'equalto', 'integracao')|list|length }}</div><div class="l">Integrações</div><div class="s">o Sentinela roda a ferramenta e lê o resultado</div></div>
+  <div class="card metrica"><div class="topo-m"><span class="ic c-roxo">{{ icone('upload', 20) }}</span></div>
+    <div class="v">{{ formatos|length }}</div><div class="l">Formatos de exportação</div><div class="s">roteiro vira código de outro framework</div></div>
+  <div class="card metrica"><div class="topo-m"><span class="ic c-laranja">{{ icone('config', 20) }}</span></div>
+    <div class="v">{{ instaladas.values()|select|list|length }}/{{ instaladas|length }}</div><div class="l">Ferramentas neste PC</div><div class="s">detectadas agora</div></div>
+</div>
+
+<section class="card mt">
+  <div class="cab"><div><h2>Catálogo</h2><div class="sub">Clique no tipo para ir à tela correspondente</div></div>
+    <div class="dir legenda"><span style="--c:#0f9d6b">Nativo</span><span style="--c:#2554d4">Integração</span><span style="--c:#7b45d6">Exportação</span></div></div>
+  <div class="tabela"><table>
+    <thead><tr><th>Tipo de teste</th><th>O que é</th><th>Como o Sentinela faz</th><th>Ferramentas</th></tr></thead>
+    <tbody>{% for tipo, oque, como, nivel, ferramentas, link in catalogo %}
+    <tr class="clicavel" data-href="{{ link }}">
+      <td><b>{{ tipo }}</b><br><span class="selo {{ {'nativo': 'verde', 'integracao': 'azul', 'exporta': 'roxo'}[nivel] }}">{{ {'nativo': 'Nativo', 'integracao': 'Integração', 'exporta': 'Exportação'}[nivel] }}</span></td>
+      <td class="pequeno">{{ oque }}</td><td class="pequeno">{{ como }}</td>
+      <td>{% for f in ferramentas %}<span class="selo cinza" style="margin:2px">{{ f }}</span>{% endfor %}</td></tr>
+    {% endfor %}</tbody></table></div>
+</section>
+
+<div class="grade g-2-1 mt">
+  <section class="card" id="exportar">
+    <div class="cab"><div><h2>Exportar um roteiro para outro framework</h2><div class="sub">Baixa um projeto pronto (.zip) com o código e as dependências</div></div></div>
+    <div class="grade g2" style="gap:12px">
+      <label class="campo">Roteiro<select id="exp-roteiro">{% for r in roteiros %}<option value="{{ r.id }}">{{ r.projeto }} — {{ r.nome }} ({{ r.tipo }})</option>{% endfor %}</select></label>
+      <label class="campo">Formato<select id="exp-formato">{% for k, n in formatos.items() %}<option value="{{ k }}">{{ n }}</option>{% endfor %}</select></label>
+    </div>
+    <button class="btn prim" id="exp-baixar">{{ icone('upload', 16) }} Baixar projeto</button>
+    <div class="tabela mt"><table><thead><tr><th>Formato</th><th>Para</th><th>Como rodar</th></tr></thead><tbody>
+      {% for f, para, rodar in [
+        ('Playwright TypeScript', 'web + API', 'npm install && npx playwright test'),
+        ('Cypress', 'web + API', 'npm install && npx cypress run'),
+        ('Selenium + pytest', 'web', 'pip install -r requirements.txt && pytest'),
+        ('pytest + requests', 'API', 'pytest'),
+        ('RestAssured + JUnit 5', 'API', 'mvn test (JDK 17 + Maven)'),
+        ('Coleção do Postman', 'API', 'npx newman run colecao.postman_collection.json'),
+        ('Appium', 'web mobile (Android)', 'appium + emulador, depois pytest'),
+        ('Maestro', 'web mobile (Android)', 'maestro test flows'),
+      ] %}<tr><td><b>{{ f }}</b></td><td class="pequeno">{{ para }}</td><td><code>{{ rodar }}</code></td></tr>{% endfor %}
+    </tbody></table></div>
+  </section>
+  <aside>
+    <section class="card">
+      <h2>Ferramentas neste computador</h2>
+      <ul class="atividade">{% for nome, ok in instaladas.items() %}
+        <li><span class="selo {{ 'verde' if ok else 'cinza' }}">{{ 'instalado' if ok else 'não encontrado' }}</span><span>{{ nome }}</span></li>{% endfor %}</ul>
+      <p class="pequeno suave">Suítes que dependem de ferramentas não instaladas ainda podem ser exportadas e rodadas em outro PC ou no CI.</p>
+    </section>
+    <section class="card mt">
+      <h2>Rodar uma suíte de outro framework</h2>
+      <pre class="bloco">sistema: Minha suíte
+tipo: suite
+ferramenta: jest   # pytest | jest | vitest
+                   # cypress | newman | maven
+                   # playwright-ts | maestro
+pasta: ../meu_projeto</pre>
+      <p class="pequeno suave">O resultado (JUnit XML) entra no relatório, no histórico e nos defeitos do Sentinela.</p>
+    </section>
+  </aside>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  document.getElementById('exp-baixar').addEventListener('click', () => {
+    location.href = `/roteiros/${document.getElementById('exp-roteiro').value}/exportar/${document.getElementById('exp-formato').value}`;
+  });
+</script>
+{% endblock %}

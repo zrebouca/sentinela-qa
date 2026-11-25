@@ -1,0 +1,10 @@
+# Roteiro do tipo SUITE: o Sentinela roda uma suíte de outro framework e lê o resultado (JUnit XML)
+# para colocar no mesmo relatório, histórico e gestão de defeitos.
+sistema: "Regras de preço — testes unitários (Pytest)"
+versao: "framework: pytest"
+responsavel: Mateus
+ambiente: Local
+objetivo: "Testes unitários das regras de preço, frete e parcelamento (com um bug plantado no desconto)"
+tipo: suite
+ferramenta: pytest
+pasta: ../exemplos_frameworks/pytest_unitario

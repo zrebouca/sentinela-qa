@@ -1,0 +1,35 @@
+{
+  "requisicao": "GET https://viacep.com.br/ws/01001000/json/",
+  "status": 200,
+  "tempo_ms": 395,
+  "cabecalhos": {
+    "server": "nginx/1.22.0",
+    "date": "Fri, 20 Nov 2026 22:38:33 GMT",
+    "content-type": "application/json; charset=utf-8",
+    "transfer-encoding": "chunked",
+    "connection": "close",
+    "expires": "Fri, 20 Nov 2026 23:38:33 GMT",
+    "cache-control": "max-age=3600",
+    "pragma": "public",
+    "access-control-allow-origin": "*",
+    "access-control-allow-methods": "GET",
+    "access-control-allow-headers": "Content-Type, X-Request-With, X-Requested-By",
+    "access-control-allow-credentials": "true",
+    "access-control-max-age": "86400"
+  },
+  "corpo": {
+    "cep": "01001-000",
+    "logradouro": "Praça da Sé",
+    "complemento": "lado ímpar",
+    "unidade": "",
+    "bairro": "Sé",
+    "localidade": "São Paulo",
+    "uf": "SP",
+    "estado": "São Paulo",
+    "regiao": "Sudeste",
+    "ibge": "3550308",
+    "gia": "1004",
+    "ddd": "11",
+    "siafi": "7107"
+  }
+}

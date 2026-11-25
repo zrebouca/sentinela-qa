@@ -1,0 +1,783 @@
+{
+  "versao_robo": "1.0.0",
+  "cabecalho": {
+    "Sistema": "The Internet (site de prática de automação)",
+    "Versão": "web",
+    "Data": "20/11/2026 17:19",
+    "Responsável": "Mateus",
+    "Ambiente": "Demonstração pública (Google Chrome 157.0.8103.80 · Windows 11)",
+    "Alvo": "https://the-internet.herokuapp.com",
+    "Roteiro": "web_the_internet.yaml",
+    "Finalidade": "-",
+    "Duração": "41s"
+  },
+  "sistema": "The Internet (site de prática de automação)",
+  "objetivo": "Exercitar os principais tipos de interação de uma página web e validar as respostas da interface.",
+  "funcionalidades": [
+    {
+      "id": "F01",
+      "nome": "Autenticação",
+      "criterios": [
+        "Credenciais válidas levam à área segura com mensagem de sucesso",
+        "Credenciais inválidas mostram mensagem de erro"
+      ]
+    },
+    {
+      "id": "F02",
+      "nome": "Componentes de formulário",
+      "criterios": [
+        "Checkbox, dropdown, upload e teclas respondem corretamente"
+      ]
+    },
+    {
+      "id": "F03",
+      "nome": "Interações de mouse e conteúdo dinâmico",
+      "criterios": [
+        "Hover revela informações, arrastar troca colunas, conteúdo carregado aparece"
+      ]
+    }
+  ],
+  "resumo": {
+    "total": 9,
+    "aprovados": 8,
+    "reprovados": 1,
+    "taxa": 89,
+    "defeitos": 1,
+    "defeitos_por_severidade": {
+      "Baixa": 1
+    },
+    "observacoes": 6,
+    "sugestoes": 5,
+    "acoes": 44,
+    "exploracao": false,
+    "ia": true
+  },
+  "casos": [
+    {
+      "id": "CT01",
+      "descricao": "Login com credenciais válidas (públicas do site)",
+      "funcionalidade": "F01",
+      "passos": [
+        "Abrir /login",
+        "Fazer login com o usuário 'tomsmith'",
+        "Verificar se a URL contém '/secure'",
+        "Verificar mensagem de sucesso 'You logged into a secure area!'",
+        "Clicar em 'Logout'",
+        "Verificar se o texto 'You logged out of the secure area!' aparece"
+      ],
+      "esperado": "Área segura com mensagem \"You logged into a secure area!\"",
+      "obtido": "URL contém '/secure' (https://the-internet.herokuapp.com/secure); Mensagem de sucesso exibida: 'You logged into a secure area!'; Texto 'You logged out of the secure area!' visível",
+      "status": "APROVADO",
+      "print": "prints/006_CT01_verificar_texto.png",
+      "duracao_s": 3.3
+    },
+    {
+      "id": "CT02",
+      "descricao": "Login com senha inválida",
+      "funcionalidade": "F01",
+      "passos": [
+        "Abrir /login",
+        "Preencher 'rotulo=Username' com 'tomsmith'",
+        "Preencher 'rotulo=Password' com 'errada'",
+        "Clicar em 'papel=button:Login'",
+        "Verificar mensagem de erro 'Your password is invalid!'",
+        "Verificar se a URL contém '/login'"
+      ],
+      "esperado": "Mensagem \"Your password is invalid!\"",
+      "obtido": "Mensagem de erro exibida: 'Your password is invalid!'; URL contém '/login' (https://the-internet.herokuapp.com/login)",
+      "status": "APROVADO",
+      "print": "prints/012_CT02_verificar_url.png",
+      "duracao_s": 2.9
+    },
+    {
+      "id": "CT03",
+      "descricao": "Marcar e desmarcar checkboxes",
+      "funcionalidade": "F02",
+      "passos": [
+        "Abrir /checkboxes",
+        "Marcar '#checkboxes input >> nth=0'",
+        "Desmarcar '#checkboxes input >> nth=1'",
+        "Verificar se o elemento '#checkboxes input:checked' existe"
+      ],
+      "esperado": "Checkbox 1 marcado e checkbox 2 desmarcado",
+      "obtido": "Elemento '#checkboxes input:checked' visível",
+      "status": "APROVADO",
+      "print": "prints/016_CT03_verificar_elemento.png",
+      "duracao_s": 2.3
+    },
+    {
+      "id": "CT04",
+      "descricao": "Selecionar opção no dropdown",
+      "funcionalidade": "F02",
+      "passos": [
+        "Abrir /dropdown",
+        "Selecionar 'Option 2' em '#dropdown'",
+        "Verificar se '#dropdown' tem o valor '2'"
+      ],
+      "esperado": "A opção 'Option 2' fica selecionada",
+      "obtido": "'#dropdown' tem o valor '2'",
+      "status": "APROVADO",
+      "print": "prints/019_CT04_verificar_valor.png",
+      "duracao_s": 2.2
+    },
+    {
+      "id": "CT05",
+      "descricao": "Enviar arquivo (upload)",
+      "funcionalidade": "F02",
+      "passos": [
+        "Abrir /upload",
+        "Enviar o arquivo 'arquivos/arquivo_teste.txt' em '#file-upload'",
+        "Clicar em '#file-submit'",
+        "Verificar se o texto 'File Uploaded!' aparece",
+        "Verificar se o texto 'arquivo_teste.txt' aparece em '#uploaded-files'"
+      ],
+      "esperado": "Página confirma \"File Uploaded!\" com o nome do arquivo",
+      "obtido": "Texto 'File Uploaded!' visível; '#uploaded-files' contém 'arquivo_teste.txt'",
+      "status": "APROVADO",
+      "print": "prints/024_CT05_verificar_texto.png",
+      "duracao_s": 2.6
+    },
+    {
+      "id": "CT06",
+      "descricao": "Digitar e apertar teclas",
+      "funcionalidade": "F02",
+      "passos": [
+        "Abrir /key_presses",
+        "Digitar 'qa' em '#target'",
+        "Apertar a tecla Tab",
+        "Verificar se o texto 'You entered: TAB' aparece em '#result'"
+      ],
+      "esperado": "A página informa a última tecla pressionada",
+      "obtido": "'#result' contém 'You entered: TAB'",
+      "status": "APROVADO",
+      "print": "prints/028_CT06_verificar_texto.png",
+      "duracao_s": 2.2
+    },
+    {
+      "id": "CT07",
+      "descricao": "Passar o mouse e arrastar e soltar",
+      "funcionalidade": "F03",
+      "passos": [
+        "Abrir /hovers",
+        "Passar o mouse sobre '.figure >> nth=0'",
+        "Verificar se o texto 'name: user1' aparece",
+        "Abrir /drag_and_drop",
+        "Arrastar '#column-a' para '#column-b'",
+        "Verificar se o texto 'B' aparece em '#column-a header'"
+      ],
+      "esperado": "Hover mostra o nome do usuário; colunas A e B trocam de lugar",
+      "obtido": "Texto 'name: user1' visível; '#column-a header' contém 'B'",
+      "status": "APROVADO",
+      "print": "prints/034_CT07_verificar_texto.png",
+      "duracao_s": 2.8
+    },
+    {
+      "id": "CT08",
+      "descricao": "Conteúdo carregado dinamicamente e rolagem",
+      "funcionalidade": "F03",
+      "passos": [
+        "Abrir /dynamic_loading/1",
+        "Clicar em 'papel=button:Start'",
+        "Esperar '#loading' sumir",
+        "Verificar se o texto 'Hello World!' aparece",
+        "Abrir /large",
+        "Rolar até '#large-table'",
+        "Rolar a página para fim"
+      ],
+      "esperado": "O texto 'Hello World!' aparece depois do carregamento (sem espera fixa)",
+      "obtido": "Texto 'Hello World!' visível",
+      "status": "APROVADO",
+      "print": "prints/041_CT08_rolar.png",
+      "duracao_s": 8.7
+    },
+    {
+      "id": "CT09",
+      "descricao": "[FALHA PROPOSITAL] Mensagem de erro deveria estar em português",
+      "funcionalidade": "F01",
+      "passos": [
+        "Abrir /login",
+        "Fazer login com o usuário 'tomsmith'",
+        "Verificar mensagem de erro 'Senha inválida'"
+      ],
+      "esperado": "Ao errar a senha, a mensagem aparece em português (\"Senha inválida\")",
+      "obtido": "Falhou no passo 3 (Verificar mensagem de erro 'Senha inválida'): A mensagem 'Senha inválida' não apareceu. Mensagem exibida: 'Your password is invalid!'",
+      "status": "REPROVADO",
+      "print": "prints/044_CT09_verificar_mensagem_FALHA.png",
+      "duracao_s": 12.7
+    }
+  ],
+  "defeitos": [
+    {
+      "id": "BUG-001",
+      "descricao": "CT09 — [FALHA PROPOSITAL] Mensagem de erro deveria estar em português: A mensagem 'Senha inválida' não apareceu. Mensagem exibida: 'Your password is invalid!'",
+      "severidade": "Baixa",
+      "status": "Aberto",
+      "passos_reproducao": [
+        "Abrir /login",
+        "Fazer login com o usuário 'tomsmith'",
+        "Verificar mensagem de erro 'Senha inválida'"
+      ],
+      "esperado": "Ao errar a senha, a mensagem aparece em português (\"Senha inválida\")",
+      "obtido": "Falhou no passo 3 (Verificar mensagem de erro 'Senha inválida'): A mensagem 'Senha inválida' não apareceu. Mensagem exibida: 'Your password is invalid!'",
+      "evidencia": "prints/044_CT09_verificar_mensagem_FALHA.png",
+      "origem": "Roteiro",
+      "caso_id": "CT09"
+    }
+  ],
+  "observacoes": [
+    {
+      "categoria": "Console",
+      "texto": "Erro no console do navegador: Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "print": null
+    },
+    {
+      "categoria": "Console",
+      "texto": "Erro no console do navegador: Failed to load resource: the server responded with a status of 404 ()",
+      "print": null
+    },
+    {
+      "categoria": "Acessibilidade",
+      "texto": "https://the-internet.herokuapp.com/checkboxes: 2 campo(s) de formulário sem <label> associado (leitores de tela não anunciam o nome; placeholder não substitui label).",
+      "print": null
+    },
+    {
+      "categoria": "Acessibilidade",
+      "texto": "https://the-internet.herokuapp.com/dropdown: 1 campo(s) de formulário sem <label> associado (leitores de tela não anunciam o nome; placeholder não substitui label).",
+      "print": null
+    },
+    {
+      "categoria": "Acessibilidade",
+      "texto": "https://the-internet.herokuapp.com/upload: 2 campo(s) de formulário sem <label> associado (leitores de tela não anunciam o nome; placeholder não substitui label).",
+      "print": null
+    },
+    {
+      "categoria": "Acessibilidade",
+      "texto": "https://the-internet.herokuapp.com/key_presses: 1 campo(s) de formulário sem <label> associado (leitores de tela não anunciam o nome; placeholder não substitui label).",
+      "print": null
+    }
+  ],
+  "sugestoes": [
+    {
+      "categoria": "Acessibilidade",
+      "titulo": "Adicionar rótulos (<label>) aos campos de entrada e seletores",
+      "descricao": "Associar tags <label> explícitas com atributo 'for' aos controles de formulário (como nos seletores e inputs das telas /dropdown e /key_presses) para garantir a correta identificação por leitores de tela.",
+      "prioridade": "Alta",
+      "evidencia": "prints/017_CT04_abrir.png e observações de acessibilidade do log"
+    },
+    {
+      "categoria": "Usabilidade",
+      "titulo": "Melhorar indicação visual e feedback de interatividade no Drag and Drop",
+      "descricao": "Adicionar alteração de cursor (ex: grab/grabbing) e destacar a área de soltura ao arrastrar os blocos A e B para tornar a ação mais intuitiva.",
+      "prioridade": "Média",
+      "evidencia": "prints/033_CT07_arrastar.png"
+    },
+    {
+      "categoria": "Usabilidade",
+      "titulo": "Adicionar texto de orientação (placeholder) na tela Key Presses",
+      "descricao": "Inserir um placeholder dentro do campo de texto com a instrução 'Clique aqui e pressione uma tecla', orientando onde o usuário deve focar o cursor antes de pressionar as teclas.",
+      "prioridade": "Baixa",
+      "evidencia": "prints/025_CT06_abrir.png"
+    },
+    {
+      "categoria": "Funcionalidade",
+      "titulo": "Adicionar recurso de alternar visibilidade da senha",
+      "descricao": "Incluir um ícone no campo de senha da tela de login para exibir/ocultar a senha digitada, auxiliando na conferência do texto antes de enviar o formulário.",
+      "prioridade": "Média",
+      "evidencia": "prints/009_CT02_preencher.png"
+    },
+    {
+      "categoria": "Texto",
+      "titulo": "Adicionar rótulo visível para o Dropdown",
+      "descricao": "Inserir uma legenda ou título explicativo acima da caixa de seleção na tela Dropdown List em vez de depender apenas do item inicial 'Please select an option'.",
+      "prioridade": "Baixa",
+      "evidencia": "prints/017_CT04_abrir.png"
+    }
+  ],
+  "acoes": [
+    {
+      "ordem": 1,
+      "horario": "17:19:48",
+      "caso_id": "CT01",
+      "comando": "abrir",
+      "descricao": "Abrir /login",
+      "status": "ok",
+      "print": "prints/001_CT01_abrir.png",
+      "duracao_ms": 1990,
+      "detalhe": "Página aberta: https://the-internet.herokuapp.com/login (HTTP 200)"
+    },
+    {
+      "ordem": 2,
+      "horario": "17:19:49",
+      "caso_id": "CT01",
+      "comando": "logar",
+      "descricao": "Fazer login com o usuário 'tomsmith'",
+      "status": "ok",
+      "print": "prints/002_CT01_logar.png",
+      "duracao_ms": 484,
+      "detalhe": "Login enviado com o usuário 'tomsmith'"
+    },
+    {
+      "ordem": 3,
+      "horario": "17:19:49",
+      "caso_id": "CT01",
+      "comando": "verificar_url",
+      "descricao": "Verificar se a URL contém '/secure'",
+      "status": "ok",
+      "print": "prints/003_CT01_verificar_url.png",
+      "duracao_ms": 62,
+      "detalhe": "URL contém '/secure' (https://the-internet.herokuapp.com/secure)"
+    },
+    {
+      "ordem": 4,
+      "horario": "17:19:49",
+      "caso_id": "CT01",
+      "comando": "verificar_mensagem",
+      "descricao": "Verificar mensagem de sucesso 'You logged into a secure area!'",
+      "status": "ok",
+      "print": "prints/004_CT01_verificar_mensagem.png",
+      "duracao_ms": 71,
+      "detalhe": "Mensagem de sucesso exibida: 'You logged into a secure area!'"
+    },
+    {
+      "ordem": 5,
+      "horario": "17:19:49",
+      "caso_id": "CT01",
+      "comando": "clicar",
+      "descricao": "Clicar em 'Logout'",
+      "status": "ok",
+      "print": "prints/005_CT01_clicar.png",
+      "duracao_ms": 479,
+      "detalhe": "Clicou em 'Logout'"
+    },
+    {
+      "ordem": 6,
+      "horario": "17:19:49",
+      "caso_id": "CT01",
+      "comando": "verificar_texto",
+      "descricao": "Verificar se o texto 'You logged out of the secure area!' aparece",
+      "status": "ok",
+      "print": "prints/006_CT01_verificar_texto.png",
+      "duracao_ms": 78,
+      "detalhe": "Texto 'You logged out of the secure area!' visível"
+    },
+    {
+      "ordem": 7,
+      "horario": "17:19:51",
+      "caso_id": "CT02",
+      "comando": "abrir",
+      "descricao": "Abrir /login",
+      "status": "ok",
+      "print": "prints/007_CT02_abrir.png",
+      "duracao_ms": 1916,
+      "detalhe": "Página aberta: https://the-internet.herokuapp.com/login (HTTP 200)"
+    },
+    {
+      "ordem": 8,
+      "horario": "17:19:51",
+      "caso_id": "CT02",
+      "comando": "preencher",
+      "descricao": "Preencher 'rotulo=Username' com 'tomsmith'",
+      "status": "ok",
+      "print": "prints/008_CT02_preencher.png",
+      "duracao_ms": 61,
+      "detalhe": "'rotulo=Username' preenchido"
+    },
+    {
+      "ordem": 9,
+      "horario": "17:19:51",
+      "caso_id": "CT02",
+      "comando": "preencher",
+      "descricao": "Preencher 'rotulo=Password' com 'errada'",
+      "status": "ok",
+      "print": "prints/009_CT02_preencher.png",
+      "duracao_ms": 67,
+      "detalhe": "'rotulo=Password' preenchido"
+    },
+    {
+      "ordem": 10,
+      "horario": "17:19:52",
+      "caso_id": "CT02",
+      "comando": "clicar",
+      "descricao": "Clicar em 'papel=button:Login'",
+      "status": "ok",
+      "print": "prints/010_CT02_clicar.png",
+      "duracao_ms": 516,
+      "detalhe": "Clicou em 'papel=button:Login'"
+    },
+    {
+      "ordem": 11,
+      "horario": "17:19:52",
+      "caso_id": "CT02",
+      "comando": "verificar_mensagem",
+      "descricao": "Verificar mensagem de erro 'Your password is invalid!'",
+      "status": "ok",
+      "print": "prints/011_CT02_verificar_mensagem.png",
+      "duracao_ms": 91,
+      "detalhe": "Mensagem de erro exibida: 'Your password is invalid!'"
+    },
+    {
+      "ordem": 12,
+      "horario": "17:19:52",
+      "caso_id": "CT02",
+      "comando": "verificar_url",
+      "descricao": "Verificar se a URL contém '/login'",
+      "status": "ok",
+      "print": "prints/012_CT02_verificar_url.png",
+      "duracao_ms": 58,
+      "detalhe": "URL contém '/login' (https://the-internet.herokuapp.com/login)"
+    },
+    {
+      "ordem": 13,
+      "horario": "17:19:54",
+      "caso_id": "CT03",
+      "comando": "abrir",
+      "descricao": "Abrir /checkboxes",
+      "status": "ok",
+      "print": "prints/013_CT03_abrir.png",
+      "duracao_ms": 1984,
+      "detalhe": "Página aberta: https://the-internet.herokuapp.com/checkboxes (HTTP 200)"
+    },
+    {
+      "ordem": 14,
+      "horario": "17:19:54",
+      "caso_id": "CT03",
+      "comando": "marcar",
+      "descricao": "Marcar '#checkboxes input >> nth=0'",
+      "status": "ok",
+      "print": "prints/014_CT03_marcar.png",
+      "duracao_ms": 97,
+      "detalhe": "'#checkboxes input >> nth=0' marcado"
+    },
+    {
+      "ordem": 15,
+      "horario": "17:19:54",
+      "caso_id": "CT03",
+      "comando": "desmarcar",
+      "descricao": "Desmarcar '#checkboxes input >> nth=1'",
+      "status": "ok",
+      "print": "prints/015_CT03_desmarcar.png",
+      "duracao_ms": 78,
+      "detalhe": "'#checkboxes input >> nth=1' desmarcado"
+    },
+    {
+      "ordem": 16,
+      "horario": "17:19:54",
+      "caso_id": "CT03",
+      "comando": "verificar_elemento",
+      "descricao": "Verificar se o elemento '#checkboxes input:checked' existe",
+      "status": "ok",
+      "print": "prints/016_CT03_verificar_elemento.png",
+      "duracao_ms": 45,
+      "detalhe": "Elemento '#checkboxes input:checked' visível"
+    },
+    {
+      "ordem": 17,
+      "horario": "17:19:56",
+      "caso_id": "CT04",
+      "comando": "abrir",
+      "descricao": "Abrir /dropdown",
+      "status": "ok",
+      "print": "prints/017_CT04_abrir.png",
+      "duracao_ms": 1929,
+      "detalhe": "Página aberta: https://the-internet.herokuapp.com/dropdown (HTTP 200)"
+    },
+    {
+      "ordem": 18,
+      "horario": "17:19:57",
+      "caso_id": "CT04",
+      "comando": "selecionar",
+      "descricao": "Selecionar 'Option 2' em '#dropdown'",
+      "status": "ok",
+      "print": "prints/018_CT04_selecionar.png",
+      "duracao_ms": 49,
+      "detalhe": "Opção 'Option 2' selecionada"
+    },
+    {
+      "ordem": 19,
+      "horario": "17:19:57",
+      "caso_id": "CT04",
+      "comando": "verificar_valor",
+      "descricao": "Verificar se '#dropdown' tem o valor '2'",
+      "status": "ok",
+      "print": "prints/019_CT04_verificar_valor.png",
+      "duracao_ms": 33,
+      "detalhe": "'#dropdown' tem o valor '2'"
+    },
+    {
+      "ordem": 20,
+      "horario": "17:19:59",
+      "caso_id": "CT05",
+      "comando": "abrir",
+      "descricao": "Abrir /upload",
+      "status": "ok",
+      "print": "prints/020_CT05_abrir.png",
+      "duracao_ms": 1934,
+      "detalhe": "Página aberta: https://the-internet.herokuapp.com/upload (HTTP 200)"
+    },
+    {
+      "ordem": 21,
+      "horario": "17:19:59",
+      "caso_id": "CT05",
+      "comando": "enviar_arquivo",
+      "descricao": "Enviar o arquivo 'arquivos/arquivo_teste.txt' em '#file-upload'",
+      "status": "ok",
+      "print": "prints/021_CT05_enviar_arquivo.png",
+      "duracao_ms": 58,
+      "detalhe": "Arquivo 'arquivo_teste.txt' selecionado"
+    },
+    {
+      "ordem": 22,
+      "horario": "17:19:59",
+      "caso_id": "CT05",
+      "comando": "clicar",
+      "descricao": "Clicar em '#file-submit'",
+      "status": "ok",
+      "print": "prints/022_CT05_clicar.png",
+      "duracao_ms": 337,
+      "detalhe": "Clicou em '#file-submit'"
+    },
+    {
+      "ordem": 23,
+      "horario": "17:19:59",
+      "caso_id": "CT05",
+      "comando": "verificar_texto",
+      "descricao": "Verificar se o texto 'File Uploaded!' aparece",
+      "status": "ok",
+      "print": "prints/023_CT05_verificar_texto.png",
+      "duracao_ms": 65,
+      "detalhe": "Texto 'File Uploaded!' visível"
+    },
+    {
+      "ordem": 24,
+      "horario": "17:19:59",
+      "caso_id": "CT05",
+      "comando": "verificar_texto",
+      "descricao": "Verificar se o texto 'arquivo_teste.txt' aparece em '#uploaded-files'",
+      "status": "ok",
+      "print": "prints/024_CT05_verificar_texto.png",
+      "duracao_ms": 57,
+      "detalhe": "'#uploaded-files' contém 'arquivo_teste.txt'"
+    },
+    {
+      "ordem": 25,
+      "horario": "17:20:01",
+      "caso_id": "CT06",
+      "comando": "abrir",
+      "descricao": "Abrir /key_presses",
+      "status": "ok",
+      "print": "prints/025_CT06_abrir.png",
+      "duracao_ms": 1787,
+      "detalhe": "Página aberta: https://the-internet.herokuapp.com/key_presses (HTTP 200)"
+    },
+    {
+      "ordem": 26,
+      "horario": "17:20:01",
+      "caso_id": "CT06",
+      "comando": "digitar",
+      "descricao": "Digitar 'qa' em '#target'",
+      "status": "ok",
+      "print": "prints/026_CT06_digitar.png",
+      "duracao_ms": 126,
+      "detalhe": "Digitou 'qa'"
+    },
+    {
+      "ordem": 27,
+      "horario": "17:20:01",
+      "caso_id": "CT06",
+      "comando": "apertar_tecla",
+      "descricao": "Apertar a tecla Tab",
+      "status": "ok",
+      "print": "prints/027_CT06_apertar_tecla.png",
+      "duracao_ms": 48,
+      "detalhe": "Tecla Tab pressionada"
+    },
+    {
+      "ordem": 28,
+      "horario": "17:20:01",
+      "caso_id": "CT06",
+      "comando": "verificar_texto",
+      "descricao": "Verificar se o texto 'You entered: TAB' aparece em '#result'",
+      "status": "ok",
+      "print": "prints/028_CT06_verificar_texto.png",
+      "duracao_ms": 55,
+      "detalhe": "'#result' contém 'You entered: TAB'"
+    },
+    {
+      "ordem": 29,
+      "horario": "17:20:03",
+      "caso_id": "CT07",
+      "comando": "abrir",
+      "descricao": "Abrir /hovers",
+      "status": "ok",
+      "print": "prints/029_CT07_abrir.png",
+      "duracao_ms": 1983,
+      "detalhe": "Página aberta: https://the-internet.herokuapp.com/hovers (HTTP 200)"
+    },
+    {
+      "ordem": 30,
+      "horario": "17:20:04",
+      "caso_id": "CT07",
+      "comando": "passar_mouse",
+      "descricao": "Passar o mouse sobre '.figure >> nth=0'",
+      "status": "ok",
+      "print": "prints/030_CT07_passar_mouse.png",
+      "duracao_ms": 110,
+      "detalhe": "Mouse sobre '.figure >> nth=0'"
+    },
+    {
+      "ordem": 31,
+      "horario": "17:20:04",
+      "caso_id": "CT07",
+      "comando": "verificar_texto",
+      "descricao": "Verificar se o texto 'name: user1' aparece",
+      "status": "ok",
+      "print": "prints/031_CT07_verificar_texto.png",
+      "duracao_ms": 28,
+      "detalhe": "Texto 'name: user1' visível"
+    },
+    {
+      "ordem": 32,
+      "horario": "17:20:04",
+      "caso_id": "CT07",
+      "comando": "abrir",
+      "descricao": "Abrir /drag_and_drop",
+      "status": "ok",
+      "print": "prints/032_CT07_abrir.png",
+      "duracao_ms": 291,
+      "detalhe": "Página aberta: https://the-internet.herokuapp.com/drag_and_drop (HTTP 200)"
+    },
+    {
+      "ordem": 33,
+      "horario": "17:20:04",
+      "caso_id": "CT07",
+      "comando": "arrastar",
+      "descricao": "Arrastar '#column-a' para '#column-b'",
+      "status": "ok",
+      "print": "prints/033_CT07_arrastar.png",
+      "duracao_ms": 158,
+      "detalhe": "'#column-a' arrastado para '#column-b'"
+    },
+    {
+      "ordem": 34,
+      "horario": "17:20:04",
+      "caso_id": "CT07",
+      "comando": "verificar_texto",
+      "descricao": "Verificar se o texto 'B' aparece em '#column-a header'",
+      "status": "ok",
+      "print": "prints/034_CT07_verificar_texto.png",
+      "duracao_ms": 70,
+      "detalhe": "'#column-a header' contém 'B'"
+    },
+    {
+      "ordem": 35,
+      "horario": "17:20:06",
+      "caso_id": "CT08",
+      "comando": "abrir",
+      "descricao": "Abrir /dynamic_loading/1",
+      "status": "ok",
+      "print": "prints/035_CT08_abrir.png",
+      "duracao_ms": 1942,
+      "detalhe": "Página aberta: https://the-internet.herokuapp.com/dynamic_loading/1 (HTTP 200)"
+    },
+    {
+      "ordem": 36,
+      "horario": "17:20:06",
+      "caso_id": "CT08",
+      "comando": "clicar",
+      "descricao": "Clicar em 'papel=button:Start'",
+      "status": "ok",
+      "print": "prints/036_CT08_clicar.png",
+      "duracao_ms": 105,
+      "detalhe": "Clicou em 'papel=button:Start'"
+    },
+    {
+      "ordem": 37,
+      "horario": "17:20:12",
+      "caso_id": "CT08",
+      "comando": "esperar",
+      "descricao": "Esperar '#loading' sumir",
+      "status": "ok",
+      "print": "prints/037_CT08_esperar.png",
+      "duracao_ms": 5442,
+      "detalhe": "'#loading' sumiu"
+    },
+    {
+      "ordem": 38,
+      "horario": "17:20:12",
+      "caso_id": "CT08",
+      "comando": "verificar_texto",
+      "descricao": "Verificar se o texto 'Hello World!' aparece",
+      "status": "ok",
+      "print": "prints/038_CT08_verificar_texto.png",
+      "duracao_ms": 70,
+      "detalhe": "Texto 'Hello World!' visível"
+    },
+    {
+      "ordem": 39,
+      "horario": "17:20:13",
+      "caso_id": "CT08",
+      "comando": "abrir",
+      "descricao": "Abrir /large",
+      "status": "ok",
+      "print": "prints/039_CT08_abrir.png",
+      "duracao_ms": 767,
+      "detalhe": "Página aberta: https://the-internet.herokuapp.com/large (HTTP 200)"
+    },
+    {
+      "ordem": 40,
+      "horario": "17:20:13",
+      "caso_id": "CT08",
+      "comando": "rolar",
+      "descricao": "Rolar até '#large-table'",
+      "status": "ok",
+      "print": "prints/040_CT08_rolar.png",
+      "duracao_ms": 157,
+      "detalhe": "Rolou até '#large-table'"
+    },
+    {
+      "ordem": 41,
+      "horario": "17:20:13",
+      "caso_id": "CT08",
+      "comando": "rolar",
+      "descricao": "Rolar a página para fim",
+      "status": "ok",
+      "print": "prints/041_CT08_rolar.png",
+      "duracao_ms": 78,
+      "detalhe": "Rolou (fim)"
+    },
+    {
+      "ordem": 42,
+      "horario": "17:20:15",
+      "caso_id": "CT09",
+      "comando": "abrir",
+      "descricao": "Abrir /login",
+      "status": "ok",
+      "print": "prints/042_CT09_abrir.png",
+      "duracao_ms": 1982,
+      "detalhe": "Página aberta: https://the-internet.herokuapp.com/login (HTTP 200)"
+    },
+    {
+      "ordem": 43,
+      "horario": "17:20:15",
+      "caso_id": "CT09",
+      "comando": "logar",
+      "descricao": "Fazer login com o usuário 'tomsmith'",
+      "status": "ok",
+      "print": "prints/043_CT09_logar.png",
+      "duracao_ms": 514,
+      "detalhe": "Login enviado com o usuário 'tomsmith'"
+    },
+    {
+      "ordem": 44,
+      "horario": "17:20:26",
+      "caso_id": "CT09",
+      "comando": "verificar_mensagem",
+      "descricao": "Verificar mensagem de erro 'Senha inválida'",
+      "status": "falha",
+      "print": "prints/044_CT09_verificar_mensagem_FALHA.png",
+      "duracao_ms": 10064,
+      "detalhe": "A mensagem 'Senha inválida' não apareceu. Mensagem exibida: 'Your password is invalid!'"
+    }
+  ],
+  "avisos": []
+}

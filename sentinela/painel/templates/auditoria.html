@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block titulo %}Auditoria {{ reg.banco }}{% endblock %}
+{% block cabecalho %}Auditoria #{{ reg.id }} — {{ reg.banco }}
+  <span class="selo {{ 'verde' if reg.nota >= 80 else ('laranja' if reg.nota >= 50 else 'vermelho') }}" style="vertical-align:middle">{{ reg.nota }}/100</span>{% endblock %}
+{% block subtitulo %}{{ reg.host }} · {{ aud.versao }} · {{ reg.criado_em|data_br }}{% endblock %}
+{% block acoes %}
+<a class="btn" href="{{ url_for('banco_dados') }}">{{ icone('voltar', 16) }} Banco de dados</a>
+<a class="btn" href="{{ url_for('banco_arquivo', aid=reg.id, arquivo='correcoes_sugeridas.sql') }}" target="_blank">{{ icone('roteiros', 16) }} Script SQL</a>
+<a class="btn prim" href="{{ url_for('banco_arquivo', aid=reg.id, arquivo='auditoria.html') }}" target="_blank">{{ icone('abrir', 16) }} Relatório completo</a>
+{% endblock %}
+{% block conteudo %}
+<div class="grade g4">
+  {% for s, cls in [('Crítica','c-vermelho'),('Alta','c-laranja'),('Média','c-azul'),('Baixa','c-verde')] %}
+  <div class="card metrica"><div class="topo-m"><span class="ic {{ cls }}">{{ icone('alerta', 20) }}</span></div>
+    <div class="v">{{ aud.resumo.por_severidade.get(s, 0) }}</div><div class="l">{{ s }}</div></div>
+  {% endfor %}
+</div>
+
+<div class="grade g-2-1 mt">
+  <form method="post" action="{{ url_for('banco_aplicar', aid=reg.id) }}" class="card"
+        data-confirmar="O Sentinela vai fazer um backup e aplicar as correções marcadas no banco {{ reg.banco }}. Continuar?">
+    <div class="cab"><div><h2>Aplicar correções automáticas</h2>
+      <div class="sub">Só aparecem as correções seguras para aplicar sem revisão. As outras estão no relatório e no script SQL.</div></div></div>
+    {% if not mysqldump %}<div class="aviso erro">{{ icone('alerta') }}<span>mysqldump não encontrado — sem backup não é possível aplicar. Configure SENTINELA_MYSQLDUMP no .env.</span></div>{% endif %}
+    {% if aplicaveis %}
+    <div class="tabela"><table>
+      <thead><tr><th><input type="checkbox" id="todos" aria-label="Marcar todas"></th><th>Item</th><th>Correção</th></tr></thead>
+      <tbody>{% for a in aplicaveis %}
+      <tr><td><input type="checkbox" name="correcao" value="{{ a.id }}" aria-label="Aplicar {{ a.id }}"></td>
+        <td><span class="selo sev-{{ a.severidade if a.severidade != 'Info' else 'Baixa' }}">{{ a.severidade }}</span>
+          <div class="pequeno" style="margin-top:4px"><code>{{ a.objeto }}</code></div></td>
+        <td><b>{{ a.problema }}</b><div class="pequeno suave">🔮 {{ a.previsao }}</div>
+          <pre class="bloco" style="margin:6px 0 0">{{ a.sql }}</pre></td></tr>
+      {% endfor %}</tbody></table></div>
+    {% if not tem_conexao %}
+    <div class="aviso amarelo mt">{{ icone('chave') }}<span>O painel foi reiniciado desde a auditoria: informe a senha do banco de novo (em branco = sem senha).</span></div>
+    <div class="grade g2" style="gap:10px"><label class="campo">Usuário<input type="text" name="usuario" value="{{ 'root' }}"></label>
+      <label class="campo">Senha<input type="password" name="senha" autocomplete="off"></label></div>
+    {% endif %}
+    <label class="campo mt">Confirmação: digite o nome do banco (<code>{{ reg.banco }}</code>)
+      <input type="text" name="confirmacao" autocomplete="off" required></label>
+    <button class="btn prim" {{ 'disabled' if not mysqldump }}>{{ icone('check', 16) }} Fazer backup e aplicar selecionadas</button>
+    {% else %}<div class="vazio">Nenhuma correção automática disponível — as sugestões precisam de revisão manual (veja o relatório).</div>{% endif %}
+  </form>
+  <aside>
+    <section class="card">
+      <h2>Backups deste banco</h2>
+      <p class="pequeno suave">Criados automaticamente antes de cada aplicação, em <code>dados/backups</code>.</p>
+      {% if backups %}
+      <form method="post" action="{{ url_for('banco_restaurar', aid=reg.id) }}" data-confirmar="Restaurar o backup vai SUBSTITUIR a estrutura e os dados atuais do banco. Continuar?">
+        <select name="backup">{% for b in backups %}<option>{{ b }}</option>{% endfor %}</select>
+        <label class="campo mt-p">Digite <code>{{ reg.banco }}</code> para confirmar<input type="text" name="confirmacao" autocomplete="off" required></label>
+        <button class="btn perigo">{{ icone('repetir', 16) }} Restaurar backup</button>
+      </form>
+      {% else %}<p class="suave pequeno">Nenhum backup ainda.</p>{% endif %}
+    </section>
+    {% if aplicacoes %}
+    <section class="card mt">
+      <h2>Histórico de aplicações</h2>
+      {% for ap in aplicacoes|reverse %}
+      <div class="pequeno" style="margin-top:10px"><b>{{ ap.quando }}</b> · backup {{ ap.backup }}
+        <ul style="padding-left:18px;margin:4px 0">{% for r in ap.resultados %}<li>{{ '✔' if r.ok else '✘' }} {{ r.id }} — {{ r.msg }}</li>{% endfor %}</ul></div>
+      {% endfor %}
+    </section>
+    {% endif %}
+  </aside>
+</div>
+
+<section class="card mt">
+  <div class="cab"><div><h2>Relatório da auditoria</h2><div class="sub">O que mudar, como mudar, onde agir e problemas futuros</div></div></div>
+  <iframe class="relatorio" src="{{ url_for('banco_arquivo', aid=reg.id, arquivo='auditoria.html') }}" title="Relatório da auditoria"></iframe>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+  const todos = document.getElementById('todos');
+  if (todos) todos.addEventListener('change', () => document.querySelectorAll('input[name=correcao]').forEach(c => c.checked = todos.checked));
+</script>
+{% endblock %}

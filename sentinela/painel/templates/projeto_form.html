@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% set editando = proj and proj.id %}
+{% block titulo %}{{ 'Editar projeto' if editando else 'Novo projeto' }}{% endblock %}
+{% block cabecalho %}{{ 'Editar projeto' if editando else 'Novo projeto' }}{% endblock %}
+{% block subtitulo %}Cadastre o sistema que será testado{% endblock %}
+{% block acoes %}<a class="btn" href="{{ url_for('projeto_detalhe', pid=proj.id) if editando else url_for('projetos') }}">{{ icone('voltar', 16) }} Voltar</a>{% endblock %}
+{% block conteudo %}
+<form method="post" class="grade g-2-1">
+  <section class="card">
+    <div class="cab"><div><h2>Dados do sistema</h2><div class="sub">Essas informações aparecem no cabeçalho de todos os relatórios</div></div></div>
+    <label class="campo">Nome do sistema *
+      <input type="text" name="nome" required value="{{ proj.nome or '' }}" placeholder="Ex.: Portal do Cliente"></label>
+    <div class="grade g2" style="gap:14px">
+      <label class="campo">Tipo
+        <select name="tipo">
+          <option value="">Detectar pelo alvo</option>
+          <option value="web" {{ 'selected' if proj.tipo == 'web' }}>Web (site)</option>
+          <option value="desktop" {{ 'selected' if proj.tipo == 'desktop' }}>Desktop (.exe)</option>
+          <option value="api" {{ 'selected' if proj.tipo == 'api' }}>API (REST/JSON)</option>
+          <option value="suite" {{ 'selected' if proj.tipo == 'suite' }}>Suíte de outro framework (Pytest, Jest, Cypress...)</option>
+        </select></label>
+      <label class="campo">Versão
+        <input type="text" name="versao" value="{{ proj.versao or '' }}" placeholder="Ex.: 2.4.1"></label>
+    </div>
+    <label class="campo">Alvo *
+      <input type="text" name="alvo" required value="{{ proj.alvo or '' }}" placeholder="https://... ou C:\Programas\sistema.exe">
+      <span class="dica">URL do site ou da API (http/https) ou caminho do executável. Pode ser só o nome, como <code>calc.exe</code>.</span></label>
+    <label class="campo">Finalidade / objetivo dos testes
+      <textarea name="finalidade" rows="3" placeholder="Ex.: Garantir que login, cadastro e checkout funcionam antes de cada versão.">{{ proj.finalidade or '' }}</textarea></label>
+    <div class="grade g2" style="gap:14px">
+      <label class="campo">Responsável
+        <input type="text" name="responsavel" value="{{ proj.responsavel or '' }}" placeholder="Quem responde pelos testes"></label>
+      <label class="campo">Ambiente
+        <input type="text" name="ambiente" value="{{ proj.ambiente or '' }}" placeholder="Ex.: Homologação"></label>
+    </div>
+  </section>
+  <aside>
+    <section class="card">
+      <h2>Cor de identificação</h2>
+      <div class="cores">
+        {% for c in cores %}<label><input type="radio" name="cor" value="{{ c }}" {{ 'checked' if (proj.cor or cores[0]) == c }}><span style="background:{{ c }}"></span></label>{% endfor %}
+      </div>
+      <div class="flex mt">
+        <button class="btn prim">{{ icone('check', 16) }} Salvar projeto</button>
+      </div>
+    </section>
+    <section class="card mt">
+      <h2>Dica de QA</h2>
+      <p class="suave pequeno">Teste apenas sistemas que você tem autorização para testar (ambiente de homologação ou sites de demonstração).
+        Credenciais vão no arquivo <code>.env</code> e são usadas no roteiro com <code>{env.NOME}</code> — nunca escreva senhas aqui.</p>
+    </section>
+  </aside>
+</form>
+{% if editando %}
+<form method="post" action="{{ url_for('projeto_excluir', pid=proj.id) }}" class="mt"
+      data-confirmar="Excluir o projeto e todo o histórico dele (roteiros, execuções e defeitos)?">
+  <button class="btn perigo">{{ icone('lixo', 16) }} Excluir projeto</button></form>
+{% endif %}
+{% endblock %}

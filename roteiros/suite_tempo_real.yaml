@@ -1,0 +1,9 @@
+# Roteiro do tipo SUITE: chat em tempo real, push, chamada e aparelhos emulados (Pytest + Playwright)
+sistema: "Chat de treino — tempo real e mobile"
+versao: "framework: pytest + playwright"
+responsavel: Mateus
+ambiente: Local
+objetivo: "Chat em tempo real, reconexão, push, chamada de áudio e vídeo e layout em aparelhos emulados"
+tipo: suite
+ferramenta: pytest
+pasta: ../exemplos_frameworks/tempo_real

@@ -1,0 +1,75 @@
+# CI do Sentinela QA — roda a cada push e pull request.
+#
+#  obrigatório (deixa o selo verde ou vermelho):
+#    - testes unitários + teste de integração (Chrome de verdade no site de treino local)
+#    - roteiro do site de treino pela linha de comando (todos os casos devem passar)
+#  informativo (sites e APIs de terceiros podem ficar fora do ar):
+#    - The Internet (pulando a falha proposital CT09), APIs públicas, Sauce Demo com exploração
+#  (Loja PHP/XAMPP e Estoque Desktop rodam localmente — precisam de MySQL e de sessão de desktop)
+#
+# Os relatórios HTML ficam disponíveis em "Artifacts" na página da execução.
+name: testes
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  sentinela:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt
+
+      - name: Testes unitários e de integração
+        run: pytest -q
+
+      - name: Subir o site de treino local
+        shell: pwsh
+        run: Start-Process python -ArgumentList "-m","sentinela","site-treino" -WindowStyle Hidden; Start-Sleep 3
+
+      - name: Regressão no site de treino (obrigatório)
+        run: python -m sentinela rodar --roteiro roteiros/web_site_treino.yaml --sem-ia --embutir-prints
+
+      - name: The Internet sem a falha proposital (informativo)
+        continue-on-error: true
+        run: python -m sentinela rodar --roteiro roteiros/web_the_internet.yaml --pular CT09 --sem-ia --embutir-prints
+
+      - name: Testes de API (informativo)
+        continue-on-error: true
+        run: python -m sentinela rodar --roteiro roteiros/api_viacep.yaml --sem-ia --embutir-prints
+
+      - name: APIs públicas gratuitas — BrasilAPI, Restful-Booker, DummyJSON, PokeAPI, GraphQL (informativo)
+        continue-on-error: true
+        run: python -m sentinela rodar --roteiro roteiros/api_publicas.yaml --sem-ia --embutir-prints
+
+      - name: Suítes de outros frameworks — Pytest, Jest e Newman/Postman (lidas via JUnit XML)
+        continue-on-error: true
+        run: |
+          python -m sentinela rodar --roteiro roteiros/suite_pytest_unitario.yaml --sem-ia --embutir-prints
+          python -m sentinela rodar --roteiro roteiros/suite_tempo_real.yaml --sem-ia --embutir-prints
+          python -m sentinela rodar --roteiro roteiros/suite_jest_unitario.yaml --sem-ia --embutir-prints
+          python -m sentinela rodar --roteiro roteiros/suite_newman_postman.yaml --sem-ia --embutir-prints
+
+      - name: Mesmo roteiro com Selenium WebDriver (obrigatório)
+        run: python -m sentinela rodar --roteiro roteiros/web_site_treino_selenium.yaml --sem-ia --embutir-prints
+
+      - name: Sauce Demo com exploração e IA (informativo — a exploração acha defeitos de propósito)
+        continue-on-error: true
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}   # opcional: Settings > Secrets > Actions
+        run: python -m sentinela rodar --roteiro roteiros/web_saucedemo.yaml --explorar --embutir-prints
+
+      - name: Publicar relatórios
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorios-sentinela-qa
+          path: relatorios/

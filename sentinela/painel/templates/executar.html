@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block titulo %}Executar{% endblock %}
+{% block cabecalho %}Nova execução{% endblock %}
+{% block subtitulo %}Escolha o que testar, por quê e como{% endblock %}
+{% block acoes %}{% endblock %}
+{% block conteudo %}
+{% if not roteiros %}
+<div class="card vazio"><div class="ic c-azul">{{ icone('roteiros', 28) }}</div><b>Nenhum roteiro para executar.</b>
+  <p>Cadastre um projeto e um roteiro, ou importe os exemplos.</p>
+  <div class="flex" style="justify-content:center"><a class="btn prim" href="{{ url_for('roteiro_editor') }}">Novo roteiro</a>
+  <form method="post" action="{{ url_for('importar_exemplos') }}"><button class="btn">Importar exemplos</button></form></div></div>
+{% else %}
+<form method="post" class="card assistente" id="assistente">
+  <div class="passos">
+    <h2>Executar testes</h2>
+    <ol id="lista-passos">
+      <li class="atual"><span class="n">1</span> O que testar</li>
+      <li><span class="n">2</span> Finalidade</li>
+      <li><span class="n">3</span> Opções e IA</li>
+      <li><span class="n">4</span> Confirmar</li>
+    </ol>
+  </div>
+  <div class="corpo">
+    <!-- 1 -->
+    <div class="etapa ativa">
+      <div class="rot-etapa">Passo 1 de 4</div><h3>Qual sistema e qual roteiro?</h3>
+      <label class="campo">Projeto
+        <select id="projeto">{% for p in projetos %}<option value="{{ p.id }}" data-tipo="{{ p.tipo }}" data-alvo="{{ p.alvo }}"
+          {{ 'selected' if p.id == sel_projeto }}>{{ p.nome }}</option>{% endfor %}</select></label>
+      <label class="campo">Roteiro
+        <select name="roteiro_id" id="roteiro" required></select>
+        <span class="dica" id="dica-alvo"></span></label>
+      <p class="pequeno suave">Não achou? <a href="{{ url_for('roteiro_editor') }}">Criar um roteiro novo</a>.</p>
+    </div>
+    <!-- 2 -->
+    <div class="etapa">
+      <div class="rot-etapa">Passo 2 de 4</div><h3>Qual a finalidade desta execução?</h3>
+      <div class="opcoes-cartao">
+        {% for f in FINALIDADES %}<label><input type="radio" name="finalidade" value="{{ f }}" {{ 'checked' if loop.first }}> {{ f }}</label>{% endfor %}
+      </div>
+      <label class="campo mt">Ou descreva outra finalidade
+        <input type="text" name="finalidade_outra" placeholder="Ex.: Validar correção do BUG-012 na versão 2.4.1"></label>
+      <label class="campo">Observações (opcional)
+        <textarea name="observacoes" rows="3" placeholder="Contexto, número da versão, link do card..."></textarea></label>
+    </div>
+    <!-- 3 -->
+    <div class="etapa">
+      <div class="rot-etapa">Passo 3 de 4</div><h3>Como executar?</h3>
+      <div class="grade" style="gap:12px">
+        <label class="interruptor {{ '' if ia.configurada else 'desligado' }}">
+          <input type="checkbox" name="usar_ia" value="1" {{ 'checked' if ia.configurada else 'disabled' }}><span class="trilho"></span>
+          <span><b>{{ icone('ia', 15) }} Usar IA (API do Gemini)</b>
+            <small>{% if ia.configurada %}Envia prints e log para o modelo <b>{{ ia.modelo }}</b> e recebe sugestões de usabilidade, texto, acessibilidade e funcionalidades.
+            {% else %}Desligado: nenhuma chave configurada. <a href="{{ url_for('configuracoes') }}">Configurar</a>.{% endif %}</small></span></label>
+        <label class="interruptor" id="op-explorar">
+          <input type="checkbox" name="explorar" value="1"><span class="trilho"></span>
+          <span><b>{{ icone('lupa', 15) }} Exploração de validações</b>
+            <small id="dica-explorar">Tenta campos vazios, CPF/e-mail inválidos, caracteres especiais e valores-limite (Faker pt_BR).</small></span></label>
+        <label class="interruptor">
+          <input type="checkbox" name="visivel" value="1"><span class="trilho"></span>
+          <span><b>{{ icone('olho', 15) }} Mostrar o navegador</b>
+            <small>Abre o navegador na tela para você acompanhar (mais lento). Desligado = modo invisível.</small></span></label>
+      </div>
+    </div>
+    <!-- 4 -->
+    <div class="etapa">
+      <div class="rot-etapa">Passo 4 de 4</div><h3>Tudo certo?</h3>
+      <dl class="resumo-exec" id="resumo"></dl>
+      <div class="aviso info mt">{{ icone('relogio') }}<span>As execuções rodam uma de cada vez. Você poderá acompanhar o log ao vivo e o relatório ficará salvo no histórico.</span></div>
+    </div>
+    <div class="navegar">
+      <button type="button" class="btn" id="voltar">{{ icone('voltar', 16) }} Voltar</button>
+      <button type="button" class="btn prim" id="avancar">Próximo {{ icone('seta', 16) }}</button>
+      <button type="submit" class="btn prim" id="enviar" style="display:none">{{ icone('executar', 16) }} Executar agora</button>
+    </div>
+  </div>
+</form>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+  const ROTEIROS = {{ roteiros|tojson }};
+  const SEL_ROTEIRO = {{ sel_roteiro|tojson }};
+  const selP = document.getElementById('projeto'), selR = document.getElementById('roteiro');
+  function carregarRoteiros() {
+    if (!selP) return;
+    const pid = +selP.value, opt = selP.selectedOptions[0];
+    selR.innerHTML = '';
+    ROTEIROS.filter(r => r.projeto_id === pid).forEach(r => {
+      const o = new Option(r.nome + (r.exploracao ? '  (com exploração)' : ''), r.id, false, r.id === SEL_ROTEIRO);
+      o.dataset.exploracao = r.exploracao ? '1' : ''; selR.add(o);
+    });
+    if (!selR.options.length) selR.add(new Option('— este projeto não tem roteiros —', ''));
+    document.getElementById('dica-alvo').textContent = `Alvo: ${opt.dataset.alvo} (${opt.dataset.tipo})`;
+    atualizarExplorar();
+  }
+  function atualizarExplorar() {
+    const o = selR.selectedOptions[0], tem = o && o.dataset.exploracao === '1';
+    const box = document.getElementById('op-explorar'), chk = box.querySelector('input');
+    box.classList.toggle('desligado', !tem); chk.disabled = !tem; if (!tem) chk.checked = false;
+    document.getElementById('dica-explorar').textContent = tem
+      ? 'Tenta campos vazios, CPF/e-mail inválidos, caracteres especiais e valores-limite (Faker pt_BR).'
+      : 'Este roteiro não tem a seção "exploracao" — veja o Guia de comandos para ativar.';
+  }
+  if (selP) { selP.addEventListener('change', carregarRoteiros); selR.addEventListener('change', atualizarExplorar); carregarRoteiros(); }
+
+  // Navegação entre etapas
+  let etapa = 0;
+  const etapas = document.querySelectorAll('.etapa'), itens = document.querySelectorAll('#lista-passos li');
+  function mostrar() {
+    etapas.forEach((e, i) => e.classList.toggle('ativa', i === etapa));
+    itens.forEach((li, i) => { li.classList.toggle('atual', i === etapa); li.classList.toggle('feito', i < etapa); });
+    document.getElementById('voltar').style.visibility = etapa ? 'visible' : 'hidden';
+    document.getElementById('avancar').style.display = etapa < 3 ? '' : 'none';
+    document.getElementById('enviar').style.display = etapa === 3 ? '' : 'none';
+    if (etapa === 3) montarResumo();
+  }
+  function montarResumo() {
+    const f = document.getElementById('assistente'), fin = f.finalidade_outra.value.trim() || (f.querySelector('[name=finalidade]:checked') || {}).value;
+    const linhas = [['Projeto', selP.selectedOptions[0].text], ['Roteiro', selR.selectedOptions[0].text], ['Finalidade', fin || '-'],
+      ['IA', f.usar_ia.checked ? 'Sim — sugestões do Gemini' : 'Não'], ['Exploração', f.explorar.checked ? 'Sim' : 'Não'],
+      ['Navegador', f.visivel.checked ? 'Visível' : 'Invisível']];
+    const dl = document.getElementById('resumo'); dl.innerHTML = '';
+    linhas.forEach(([k, v]) => { const dt = document.createElement('dt'), dd = document.createElement('dd'); dt.textContent = k; dd.textContent = v; dl.append(dt, dd); });
+  }
+  if (etapas.length) {
+    document.getElementById('avancar').addEventListener('click', () => {
+      if (etapa === 0 && !selR.value) { alert('Escolha um roteiro.'); return; }
+      etapa++; mostrar(); });
+    document.getElementById('voltar').addEventListener('click', () => { etapa--; mostrar(); });
+    mostrar();
+  }
+</script>
+{% endblock %}

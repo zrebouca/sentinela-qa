@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"><title>Login — Loja Treino</title><link rel="stylesheet" href="estilo.css"></head>
+<body>
+<header><b>Loja Treino</b><span>site local para praticar automação</span></header>
+<main>
+  <h1>Entrar</h1>
+  <p>Usuário de teste: <code>qa</code> · senha: <code>treino123</code> (dados fictícios deste site de treino).</p>
+  <form id="form-login" novalidate>
+    <label for="usuario">Usuário</label>
+    <input id="usuario" name="usuario" autocomplete="off">
+    <label for="senha">Senha</label>
+    <input id="senha" name="senha" type="password">
+    <button type="submit" id="entrar">Entrar</button>
+  </form>
+  <div id="mensagem" class="alerta" role="alert"></div>
+</main>
+<script>
+  document.getElementById('form-login').addEventListener('submit', e => {
+    e.preventDefault();
+    const u = document.getElementById('usuario').value, s = document.getElementById('senha').value;
+    const msg = document.getElementById('mensagem');
+    if (!u || !s) { msg.className = 'alerta erro'; msg.textContent = 'Preencha usuário e senha.'; return; }
+    if (u === 'qa' && s === 'treino123') { sessionStorage.setItem('usuario', u); location.href = 'painel.html'; return; }
+    msg.className = 'alerta erro'; msg.textContent = 'Usuário ou senha inválidos.';
+  });
+</script>
+</body>
+</html>

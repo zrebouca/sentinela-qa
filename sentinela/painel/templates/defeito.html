@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block titulo %}{{ d.codigo }}{% endblock %}
+{% block cabecalho %}{{ d.codigo }} <span class="selo sev-{{ d.severidade }}" style="vertical-align:middle">Severidade {{ d.severidade }}</span>{% endblock %}
+{% block subtitulo %}{{ d.projeto }} · execução #{{ d.execucao_id }} · origem: {{ d.origem }}{% endblock %}
+{% block acoes %}
+<a class="btn" href="{{ url_for('defeitos') }}">{{ icone('voltar', 16) }} Defeitos</a>
+<a class="btn" href="{{ url_for('execucao_detalhe', eid=d.execucao_id) }}">{{ icone('execucoes', 16) }} Ver execução</a>
+{% endblock %}
+{% block conteudo %}
+<div class="grade g-2-1">
+  <section class="card">
+    <h2 style="font-size:18px">{{ d.descricao }}</h2>
+    <h3 class="mt" style="font-size:14px">Passos para reproduzir</h3>
+    <ol>{% for p in d.passos %}<li>{{ p }}</li>{% endfor %}</ol>
+    <div class="grade g2 mt">
+      <div><h3 style="font-size:14px">Resultado esperado</h3><p>{{ d.esperado or '-' }}</p></div>
+      <div><h3 style="font-size:14px">Resultado obtido</h3><p>{{ d.obtido or '-' }}</p></div>
+    </div>
+    {% if d.evidencia and not d.evidencia.endswith(".png") %}
+    <h3 class="mt" style="font-size:14px">Evidência</h3>
+    <a class="btn peq" href="{{ url_for('execucao_arquivo', eid=d.execucao_id, arquivo=d.evidencia) }}" target="_blank">📄 Ver resposta da API (JSON)</a>
+    {% elif d.evidencia %}
+    <h3 class="mt" style="font-size:14px">Evidência</h3>
+    <a href="{{ url_for('execucao_arquivo', eid=d.execucao_id, arquivo=d.evidencia) }}" target="_blank">
+      <img class="evid mt-p" src="{{ url_for('execucao_arquivo', eid=d.execucao_id, arquivo=d.evidencia) }}" alt="Print de evidência do {{ d.codigo }}"></a>
+    {% endif %}
+  </section>
+  <aside>
+    <form method="post" class="card">
+      <h2>Acompanhamento</h2>
+      <label class="campo mt">Status
+        <select name="status">{% for s in STATUS_DEFEITO %}<option {{ 'selected' if d.status == s }}>{{ s }}</option>{% endfor %}</select></label>
+      <label class="campo">Comentário
+        <textarea name="comentario" rows="5" placeholder="Ex.: Reportado no Jira QA-123; corrigido na versão 2.4.2.">{{ d.comentario or '' }}</textarea></label>
+      <button class="btn prim">{{ icone('check', 16) }} Salvar</button>
+      <p class="pequeno suave mt-p">Atualizado {{ d.atualizado_em|relativo }}.</p>
+    </form>
+    <section class="card mt">
+      <h2>Levar para o Jira</h2>
+      <p class="pequeno suave">Texto pronto (formato do Jira) com passos, esperado, obtido e evidência.</p>
+      <textarea id="jira" rows="6" readonly style="font:12px Consolas,monospace">{{ jira }}</textarea>
+      <button type="button" class="btn peq mt-p" id="copiar-jira">{{ icone('roteiros', 14) }} Copiar texto</button>
+      <span class="pequeno" id="copiado"></span>
+    </section>
+    <section class="card mt">
+      <h2>Ficha</h2>
+      <dl class="ficha mt" style="grid-template-columns:110px 1fr">
+        <dt>Projeto</dt><dd>{{ d.projeto }}</dd>
+        <dt>Caso</dt><dd>{{ d.caso_id or '-' }}</dd>
+        <dt>Origem</dt><dd>{{ d.origem }}</dd>
+        <dt>Finalidade</dt><dd>{{ d.finalidade or '-' }}</dd>
+        <dt>Registrado</dt><dd>{{ d.criado_em|data_br }}</dd>
+      </dl>
+      <p class="pequeno suave mt">Dica: para validar a correção, use “Executar de novo” na execução com a finalidade <b>Validação de correção</b>.</p>
+    </section>
+  </aside>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.getElementById('copiar-jira').addEventListener('click', async () => {
+    const t = document.getElementById('jira');
+    try { await navigator.clipboard.writeText(t.value); } catch { t.select(); document.execCommand('copy'); }
+    document.getElementById('copiado').textContent = ' Copiado!';
+  });
+</script>
+{% endblock %}

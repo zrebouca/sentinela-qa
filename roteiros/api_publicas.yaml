@@ -1,0 +1,135 @@
+# Roteiro de exemplo — APIs PÚBLICAS E GRATUITAS (nenhuma precisa de chave).
+# BrasilAPI (dados do Brasil), Restful-Booker e DummyJSON (APIs feitas para treino de QA, com login),
+# PokeAPI (contrato JSON), Countries (GraphQL) e Open-Meteo (clima).
+# As credenciais de Restful-Booker e DummyJSON são as de DEMONSTRAÇÃO publicadas pelos próprios sites.
+
+sistema: APIs públicas gratuitas
+versao: "REST + GraphQL"
+responsavel: Mateus
+ambiente: Internet (APIs públicas de teste)
+tipo: api
+objetivo: Exercitar autenticação (token e JWT), CRUD completo, GraphQL, contrato JSON e tempo de resposta.
+alvo: https://brasilapi.com.br
+tempo_limite: 20
+
+funcionalidades:
+  - id: F01
+    nome: Dados públicos do Brasil (BrasilAPI)
+    criterios:
+      - CEP retorna cidade/UF corretas
+      - Feriados nacionais incluem Tiradentes (21/04)
+  - id: F02
+    nome: Autenticação e CRUD (Restful-Booker / DummyJSON)
+    criterios:
+      - Login devolve token e o token libera as rotas protegidas
+      - Reserva criada, alterada e excluída
+  - id: F03
+    nome: Contrato e GraphQL
+    criterios:
+      - Resposta da PokeAPI segue o contrato (JSON Schema)
+      - Consulta GraphQL devolve os campos pedidos
+
+casos:
+  - id: CT01
+    funcionalidade: F01
+    descricao: BrasilAPI — consultar CEP
+    esperado: São Paulo / SP
+    passos:
+      - requisitar: GET /api/cep/v1/01001000
+      - verificar_status: 200
+      - verificar_json: { campo: city, valor: São Paulo }
+      - verificar_json: { campo: state, valor: SP }
+      - verificar_tempo: { maximo_ms: 8000 }
+
+  - id: CT02
+    funcionalidade: F01
+    descricao: BrasilAPI — feriados nacionais e banco pelo código
+    esperado: Lista de feriados com Tiradentes; banco 1 = Banco do Brasil
+    passos:
+      - requisitar: GET /api/feriados/v1/2026
+      - verificar_status: 200
+      - verificar_json: { campo: "", contem: Tiradentes }
+      - verificar_json: { campo: "", tipo: lista }
+      - requisitar: GET /api/banks/v1/1
+      - verificar_json: { campo: fullName, contem: Banco do Brasil }
+
+  - id: CT03
+    funcionalidade: F02
+    descricao: Restful-Booker — login, criar, alterar e excluir reserva
+    esperado: Token gerado; reserva 201/200 em cada etapa
+    severidade: Alta
+    passos:
+      - requisitar: { metodo: POST, url: https://restful-booker.herokuapp.com/auth,
+                      corpo: { username: "{env.BOOKER_USUARIO|admin}", password: "{env.BOOKER_SENHA|password123}" } }
+      - verificar_status: 200
+      - guardar: { campo: token, como: token }
+      - requisitar:
+          metodo: POST
+          url: https://restful-booker.herokuapp.com/booking
+          corpo: { firstname: "{faker.first_name}", lastname: Sentinela, totalprice: 150, depositpaid: true,
+                   bookingdates: { checkin: "2026-12-01", checkout: "2026-12-05" }, additionalneeds: Café }
+      - verificar_status: 200
+      - guardar: { campo: bookingid, como: reserva }
+      - verificar_json: { campo: booking.lastname, valor: Sentinela }
+      - requisitar:
+          metodo: PATCH
+          url: https://restful-booker.herokuapp.com/booking/{dados.reserva}
+          cabecalhos: { Cookie: "token={dados.token}" }
+          corpo: { totalprice: 199 }
+      - verificar_status: 200
+      - verificar_json: { campo: totalprice, valor: 199 }
+      - requisitar: { metodo: DELETE, url: "https://restful-booker.herokuapp.com/booking/{dados.reserva}",
+                      cabecalhos: { Cookie: "token={dados.token}" } }
+      - verificar_status: { entre: [200, 201] }
+      - requisitar: GET https://restful-booker.herokuapp.com/booking/{dados.reserva}
+      - verificar_status: 404
+
+  - id: CT04
+    funcionalidade: F02
+    descricao: DummyJSON — login JWT e rota protegida
+    esperado: accessToken gerado; /auth/me devolve o usuário
+    passos:
+      - requisitar: { metodo: POST, url: https://dummyjson.com/auth/login,
+                      corpo: { username: "{env.DUMMY_USUARIO|emilys}", password: "{env.DUMMY_SENHA|emilyspass}" } }
+      - verificar_status: 200
+      - guardar: { campo: accessToken, como: jwt }
+      - requisitar: { metodo: GET, url: https://dummyjson.com/auth/me, cabecalhos: { Authorization: "Bearer {dados.jwt}" } }
+      - verificar_status: 200
+      - verificar_json: { campo: username, valor: emilys }
+      - requisitar: { metodo: GET, url: https://dummyjson.com/auth/me, cabecalhos: { Authorization: "Bearer token-invalido" } }
+      - verificar_status: { entre: [400, 403] }
+
+  - id: CT05
+    funcionalidade: F03
+    descricao: PokeAPI — contrato JSON
+    esperado: Pikachu (id 25) do tipo elétrico, dentro do esquema
+    passos:
+      - requisitar: GET https://pokeapi.co/api/v2/pokemon/pikachu
+      - verificar_status: 200
+      - verificar_esquema: { arquivo: esquemas/pokemon.json }
+      - verificar_json: { campo: id, valor: 25 }
+      - verificar_json: { campo: "types[0].type.name", valor: electric }
+
+  - id: CT06
+    funcionalidade: F03
+    descricao: Countries — consulta GraphQL
+    esperado: Brasil com capital Brasília e moeda BRL
+    passos:
+      - requisitar:
+          metodo: POST
+          url: https://countries.trevorblades.com/
+          corpo: { query: "{ country(code: \"BR\") { name capital currency } }" }
+      - verificar_status: 200
+      - verificar_json: { campo: data.country.capital, valor: Brasília }
+      - verificar_json: { campo: data.country.currency, contem: BRL }
+
+  - id: CT07
+    funcionalidade: F01
+    descricao: Open-Meteo — clima atual em São Paulo
+    esperado: Temperatura numérica e unidade °C
+    passos:
+      - requisitar: { metodo: GET, url: https://api.open-meteo.com/v1/forecast,
+                      consulta: { latitude: -23.55, longitude: -46.63, current: temperature_2m } }
+      - verificar_status: 200
+      - verificar_json: { campo: current.temperature_2m, tipo: numero }
+      - verificar_json: { campo: current_units.temperature_2m, valor: "°C" }

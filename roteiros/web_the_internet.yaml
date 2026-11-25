@@ -1,0 +1,130 @@
+# Roteiro de exemplo — "The Internet" (site público feito para praticar automação).
+# Mostra os comandos de interação: hover, arrastar e soltar, upload, teclas,
+# checkbox, dropdown, conteúdo dinâmico e rolagem.
+#
+# O caso CT09 tem uma FALHA PROPOSITAL (espera um texto que não existe)
+# para mostrar como um caso REPROVADO e o defeito aparecem no relatório.
+
+sistema: The Internet (site de prática de automação)
+versao: "web"
+responsavel: Mateus
+ambiente: Demonstração pública
+objetivo: Exercitar os principais tipos de interação de uma página web e validar as respostas da interface.
+alvo: https://the-internet.herokuapp.com
+tempo_limite: 10
+
+funcionalidades:
+  - id: F01
+    nome: Autenticação
+    criterios:
+      - Credenciais válidas levam à área segura com mensagem de sucesso
+      - Credenciais inválidas mostram mensagem de erro
+  - id: F02
+    nome: Componentes de formulário
+    criterios:
+      - Checkbox, dropdown, upload e teclas respondem corretamente
+  - id: F03
+    nome: Interações de mouse e conteúdo dinâmico
+    criterios:
+      - Hover revela informações, arrastar troca colunas, conteúdo carregado aparece
+
+casos:
+  - id: CT01
+    funcionalidade: F01
+    descricao: Login com credenciais válidas (públicas do site)
+    esperado: Área segura com mensagem "You logged into a secure area!"
+    severidade: Crítica
+    passos:
+      - abrir: /login
+      - logar: { usuario: tomsmith, senha: "{env.INTERNET_SENHA|SuperSecretPassword!}" }
+      - verificar_url: /secure
+      - verificar_mensagem: { tipo: sucesso, texto: "You logged into a secure area!" }
+      - clicar: "Logout"
+      - verificar_texto: "You logged out of the secure area!"
+
+  - id: CT02
+    funcionalidade: F01
+    descricao: Login com senha inválida
+    esperado: Mensagem "Your password is invalid!"
+    passos:
+      - abrir: /login
+      - preencher: { campo: "rotulo=Username", valor: tomsmith }
+      - preencher: { campo: "rotulo=Password", valor: "errada" }
+      - clicar: "papel=button:Login"
+      - verificar_mensagem: { tipo: erro, texto: "Your password is invalid!" }
+      - verificar_url: /login
+
+  - id: CT03
+    funcionalidade: F02
+    descricao: Marcar e desmarcar checkboxes
+    esperado: Checkbox 1 marcado e checkbox 2 desmarcado
+    passos:
+      - abrir: /checkboxes
+      - marcar: "#checkboxes input >> nth=0"
+      - desmarcar: "#checkboxes input >> nth=1"
+      - verificar_elemento: "#checkboxes input:checked"
+
+  - id: CT04
+    funcionalidade: F02
+    descricao: Selecionar opção no dropdown
+    esperado: A opção 'Option 2' fica selecionada
+    passos:
+      - abrir: /dropdown
+      - selecionar: { campo: "#dropdown", opcao: "Option 2" }
+      - verificar_valor: { campo: "#dropdown", valor: "2" }
+
+  - id: CT05
+    funcionalidade: F02
+    descricao: Enviar arquivo (upload)
+    esperado: Página confirma "File Uploaded!" com o nome do arquivo
+    passos:
+      - abrir: /upload
+      - enviar_arquivo: { campo: "#file-upload", arquivo: arquivos/arquivo_teste.txt }
+      - clicar: "#file-submit"
+      - verificar_texto: "File Uploaded!"
+      - verificar_texto: { elemento: "#uploaded-files", texto: "arquivo_teste.txt" }
+
+  - id: CT06
+    funcionalidade: F02
+    descricao: Digitar e apertar teclas
+    esperado: A página informa a última tecla pressionada
+    passos:
+      - abrir: /key_presses
+      - digitar: { campo: "#target", texto: "qa" }
+      - apertar_tecla: { tecla: Tab, campo: "#target" }
+      - verificar_texto: { elemento: "#result", texto: "You entered: TAB" }
+
+  - id: CT07
+    funcionalidade: F03
+    descricao: Passar o mouse e arrastar e soltar
+    esperado: Hover mostra o nome do usuário; colunas A e B trocam de lugar
+    passos:
+      - abrir: /hovers
+      - passar_mouse: ".figure >> nth=0"
+      - verificar_texto: "name: user1"
+      - abrir: /drag_and_drop
+      - arrastar: { de: "#column-a", para: "#column-b" }
+      - verificar_texto: { elemento: "#column-a header", texto: "B" }
+
+  - id: CT08
+    funcionalidade: F03
+    descricao: Conteúdo carregado dinamicamente e rolagem
+    esperado: O texto 'Hello World!' aparece depois do carregamento (sem espera fixa)
+    passos:
+      - abrir: /dynamic_loading/1
+      - clicar: "papel=button:Start"
+      - esperar: { sumir: "#loading" }
+      - verificar_texto: "Hello World!"
+      - abrir: /large
+      - rolar: { ate: "#large-table" }
+      - rolar: fim
+
+  - id: CT09
+    funcionalidade: F01
+    descricao: "[FALHA PROPOSITAL] Mensagem de erro deveria estar em português"
+    esperado: Ao errar a senha, a mensagem aparece em português ("Senha inválida")
+    severidade: Baixa
+    passos:
+      - abrir: /login
+      - logar: { usuario: tomsmith, senha: "senha_errada" }
+      - verificar_mensagem: { tipo: erro, texto: "Senha inválida" }

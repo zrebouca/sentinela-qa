@@ -1,0 +1,10 @@
+# Roteiro do tipo SUITE: o Sentinela roda uma suíte de outro framework e lê o resultado (JUnit XML)
+# para colocar no mesmo relatório, histórico e gestão de defeitos.
+sistema: "Loja Treino — Playwright em TypeScript"
+versao: "framework: playwright-ts"
+responsavel: Mateus
+ambiente: Local
+objetivo: "Testes gerados pelo Sentinela em Playwright TypeScript (precisa do site de treino no ar)"
+tipo: suite
+ferramenta: playwright-ts
+pasta: ../exemplos_frameworks/playwright_ts

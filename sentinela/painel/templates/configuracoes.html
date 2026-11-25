@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block titulo %}Configurações{% endblock %}
+{% block cabecalho %}Configurações{% endblock %}
+{% block subtitulo %}Inteligência artificial, preferências e dados{% endblock %}
+{% block acoes %}{% endblock %}
+{% block conteudo %}
+<form method="post" class="grade g-2-1">
+  <section class="card">
+    <div class="cab"><div><h2>{{ icone('ia') }} Inteligência artificial</h2>
+      <div class="sub">Usada para sugerir melhorias de usabilidade, texto, acessibilidade e funcionalidades</div></div>
+      <span class="dir selo {{ 'verde' if ia.configurada else 'cinza' }}">{{ 'Conectada' if ia.configurada else 'Desligada' }}</span></div>
+    <label class="campo">Provedor
+      <select name="provedor">
+        <option value="gemini" {{ 'selected' if ia.provedor == 'gemini' }}>Google Gemini</option>
+        <option value="nenhuma" {{ 'selected' if ia.provedor == 'nenhuma' }}>Nenhum (não usar IA)</option>
+      </select></label>
+    <label class="campo">Chave da API
+      <input type="password" name="chave" autocomplete="off" placeholder="{{ ia.mascara or 'Cole aqui a chave do Google AI Studio' }}">
+      <span class="dica">{% if ia.mascara %}Chave atual: {{ ia.mascara }}. Deixe em branco para manter.{% else %}Crie em aistudio.google.com/apikey.{% endif %}
+        Ela é gravada só no arquivo <code>.env</code> deste computador, nunca no código.</span></label>
+    {% if ia.mascara %}<label class="flex pequeno" style="margin:-6px 0 14px"><input type="checkbox" name="remover_chave" value="1"> Remover a chave salva</label>{% endif %}
+    <label class="campo">Modelo
+      <input type="text" name="modelo" value="{{ ia.modelo }}" list="modelos">
+      <datalist id="modelos"></datalist>
+      <span class="dica">Se o modelo não estiver disponível, o Sentinela escolhe outro “flash” automaticamente.</span></label>
+    <div class="flex">
+      <button class="btn prim">{{ icone('check', 16) }} Salvar</button>
+      <button type="button" class="btn" id="testar">{{ icone('chave', 16) }} Testar conexão</button>
+      <span class="pequeno" id="teste-res"></span>
+    </div>
+  </section>
+  <aside>
+    <section class="card">
+      <h2>Preferências</h2>
+      <label class="campo mt">Responsável padrão
+        <input type="text" name="responsavel" value="{{ responsavel }}" placeholder="Seu nome"></label>
+      <label class="campo">Ambiente padrão
+        <input type="text" name="ambiente" value="{{ ambiente }}" placeholder="Ex.: Homologação"></label>
+      <span class="pequeno suave">Usados ao cadastrar projetos novos.</span>
+    </section>
+    <section class="card mt">
+      <h2>Onde ficam os dados</h2>
+      <dl class="ficha mt" style="grid-template-columns:90px 1fr">
+        <dt>Banco</dt><dd class="pequeno">{{ pasta_dados }}\sentinela.db</dd>
+        <dt>Relatórios</dt><dd class="pequeno">{{ pasta_dados }}\relatorios</dd>
+        <dt>Segredos</dt><dd class="pequeno">{{ caminho_env }}</dd>
+      </dl>
+    </section>
+  </aside>
+</form>
+<section class="card mt">
+  <div class="cab"><div><h2>Projetos de exemplo</h2><div class="sub">Sauce Demo, The Internet e Calculadora do Windows — bons para demonstrar o sistema</div></div>
+    <form class="dir" method="post" action="{{ url_for('importar_exemplos') }}"><button class="btn">{{ icone('camada', 16) }} Importar exemplos</button></form></div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+  document.getElementById('testar').addEventListener('click', async () => {
+    const out = document.getElementById('teste-res'); out.textContent = 'Testando...'; out.style.color = '';
+    const r = await fetch('{{ url_for("api_testar_ia") }}', { method: 'POST' }).then(r => r.json());
+    out.textContent = r.msg; out.style.color = r.ok ? 'var(--verde)' : 'var(--vermelho)';
+    const dl = document.getElementById('modelos'); dl.innerHTML = '';
+    (r.modelos || []).forEach(m => dl.append(new Option(m, m)));
+  });
+</script>
+{% endblock %}

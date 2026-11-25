@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block titulo %}Projetos{% endblock %}
+{% block cabecalho %}Projetos{% endblock %}
+{% block subtitulo %}Sistemas em teste ({{ projetos|length }}){% endblock %}
+{% block acoes %}<a class="btn prim" href="{{ url_for('projeto_form') }}">{{ icone('mais', 16) }} Novo projeto</a>{% endblock %}
+{% block conteudo %}
+{% if projetos %}
+<div class="cartoes">
+  {% for p in projetos %}
+  <article class="card cartao-proj">
+    <div class="flex">
+      <span class="avatar" style="background:{{ p.cor }}">{{ icone(ICONE_TIPO[p.tipo], 19) }}</span>
+      <div style="min-width:0;flex:1">
+        <a href="{{ url_for('projeto_detalhe', pid=p.id) }}" style="color:inherit"><b style="font-size:15.5px">{{ p.nome }}</b></a>
+        <div class="pequeno suave" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.alvo }}</div>
+      </div>
+      <span class="selo {{ 'laranja' if p.tipo == 'desktop' else ('roxo' if p.tipo == 'api' else 'azul') }}">{{ TIPOS[p.tipo] }}</span>
+    </div>
+    <div class="pequeno" style="min-height:40px">{{ p.finalidade or 'Sem finalidade descrita.' }}</div>
+    <div>
+      <div class="flex entre pequeno"><span class="suave">Aprovação acumulada</span><b>{{ p.taxa if p.execucoes else '—' }}{{ '%' if p.execucoes }}</b></div>
+      <div class="barra"><i style="width:{{ p.taxa or 0 }}%;background:{{ p.cor }}"></i></div>
+    </div>
+    <div class="stats">
+      <div><b>{{ p.roteiros }}</b><small>roteiros</small></div>
+      <div><b>{{ p.execucoes }}</b><small>execuções</small></div>
+      <div><b style="color:{{ 'var(--vermelho)' if p.abertos else 'inherit' }}">{{ p.abertos }}</b><small>abertos</small></div>
+    </div>
+    <div class="flex">
+      <a class="btn peq prim" href="{{ url_for('executar', projeto=p.id) }}">{{ icone('executar', 14) }} Executar</a>
+      <a class="btn peq" href="{{ url_for('projeto_detalhe', pid=p.id) }}">Detalhes</a>
+      <span class="pequeno suave" style="margin-left:auto">{{ p.ultima|relativo if p.ultima else 'nunca executado' }}</span>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card vazio"><div class="ic c-azul">{{ icone('projetos', 28) }}</div>
+  <b>Nenhum projeto cadastrado.</b><p>Cadastre o primeiro sistema que você vai testar ou importe os exemplos.</p>
+  <div class="flex" style="justify-content:center">
+    <a class="btn prim" href="{{ url_for('projeto_form') }}">{{ icone('mais', 16) }} Novo projeto</a>
+    <form method="post" action="{{ url_for('importar_exemplos') }}"><button class="btn">{{ icone('camada', 16) }} Importar exemplos</button></form>
+  </div></div>
+{% endif %}
+{% endblock %}

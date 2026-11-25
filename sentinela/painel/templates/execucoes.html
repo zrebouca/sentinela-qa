@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block titulo %}Execuções{% endblock %}
+{% block cabecalho %}Execuções{% endblock %}
+{% block subtitulo %}Histórico de todas as rodadas de teste{% endblock %}
+{% block conteudo %}
+<section class="card">
+  <div class="cab"><form method="get" class="flex">
+    <select name="projeto" onchange="this.form.submit()" style="margin:0;min-width:240px">
+      <option value="">Todos os projetos</option>
+      {% for p in projetos %}<option value="{{ p.id }}" {{ 'selected' if p.id == filtro_proj }}>{{ p.nome }}</option>{% endfor %}
+    </select></form>
+    <span class="dir suave pequeno">{{ execucoes|length }} execução(ões)</span></div>
+  {% include "_tabela_execucoes.html" %}
+</section>
+{% endblock %}
+{% block scripts %}{% if menu_rodando %}<script>setTimeout(() => location.reload(), 6000);</script>{% endif %}{% endblock %}

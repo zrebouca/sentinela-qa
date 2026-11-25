@@ -1,0 +1,170 @@
+========================================================================
+RELATÓRIO DE TESTES — Loja Treino (site local)
+========================================================================
+Sistema:      Loja Treino (site local)
+Versão:       1.0
+Data:         20/11/2026 19:37
+Responsável:  Mateus
+Ambiente:     Local (Google Chrome 157.0.8103.80 · Windows 11)
+Alvo:         http://127.0.0.1:8000
+Roteiro:      web_site_treino.yaml
+Finalidade:   -
+Duração:      13s
+
+RESUMO
+  Casos: 6 | Aprovados: 6 | Reprovados: 0 | Taxa: 100%
+  Defeitos: 1 | Observações: 6 | Sugestões da IA: 5
+
+OBJETIVO
+  Validar login, busca, conteúdo dinâmico e o cadastro de clientes com validação de CPF, e-mail e CEP.
+
+FUNCIONALIDADES E CRITÉRIOS DE ACEITAÇÃO
+  F01 - Login
+     • Usuário e senha corretos levam ao painel com boas-vindas
+     • Senha errada ou campos vazios mostram mensagem de erro
+  F02 - Painel
+     • A busca filtra os produtos
+     • As ofertas aparecem depois do carregamento
+  F03 - Cadastro de cliente
+     • Dados válidos salvam o cadastro com mensagem de sucesso
+     • CPF inválido é bloqueado com mensagem clara
+
+CASOS DE TESTE
+  [APROVADO] CT01 — Login com usuário válido
+     Passos:
+       1. Abrir /index.html
+       2. Fazer login com o usuário 'qa'
+       3. Verificar se a URL contém 'painel.html'
+       4. Verificar se o texto 'Bem-vindo, qa!' aparece
+     Esperado: Painel com "Bem-vindo, qa!"
+     Obtido:   URL contém 'painel.html' (http://127.0.0.1:8000/painel.html); Texto 'Bem-vindo, qa!' visível
+     Evidência: prints/004_CT01_verificar_texto.png
+
+  [APROVADO] CT02 — Login com senha errada
+     Passos:
+       1. Abrir /index.html
+       2. Preencher 'rotulo=Usuário' com 'qa'
+       3. Preencher 'rotulo=Senha' com 'errada'
+       4. Apertar a tecla Enter
+       5. Verificar mensagem de erro 'Usuário ou senha inválidos.'
+       6. Verificar se a URL contém 'index.html'
+     Esperado: Mensagem "Usuário ou senha inválidos."
+     Obtido:   Mensagem de erro exibida: 'Usuário ou senha inválidos.'; URL contém 'index.html' (http://127.0.0.1:8000/index.html)
+     Evidência: prints/010_CT02_verificar_url.png
+
+  [APROVADO] CT03 — Login com campos vazios
+     Passos:
+       1. Abrir /index.html
+       2. Clicar em 'Entrar'
+       3. Verificar mensagem de erro 'Preencha usuário e senha.'
+     Esperado: Mensagem pedindo para preencher
+     Obtido:   Mensagem de erro exibida: 'Preencha usuário e senha.'
+     Evidência: prints/013_CT03_verificar_mensagem.png
+
+  [APROVADO] CT04 — Buscar produto e carregar ofertas
+     Passos:
+       1. Abrir /index.html
+       2. Fazer login com o usuário 'qa'
+       3. Buscar por 'mochila'
+       4. Verificar se o texto 'Mochila escolar' aparece
+       5. Verificar se o elemento '#lista li:visible' existe
+       6. Clicar em 'Carregar ofertas'
+       7. Esperar o texto '3 ofertas disponíveis hoje!' aparecer
+       8. Verificar se o texto 'Carregando...' NÃO aparece
+     Esperado: Só a mochila aparece na busca; ofertas aparecem após o carregamento
+     Obtido:   Texto 'Mochila escolar' visível; '#lista li:visible' aparece 1 vez(es); Texto 'Carregando...' não aparece (correto)
+     Evidência: prints/021_CT04_verificar_sem_texto.png
+
+  [APROVADO] CT05 — Cadastro com dados válidos (Faker pt_BR)
+     Passos:
+       1. Abrir /cadastro.html
+       2. Preencher o formulário de cadastro e enviar em 'Salvar cadastro'
+       3. Verificar se a URL contém 'sucesso.html'
+       4. Verificar mensagem de sucesso 'Cadastro realizado com sucesso!'
+     Esperado: Mensagem "Cadastro realizado com sucesso!"
+     Obtido:   URL contém 'sucesso.html' (http://127.0.0.1:8000/sucesso.html); Mensagem de sucesso exibida: 'Cadastro realizado com sucesso!'
+     Evidência: prints/025_CT05_verificar_mensagem.png
+
+  [APROVADO] CT06 — Cadastro com CPF inválido
+     Passos:
+       1. Abrir /cadastro.html
+       2. Preencher o formulário de cadastro e enviar em '#salvar'
+       3. Verificar se o texto 'CPF inválido.' aparece em '#erro-cpf'
+       4. Verificar se a URL contém 'cadastro.html'
+     Esperado: Mensagem "CPF inválido." e o cadastro não é salvo
+     Obtido:   '#erro-cpf' contém 'CPF inválido.'; URL contém 'cadastro.html' (http://127.0.0.1:8000/cadastro.html)
+     Evidência: prints/029_CT06_verificar_url.png
+
+DEFEITOS
+  BUG-001 | Baixa | Aberto | origem: Exploração
+     O campo '#telefone' aceita telefone com letras ('(11) abcde-fghi') sem validação
+     Passos para reproduzir:
+       1. Abrir /cadastro.html
+       2. Preencher '#nome' com 'Dom'
+       3. Preencher '#email' com 'mendoncajuliana@example.com'
+       4. Preencher '#cpf' com '133.431.558-29'
+       5. Preencher '#cep' com '12966796'
+       6. Preencher '#telefone' com '(11) abcde-fghi'
+       7. Clicar em '#salvar'
+     Esperado: O sistema deveria bloquear telefone com letras e mostrar uma mensagem clara
+     Obtido:   O formulário foi aceito e o fluxo seguiu para a próxima etapa
+     Evidência: prints/035_EXP06_exploracao_tel_letras.png
+
+O QUE FOI ENCONTRADO (OBSERVAÇÕES)
+  [Console] Erro no console do navegador: Failed to load resource: the server responded with a status of 404 (File not found)
+  [Exploração] '#nome' com campo vazio: bloqueado corretamente — mensagem exibida: "Informe o nome completo (só letras)."
+  [Exploração] '#nome' com nome só com números: bloqueado corretamente — mensagem exibida: "Informe o nome completo (só letras)."
+  [Exploração] '#email' com e-mail sem @: bloqueado corretamente — mensagem exibida: "E-mail inválido."
+  [Exploração] '#cpf' com CPF com dígito verificador errado: bloqueado corretamente — mensagem exibida: "CPF inválido."
+  [Exploração] '#cep' com CEP com letras: bloqueado corretamente — mensagem exibida: "CEP deve ter 8 números."
+
+MELHORIAS E IDEIAS (SUGESTÕES DA IA — avaliar antes de aplicar)
+  [Acessibilidade | prioridade Média] Melhorar contraste do texto na mensagem de sucesso
+     O texto verde 'Cadastro realizado com sucesso!' sobre fundo verde claro apresenta baixo contraste visual, o que pode dificultar a leitura segundo as diretrizes da WCAG.
+  [Usabilidade | prioridade Média] Adicionar indicador visual de carregamento e desabilitar botão
+     Ao clicar em 'Carregar ofertas', a mensagem 'Carregando...' aparece como texto simples. O ideal é exibir um spinner visual e desabilitar o botão durante a requisição para evitar múltiplos cliques.
+  [Funcionalidade | prioridade Baixa] Implementar funcionalidade de alternar visibilidade da senha
+     Incluir um botão/ícone no campo de senha para permitir que o usuário exiba ou oculte o texto digitado antes do envio.
+  [Texto | prioridade Baixa] Especificar mensagem de erro para campos individuais no login
+     A mensagem 'Preencha usuário e senha.' é exibida de forma genérica. Se apenas um campo ficar em branco, a mensagem deve apontar especificamente qual campo precisa ser preenchido.
+  [Usabilidade | prioridade Baixa] Aprimorar visual e opções de ação na tela de sucesso
+     A tela de confirmação do cadastro apresenta elementos pequenos centralizados em uma área com muito espaço em branco. Adicionar botões destacados de ações principais tornaria o fluxo mais fluido.
+
+CAMINHO PERCORRIDO
+    1. 19:37:49 [CT01] Abrir /index.html -> OK (264 ms) prints/001_CT01_abrir.png
+    2. 19:37:49 [CT01] Fazer login com o usuário 'qa' -> OK (185 ms) prints/002_CT01_logar.png
+    3. 19:37:49 [CT01] Verificar se a URL contém 'painel.html' -> OK (79 ms) prints/003_CT01_verificar_url.png
+    4. 19:37:49 [CT01] Verificar se o texto 'Bem-vindo, qa!' aparece -> OK (49 ms) prints/004_CT01_verificar_texto.png
+    5. 19:37:50 [CT02] Abrir /index.html -> OK (175 ms) prints/005_CT02_abrir.png
+    6. 19:37:50 [CT02] Preencher 'rotulo=Usuário' com 'qa' -> OK (116 ms) prints/006_CT02_preencher.png
+    7. 19:37:50 [CT02] Preencher 'rotulo=Senha' com 'errada' -> OK (78 ms) prints/007_CT02_preencher.png
+    8. 19:37:50 [CT02] Apertar a tecla Enter -> OK (84 ms) prints/008_CT02_apertar_tecla.png
+    9. 19:37:50 [CT02] Verificar mensagem de erro 'Usuário ou senha inválidos.' -> OK (60 ms) prints/009_CT02_verificar_mensagem.png
+   10. 19:37:50 [CT02] Verificar se a URL contém 'index.html' -> OK (59 ms) prints/010_CT02_verificar_url.png
+   11. 19:37:51 [CT03] Abrir /index.html -> OK (136 ms) prints/011_CT03_abrir.png
+   12. 19:37:51 [CT03] Clicar em 'Entrar' -> OK (119 ms) prints/012_CT03_clicar.png
+   13. 19:37:51 [CT03] Verificar mensagem de erro 'Preencha usuário e senha.' -> OK (63 ms) prints/013_CT03_verificar_mensagem.png
+   14. 19:37:51 [CT04] Abrir /index.html -> OK (155 ms) prints/014_CT04_abrir.png
+   15. 19:37:51 [CT04] Fazer login com o usuário 'qa' -> OK (212 ms) prints/015_CT04_logar.png
+   16. 19:37:51 [CT04] Buscar por 'mochila' -> OK (114 ms) prints/016_CT04_buscar.png
+   17. 19:37:52 [CT04] Verificar se o texto 'Mochila escolar' aparece -> OK (60 ms) prints/017_CT04_verificar_texto.png
+   18. 19:37:52 [CT04] Verificar se o elemento '#lista li:visible' existe -> OK (72 ms) prints/018_CT04_verificar_elemento.png
+   19. 19:37:52 [CT04] Clicar em 'Carregar ofertas' -> OK (113 ms) prints/019_CT04_clicar.png
+   20. 19:37:53 [CT04] Esperar o texto '3 ofertas disponíveis hoje!' aparecer -> OK (1395 ms) prints/020_CT04_esperar.png
+   21. 19:37:53 [CT04] Verificar se o texto 'Carregando...' NÃO aparece -> OK (73 ms) prints/021_CT04_verificar_sem_texto.png
+   22. 19:37:54 [CT05] Abrir /cadastro.html -> OK (157 ms) prints/022_CT05_abrir.png
+   23. 19:37:54 [CT05] Preencher o formulário de cadastro e enviar em 'Salvar cadastro' -> OK (460 ms) prints/023_CT05_cadastrar.png
+   24. 19:37:54 [CT05] Verificar se a URL contém 'sucesso.html' -> OK (86 ms) prints/024_CT05_verificar_url.png
+   25. 19:37:54 [CT05] Verificar mensagem de sucesso 'Cadastro realizado com sucesso!' -> OK (82 ms) prints/025_CT05_verificar_mensagem.png
+   26. 19:37:55 [CT06] Abrir /cadastro.html -> OK (174 ms) prints/026_CT06_abrir.png
+   27. 19:37:55 [CT06] Preencher o formulário de cadastro e enviar em '#salvar' -> OK (241 ms) prints/027_CT06_cadastrar.png
+   28. 19:37:55 [CT06] Verificar se o texto 'CPF inválido.' aparece em '#erro-cpf' -> OK (61 ms) prints/028_CT06_verificar_texto.png
+   29. 19:37:55 [CT06] Verificar se a URL contém 'cadastro.html' -> OK (47 ms) prints/029_CT06_verificar_url.png
+   30. 19:37:55 [EXP01] Exploração: '#nome' com campo vazio -> OK (497 ms) prints/030_EXP01_exploracao_vazio.png
+   31. 19:37:56 [EXP02] Exploração: '#nome' com nome só com números -> OK (540 ms) prints/031_EXP02_exploracao_nome_numeros.png
+   32. 19:37:57 [EXP03] Exploração: '#email' com e-mail sem @ -> OK (606 ms) prints/032_EXP03_exploracao_email_sem_arroba.png
+   33. 19:37:58 [EXP04] Exploração: '#cpf' com CPF com dígito verificador errado -> OK (838 ms) prints/033_EXP04_exploracao_cpf_digito.png
+   34. 19:37:58 [EXP05] Exploração: '#cep' com CEP com letras -> OK (814 ms) prints/034_EXP05_exploracao_cep_letras.png
+   35. 19:38:00 [EXP06] Exploração: '#telefone' com telefone com letras -> FALHA (1202 ms) prints/035_EXP06_exploracao_tel_letras.png
+
+Gerado por Sentinela QA v1.0.0

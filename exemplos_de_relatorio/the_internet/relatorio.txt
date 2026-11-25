@@ -1,0 +1,206 @@
+========================================================================
+RELATÓRIO DE TESTES — The Internet (site de prática de automação)
+========================================================================
+Sistema:      The Internet (site de prática de automação)
+Versão:       web
+Data:         20/11/2026 17:19
+Responsável:  Mateus
+Ambiente:     Demonstração pública (Google Chrome 157.0.8103.80 · Windows 11)
+Alvo:         https://the-internet.herokuapp.com
+Roteiro:      web_the_internet.yaml
+Finalidade:   -
+Duração:      41s
+
+RESUMO
+  Casos: 9 | Aprovados: 8 | Reprovados: 1 | Taxa: 89%
+  Defeitos: 1 | Observações: 6 | Sugestões da IA: 5
+
+OBJETIVO
+  Exercitar os principais tipos de interação de uma página web e validar as respostas da interface.
+
+FUNCIONALIDADES E CRITÉRIOS DE ACEITAÇÃO
+  F01 - Autenticação
+     • Credenciais válidas levam à área segura com mensagem de sucesso
+     • Credenciais inválidas mostram mensagem de erro
+  F02 - Componentes de formulário
+     • Checkbox, dropdown, upload e teclas respondem corretamente
+  F03 - Interações de mouse e conteúdo dinâmico
+     • Hover revela informações, arrastar troca colunas, conteúdo carregado aparece
+
+CASOS DE TESTE
+  [APROVADO] CT01 — Login com credenciais válidas (públicas do site)
+     Passos:
+       1. Abrir /login
+       2. Fazer login com o usuário 'tomsmith'
+       3. Verificar se a URL contém '/secure'
+       4. Verificar mensagem de sucesso 'You logged into a secure area!'
+       5. Clicar em 'Logout'
+       6. Verificar se o texto 'You logged out of the secure area!' aparece
+     Esperado: Área segura com mensagem "You logged into a secure area!"
+     Obtido:   URL contém '/secure' (https://the-internet.herokuapp.com/secure); Mensagem de sucesso exibida: 'You logged into a secure area!'; Texto 'You logged out of the secure area!' visível
+     Evidência: prints/006_CT01_verificar_texto.png
+
+  [APROVADO] CT02 — Login com senha inválida
+     Passos:
+       1. Abrir /login
+       2. Preencher 'rotulo=Username' com 'tomsmith'
+       3. Preencher 'rotulo=Password' com 'errada'
+       4. Clicar em 'papel=button:Login'
+       5. Verificar mensagem de erro 'Your password is invalid!'
+       6. Verificar se a URL contém '/login'
+     Esperado: Mensagem "Your password is invalid!"
+     Obtido:   Mensagem de erro exibida: 'Your password is invalid!'; URL contém '/login' (https://the-internet.herokuapp.com/login)
+     Evidência: prints/012_CT02_verificar_url.png
+
+  [APROVADO] CT03 — Marcar e desmarcar checkboxes
+     Passos:
+       1. Abrir /checkboxes
+       2. Marcar '#checkboxes input >> nth=0'
+       3. Desmarcar '#checkboxes input >> nth=1'
+       4. Verificar se o elemento '#checkboxes input:checked' existe
+     Esperado: Checkbox 1 marcado e checkbox 2 desmarcado
+     Obtido:   Elemento '#checkboxes input:checked' visível
+     Evidência: prints/016_CT03_verificar_elemento.png
+
+  [APROVADO] CT04 — Selecionar opção no dropdown
+     Passos:
+       1. Abrir /dropdown
+       2. Selecionar 'Option 2' em '#dropdown'
+       3. Verificar se '#dropdown' tem o valor '2'
+     Esperado: A opção 'Option 2' fica selecionada
+     Obtido:   '#dropdown' tem o valor '2'
+     Evidência: prints/019_CT04_verificar_valor.png
+
+  [APROVADO] CT05 — Enviar arquivo (upload)
+     Passos:
+       1. Abrir /upload
+       2. Enviar o arquivo 'arquivos/arquivo_teste.txt' em '#file-upload'
+       3. Clicar em '#file-submit'
+       4. Verificar se o texto 'File Uploaded!' aparece
+       5. Verificar se o texto 'arquivo_teste.txt' aparece em '#uploaded-files'
+     Esperado: Página confirma "File Uploaded!" com o nome do arquivo
+     Obtido:   Texto 'File Uploaded!' visível; '#uploaded-files' contém 'arquivo_teste.txt'
+     Evidência: prints/024_CT05_verificar_texto.png
+
+  [APROVADO] CT06 — Digitar e apertar teclas
+     Passos:
+       1. Abrir /key_presses
+       2. Digitar 'qa' em '#target'
+       3. Apertar a tecla Tab
+       4. Verificar se o texto 'You entered: TAB' aparece em '#result'
+     Esperado: A página informa a última tecla pressionada
+     Obtido:   '#result' contém 'You entered: TAB'
+     Evidência: prints/028_CT06_verificar_texto.png
+
+  [APROVADO] CT07 — Passar o mouse e arrastar e soltar
+     Passos:
+       1. Abrir /hovers
+       2. Passar o mouse sobre '.figure >> nth=0'
+       3. Verificar se o texto 'name: user1' aparece
+       4. Abrir /drag_and_drop
+       5. Arrastar '#column-a' para '#column-b'
+       6. Verificar se o texto 'B' aparece em '#column-a header'
+     Esperado: Hover mostra o nome do usuário; colunas A e B trocam de lugar
+     Obtido:   Texto 'name: user1' visível; '#column-a header' contém 'B'
+     Evidência: prints/034_CT07_verificar_texto.png
+
+  [APROVADO] CT08 — Conteúdo carregado dinamicamente e rolagem
+     Passos:
+       1. Abrir /dynamic_loading/1
+       2. Clicar em 'papel=button:Start'
+       3. Esperar '#loading' sumir
+       4. Verificar se o texto 'Hello World!' aparece
+       5. Abrir /large
+       6. Rolar até '#large-table'
+       7. Rolar a página para fim
+     Esperado: O texto 'Hello World!' aparece depois do carregamento (sem espera fixa)
+     Obtido:   Texto 'Hello World!' visível
+     Evidência: prints/041_CT08_rolar.png
+
+  [REPROVADO] CT09 — [FALHA PROPOSITAL] Mensagem de erro deveria estar em português
+     Passos:
+       1. Abrir /login
+       2. Fazer login com o usuário 'tomsmith'
+       3. Verificar mensagem de erro 'Senha inválida'
+     Esperado: Ao errar a senha, a mensagem aparece em português ("Senha inválida")
+     Obtido:   Falhou no passo 3 (Verificar mensagem de erro 'Senha inválida'): A mensagem 'Senha inválida' não apareceu. Mensagem exibida: 'Your password is invalid!'
+     Evidência: prints/044_CT09_verificar_mensagem_FALHA.png
+
+DEFEITOS
+  BUG-001 | Baixa | Aberto | origem: Roteiro
+     CT09 — [FALHA PROPOSITAL] Mensagem de erro deveria estar em português: A mensagem 'Senha inválida' não apareceu. Mensagem exibida: 'Your password is invalid!'
+     Passos para reproduzir:
+       1. Abrir /login
+       2. Fazer login com o usuário 'tomsmith'
+       3. Verificar mensagem de erro 'Senha inválida'
+     Esperado: Ao errar a senha, a mensagem aparece em português ("Senha inválida")
+     Obtido:   Falhou no passo 3 (Verificar mensagem de erro 'Senha inválida'): A mensagem 'Senha inválida' não apareceu. Mensagem exibida: 'Your password is invalid!'
+     Evidência: prints/044_CT09_verificar_mensagem_FALHA.png
+
+O QUE FOI ENCONTRADO (OBSERVAÇÕES)
+  [Console] Erro no console do navegador: Failed to load resource: net::ERR_NAME_NOT_RESOLVED
+  [Console] Erro no console do navegador: Failed to load resource: the server responded with a status of 404 ()
+  [Acessibilidade] https://the-internet.herokuapp.com/checkboxes: 2 campo(s) de formulário sem <label> associado (leitores de tela não anunciam o nome; placeholder não substitui label).
+  [Acessibilidade] https://the-internet.herokuapp.com/dropdown: 1 campo(s) de formulário sem <label> associado (leitores de tela não anunciam o nome; placeholder não substitui label).
+  [Acessibilidade] https://the-internet.herokuapp.com/upload: 2 campo(s) de formulário sem <label> associado (leitores de tela não anunciam o nome; placeholder não substitui label).
+  [Acessibilidade] https://the-internet.herokuapp.com/key_presses: 1 campo(s) de formulário sem <label> associado (leitores de tela não anunciam o nome; placeholder não substitui label).
+
+MELHORIAS E IDEIAS (SUGESTÕES DA IA — avaliar antes de aplicar)
+  [Acessibilidade | prioridade Alta] Adicionar rótulos (<label>) aos campos de entrada e seletores
+     Associar tags <label> explícitas com atributo 'for' aos controles de formulário (como nos seletores e inputs das telas /dropdown e /key_presses) para garantir a correta identificação por leitores de tela.
+  [Usabilidade | prioridade Média] Melhorar indicação visual e feedback de interatividade no Drag and Drop
+     Adicionar alteração de cursor (ex: grab/grabbing) e destacar a área de soltura ao arrastrar os blocos A e B para tornar a ação mais intuitiva.
+  [Usabilidade | prioridade Baixa] Adicionar texto de orientação (placeholder) na tela Key Presses
+     Inserir um placeholder dentro do campo de texto com a instrução 'Clique aqui e pressione uma tecla', orientando onde o usuário deve focar o cursor antes de pressionar as teclas.
+  [Funcionalidade | prioridade Média] Adicionar recurso de alternar visibilidade da senha
+     Incluir um ícone no campo de senha da tela de login para exibir/ocultar a senha digitada, auxiliando na conferência do texto antes de enviar o formulário.
+  [Texto | prioridade Baixa] Adicionar rótulo visível para o Dropdown
+     Inserir uma legenda ou título explicativo acima da caixa de seleção na tela Dropdown List em vez de depender apenas do item inicial 'Please select an option'.
+
+CAMINHO PERCORRIDO
+    1. 17:19:48 [CT01] Abrir /login -> OK (1990 ms) prints/001_CT01_abrir.png
+    2. 17:19:49 [CT01] Fazer login com o usuário 'tomsmith' -> OK (484 ms) prints/002_CT01_logar.png
+    3. 17:19:49 [CT01] Verificar se a URL contém '/secure' -> OK (62 ms) prints/003_CT01_verificar_url.png
+    4. 17:19:49 [CT01] Verificar mensagem de sucesso 'You logged into a secure area!' -> OK (71 ms) prints/004_CT01_verificar_mensagem.png
+    5. 17:19:49 [CT01] Clicar em 'Logout' -> OK (479 ms) prints/005_CT01_clicar.png
+    6. 17:19:49 [CT01] Verificar se o texto 'You logged out of the secure area!' aparece -> OK (78 ms) prints/006_CT01_verificar_texto.png
+    7. 17:19:51 [CT02] Abrir /login -> OK (1916 ms) prints/007_CT02_abrir.png
+    8. 17:19:51 [CT02] Preencher 'rotulo=Username' com 'tomsmith' -> OK (61 ms) prints/008_CT02_preencher.png
+    9. 17:19:51 [CT02] Preencher 'rotulo=Password' com 'errada' -> OK (67 ms) prints/009_CT02_preencher.png
+   10. 17:19:52 [CT02] Clicar em 'papel=button:Login' -> OK (516 ms) prints/010_CT02_clicar.png
+   11. 17:19:52 [CT02] Verificar mensagem de erro 'Your password is invalid!' -> OK (91 ms) prints/011_CT02_verificar_mensagem.png
+   12. 17:19:52 [CT02] Verificar se a URL contém '/login' -> OK (58 ms) prints/012_CT02_verificar_url.png
+   13. 17:19:54 [CT03] Abrir /checkboxes -> OK (1984 ms) prints/013_CT03_abrir.png
+   14. 17:19:54 [CT03] Marcar '#checkboxes input >> nth=0' -> OK (97 ms) prints/014_CT03_marcar.png
+   15. 17:19:54 [CT03] Desmarcar '#checkboxes input >> nth=1' -> OK (78 ms) prints/015_CT03_desmarcar.png
+   16. 17:19:54 [CT03] Verificar se o elemento '#checkboxes input:checked' existe -> OK (45 ms) prints/016_CT03_verificar_elemento.png
+   17. 17:19:56 [CT04] Abrir /dropdown -> OK (1929 ms) prints/017_CT04_abrir.png
+   18. 17:19:57 [CT04] Selecionar 'Option 2' em '#dropdown' -> OK (49 ms) prints/018_CT04_selecionar.png
+   19. 17:19:57 [CT04] Verificar se '#dropdown' tem o valor '2' -> OK (33 ms) prints/019_CT04_verificar_valor.png
+   20. 17:19:59 [CT05] Abrir /upload -> OK (1934 ms) prints/020_CT05_abrir.png
+   21. 17:19:59 [CT05] Enviar o arquivo 'arquivos/arquivo_teste.txt' em '#file-upload' -> OK (58 ms) prints/021_CT05_enviar_arquivo.png
+   22. 17:19:59 [CT05] Clicar em '#file-submit' -> OK (337 ms) prints/022_CT05_clicar.png
+   23. 17:19:59 [CT05] Verificar se o texto 'File Uploaded!' aparece -> OK (65 ms) prints/023_CT05_verificar_texto.png
+   24. 17:19:59 [CT05] Verificar se o texto 'arquivo_teste.txt' aparece em '#uploaded-files' -> OK (57 ms) prints/024_CT05_verificar_texto.png
+   25. 17:20:01 [CT06] Abrir /key_presses -> OK (1787 ms) prints/025_CT06_abrir.png
+   26. 17:20:01 [CT06] Digitar 'qa' em '#target' -> OK (126 ms) prints/026_CT06_digitar.png
+   27. 17:20:01 [CT06] Apertar a tecla Tab -> OK (48 ms) prints/027_CT06_apertar_tecla.png
+   28. 17:20:01 [CT06] Verificar se o texto 'You entered: TAB' aparece em '#result' -> OK (55 ms) prints/028_CT06_verificar_texto.png
+   29. 17:20:03 [CT07] Abrir /hovers -> OK (1983 ms) prints/029_CT07_abrir.png
+   30. 17:20:04 [CT07] Passar o mouse sobre '.figure >> nth=0' -> OK (110 ms) prints/030_CT07_passar_mouse.png
+   31. 17:20:04 [CT07] Verificar se o texto 'name: user1' aparece -> OK (28 ms) prints/031_CT07_verificar_texto.png
+   32. 17:20:04 [CT07] Abrir /drag_and_drop -> OK (291 ms) prints/032_CT07_abrir.png
+   33. 17:20:04 [CT07] Arrastar '#column-a' para '#column-b' -> OK (158 ms) prints/033_CT07_arrastar.png
+   34. 17:20:04 [CT07] Verificar se o texto 'B' aparece em '#column-a header' -> OK (70 ms) prints/034_CT07_verificar_texto.png
+   35. 17:20:06 [CT08] Abrir /dynamic_loading/1 -> OK (1942 ms) prints/035_CT08_abrir.png
+   36. 17:20:06 [CT08] Clicar em 'papel=button:Start' -> OK (105 ms) prints/036_CT08_clicar.png
+   37. 17:20:12 [CT08] Esperar '#loading' sumir -> OK (5442 ms) prints/037_CT08_esperar.png
+   38. 17:20:12 [CT08] Verificar se o texto 'Hello World!' aparece -> OK (70 ms) prints/038_CT08_verificar_texto.png
+   39. 17:20:13 [CT08] Abrir /large -> OK (767 ms) prints/039_CT08_abrir.png
+   40. 17:20:13 [CT08] Rolar até '#large-table' -> OK (157 ms) prints/040_CT08_rolar.png
+   41. 17:20:13 [CT08] Rolar a página para fim -> OK (78 ms) prints/041_CT08_rolar.png
+   42. 17:20:15 [CT09] Abrir /login -> OK (1982 ms) prints/042_CT09_abrir.png
+   43. 17:20:15 [CT09] Fazer login com o usuário 'tomsmith' -> OK (514 ms) prints/043_CT09_logar.png
+   44. 17:20:26 [CT09] Verificar mensagem de erro 'Senha inválida' -> FALHA (10064 ms) prints/044_CT09_verificar_mensagem_FALHA.png
+
+Gerado por Sentinela QA v1.0.0

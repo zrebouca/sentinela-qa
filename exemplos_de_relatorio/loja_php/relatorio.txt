@@ -1,0 +1,280 @@
+========================================================================
+RELATÓRIO DE TESTES — Loja PHP (XAMPP)
+========================================================================
+Sistema:      Loja PHP (XAMPP)
+Versão:       treino
+Data:         20/11/2026 22:11
+Responsável:  Mateus
+Ambiente:     XAMPP local (Apache + PHP 8 + MariaDB) (Google Chrome 157.0.8103.80 · Windows 11)
+Alvo:         http://localhost/sentinela-loja
+Roteiro:      web_loja_php.yaml
+Finalidade:   -
+Duração:      14s
+
+RESUMO
+  Casos: 7 | Aprovados: 6 | Reprovados: 1 | Taxa: 86%
+  Defeitos: 5 | Observações: 12 | Sugestões da IA: 6
+
+OBJETIVO
+  Validar login, cadastro e busca de produtos, a API REST e se os dados são gravados corretamente no banco.
+
+FUNCIONALIDADES E CRITÉRIOS DE ACEITAÇÃO
+  F01 - Autenticação
+     • Usuário válido entra na lista de produtos
+     • Senha errada mostra mensagem e não entra
+  F02 - Cadastro de produtos
+     • Produto válido é exibido na lista E gravado no banco com o preço correto
+     • Nome curto é recusado com mensagem clara
+  F03 - API REST
+     • GET lista os produtos no formato combinado (JSON Schema)
+     • POST cria o produto (201) e ele aparece no banco
+  F04 - Qualidade não funcional
+     • Tela de login sem violações graves de acessibilidade (WCAG)
+     • API aguenta 30 requisições com p95 abaixo de 1,5 s
+
+CASOS DE TESTE
+  [APROVADO] CT01 — Login com usuário válido
+     Passos:
+       1. Preparar o banco: DELETE FROM produtos WHERE nome LIKE 'TESTE %'
+       2. Abrir /index.php
+       3. Fazer login com o usuário '{dados.email}'
+       4. Verificar se a URL contém 'produtos.php'
+       5. Verificar se o texto 'Olá, QA Treino' aparece
+       6. Conferir no banco: SELECT COUNT(*) FROM log_acessos WHERE acao='login' AND quando >= NOW() - INTERVAL 1 MINUTE
+     Esperado: Lista de produtos com "Olá, QA Treino"
+     Obtido:   URL contém 'produtos.php' (http://localhost/sentinela-loja/produtos.php); Texto 'Olá, QA Treino' visível; Banco: registro encontrado
+     Evidência: prints/006_CT01_verificar_banco.png
+
+  [APROVADO] CT02 — Login com senha errada
+     Passos:
+       1. Preparar o banco: DELETE FROM produtos WHERE nome LIKE 'TESTE %'
+       2. Abrir /index.php
+       3. Preencher 'rotulo=E-mail' com '{dados.email}'
+       4. Preencher 'rotulo=Senha' com 'errada'
+       5. Clicar em 'papel=button:Entrar'
+       6. Verificar mensagem de erro 'E-mail ou senha incorretos.'
+     Esperado: Mensagem "E-mail ou senha incorretos."
+     Obtido:   Mensagem de erro exibida: 'E-mail ou senha incorretos.'
+     Evidência: prints/012_CT02_verificar_mensagem.png
+
+  [APROVADO] CT03 — Cadastrar produto pela tela e conferir no banco
+     Passos:
+       1. Preparar o banco: DELETE FROM produtos WHERE nome LIKE 'TESTE %'
+       2. Abrir /index.php
+       3. Fazer login com o usuário '{dados.email}'
+       4. Clicar em 'Novo produto'
+       5. Preencher o formulário de cadastro e enviar em 'Salvar produto'
+       6. Verificar mensagem de sucesso 'Produto cadastrado com sucesso!'
+       7. Verificar se o texto '{dados.produto}' aparece em '#tabela-produtos'
+       8. Conferir no banco: SELECT COUNT(*) FROM produtos WHERE nome = '{dados.produto}'
+       9. Conferir no banco: SELECT ROUND(preco, 2) FROM produtos WHERE nome = '{dados.produto}'
+     Esperado: Mensagem de sucesso, produto na lista e gravado com preço 19.90
+     Obtido:   Mensagem de sucesso exibida: 'Produto cadastrado com sucesso!'; '#tabela-produtos' contém 'TESTE illum 446'; Banco: valor 1 (correto); Banco: valor 19.9 (correto)
+     Evidência: prints/021_CT03_verificar_banco.png
+
+  [APROVADO] CT04 — Nome muito curto é recusado
+     Passos:
+       1. Preparar o banco: DELETE FROM produtos WHERE nome LIKE 'TESTE %'
+       2. Abrir /index.php
+       3. Fazer login com o usuário '{dados.email}'
+       4. Abrir /produto_novo.php
+       5. Preencher o formulário de cadastro e enviar em '#salvar'
+       6. Verificar se o texto 'mínimo 3 letras' aparece em '#erro-nome'
+       7. Conferir no banco: SELECT id FROM produtos WHERE nome = 'TE'
+     Esperado: Mensagem de erro no campo nome e nada gravado
+     Obtido:   '#erro-nome' contém 'mínimo 3 letras'; Banco: registro ausente (correto)
+     Evidência: prints/028_CT04_verificar_banco.png
+
+  [APROVADO] CT05 — API — listar produtos no contrato combinado
+     Passos:
+       1. Preparar o banco: DELETE FROM produtos WHERE nome LIKE 'TESTE %'
+       2. Requisição GET /api/produtos.php
+       3. Verificar se o status HTTP é 200
+       4. Validar o JSON contra o esquema (JSON Schema)
+       5. Consultar o banco: SELECT COUNT(*) FROM produtos
+       6. Verificar o campo JSON 'total' = '{dados.total_banco}'
+       7. Verificar se respondeu em até 1500 ms
+     Esperado: HTTP 200, JSON válido pelo esquema, total igual ao do banco
+     Obtido:   Status HTTP 200; JSON dentro do contrato (JSON Schema); 'total' = 4; Respondeu em 89 ms (≤ 1500)
+     Evidência: prints/035_CT05_verificar_tempo.png
+
+  [APROVADO] CT06 — API — criar produto (POST) e conferir no banco
+     Passos:
+       1. Preparar o banco: DELETE FROM produtos WHERE nome LIKE 'TESTE %'
+       2. Requisição POST /api/produtos.php
+       3. Verificar se o status HTTP é 201
+       4. Guardar 'id' como {dados.novo_id}
+       5. Conferir no banco: SELECT estoque FROM produtos WHERE id = {dados.novo_id}
+       6. Requisição GET /api/produtos.php?id={dados.novo_id}
+       7. Verificar o campo JSON 'nome' = '{dados.produto} API'
+     Esperado: HTTP 201 com id; produto gravado com estoque 3
+     Obtido:   Status HTTP 201; Banco: valor 3 (correto); 'nome' = 'TESTE illum 446 API'
+     Evidência: prints/042_CT06_verificar_json.png
+
+  [REPROVADO] CT07 — Qualidade da tela de login e da API
+     Passos:
+       1. Preparar o banco: DELETE FROM produtos WHERE nome LIKE 'TESTE %'
+       2. Abrir /index.php
+       3. Verificar desempenho de carregamento da página
+       4. Verificar cabeçalhos e cookies de segurança
+       5. Teste de carga: 30 requisições em /api/produtos.php
+       6. Verificar acessibilidade (axe-core / WCAG)
+     Esperado: Sem violações graves de acessibilidade; API com p95 < 1,5 s
+     Obtido:   Falhou no passo 6 (Verificar acessibilidade (axe-core / WCAG)): 1 violação(ões) de acessibilidade de impacto ≥ sério: color-contrast (1)
+     Evidência: prints/048_CT07_verificar_acessibilidade_FALHA.png
+
+DEFEITOS
+  BUG-001 | Baixa | Aberto | origem: Roteiro
+     CT07 — Qualidade da tela de login e da API: 1 violação(ões) de acessibilidade de impacto ≥ sério: color-contrast (1)
+     Passos para reproduzir:
+       1. Preparar o banco: DELETE FROM produtos WHERE nome LIKE 'TESTE %'
+       2. Abrir /index.php
+       3. Verificar desempenho de carregamento da página
+       4. Verificar cabeçalhos e cookies de segurança
+       5. Teste de carga: 30 requisições em /api/produtos.php
+       6. Verificar acessibilidade (axe-core / WCAG)
+     Esperado: Sem violações graves de acessibilidade; API com p95 < 1,5 s
+     Obtido:   Falhou no passo 6 (Verificar acessibilidade (axe-core / WCAG)): 1 violação(ões) de acessibilidade de impacto ≥ sério: color-contrast (1)
+     Evidência: prints/048_CT07_verificar_acessibilidade_FALHA.png
+
+  BUG-002 | Média | Aberto | origem: Exploração
+     O campo '#nome' aceita caracteres especiais/HTML ('<script>alert(1)</script>'"%;') sem validação
+     Passos para reproduzir:
+       1. Abrir /index.php
+       2. Fazer login com o usuário '{dados.email}'
+       3. Abrir /produto_novo.php
+       4. Preencher '#nome' com '<script>alert(1)</script>'"%;'
+       5. Preencher '#preco' com '519'
+       6. Preencher '#estoque' com '40'
+       7. Clicar em '#salvar'
+     Esperado: O sistema deveria bloquear caracteres especiais/HTML e mostrar uma mensagem clara
+     Obtido:   O formulário foi aceito e o fluxo seguiu para a próxima etapa
+     Evidência: prints/050_EXP02_exploracao_especiais.png
+
+  BUG-003 | Média | Aberto | origem: Exploração
+     O campo '#preco' aceita número negativo ('-1') sem validação
+     Passos para reproduzir:
+       1. Abrir /index.php
+       2. Fazer login com o usuário '{dados.email}'
+       3. Abrir /produto_novo.php
+       4. Preencher '#nome' com 'Renan'
+       5. Preencher '#preco' com '-1'
+       6. Preencher '#estoque' com '698'
+       7. Clicar em '#salvar'
+     Esperado: O sistema deveria bloquear número negativo e mostrar uma mensagem clara
+     Obtido:   O formulário foi aceito e o fluxo seguiu para a próxima etapa
+     Evidência: prints/051_EXP03_exploracao_num_negativo.png
+
+  BUG-004 | Média | Aberto | origem: Exploração
+     O campo '#estoque' aceita número negativo ('-1') sem validação
+     Passos para reproduzir:
+       1. Abrir /index.php
+       2. Fazer login com o usuário '{dados.email}'
+       3. Abrir /produto_novo.php
+       4. Preencher '#nome' com 'Bryan'
+       5. Preencher '#preco' com '490'
+       6. Preencher '#estoque' com '-1'
+       7. Clicar em '#salvar'
+     Esperado: O sistema deveria bloquear número negativo e mostrar uma mensagem clara
+     Obtido:   O formulário foi aceito e o fluxo seguiu para a próxima etapa
+     Evidência: prints/053_EXP05_exploracao_num_negativo.png
+
+  BUG-005 | Média | Aberto | origem: Exploração
+     O campo '#estoque' aceita letras em campo numérico ('abc') sem validação
+     Passos para reproduzir:
+       1. Abrir /index.php
+       2. Fazer login com o usuário '{dados.email}'
+       3. Abrir /produto_novo.php
+       4. Preencher '#nome' com 'Maitê'
+       5. Preencher '#preco' com '42'
+       6. Preencher '#estoque' com 'abc'
+       7. Clicar em '#salvar'
+     Esperado: O sistema deveria bloquear letras em campo numérico e mostrar uma mensagem clara
+     Obtido:   O formulário foi aceito e o fluxo seguiu para a próxima etapa
+     Evidência: prints/054_EXP06_exploracao_num_letras.png
+
+O QUE FOI ENCONTRADO (OBSERVAÇÕES)
+  [Desempenho] http://localhost/sentinela-loja/index.php: carregamento 36 ms · DOM 14 ms · TTFB 5 ms · LCP 68 ms · 2 recursos · 32 KB
+  [Segurança] http://localhost/sentinela-loja/index.php: falta o cabeçalho Content-Security-Policy (protege contra XSS e injeção de scripts)
+  [Segurança] http://localhost/sentinela-loja/index.php: falta o cabeçalho X-Content-Type-Options: nosniff (impede o navegador de 'adivinhar' o tipo do arquivo)
+  [Segurança] http://localhost/sentinela-loja/index.php: falta o cabeçalho X-Frame-Options ou CSP frame-ancestors (protege contra clickjacking)
+  [Segurança] http://localhost/sentinela-loja/index.php: falta o cabeçalho Referrer-Policy (evita vazar URLs internas para outros sites)
+  [Segurança] http://localhost/sentinela-loja/index.php: o cabeçalho Server expõe a versão (Apache/2.4.58 (Win64) OpenSSL/3.1.3 PHP/8.2.12) — facilita ataques direcionados
+  [Segurança] http://localhost/sentinela-loja/index.php: o cabeçalho X-Powered-By expõe a tecnologia (PHP/8.2.12)
+  [Segurança] Cookie 'PHPSESSID' sem HttpOnly
+  [Carga] http://localhost/sentinela-loja/api/produtos.php: 30 req · 6 simultâneas · 278.4 req/s · média 18 ms · p95 32 ms · máx 54 ms · erros 0
+  [Acessibilidade (axe)] http://localhost/sentinela-loja/index.php: [sério] Elements must meet minimum color contrast ratio thresholds — 1 elemento(s). Regra: color-contrast
+  [Exploração] '#nome' com campo vazio: bloqueado corretamente — mensagem exibida: "Informe o nome do produto (mínimo 3 letras)."
+  [Exploração] '#preco' com letras em campo numérico: bloqueado corretamente — mensagem exibida: "Preço inválido."
+
+MELHORIAS E IDEIAS (SUGESTÕES DA IA — avaliar antes de aplicar)
+  [Usabilidade | prioridade Alta] Adicionar coluna de ações na tabela de produtos
+     A listagem atual exibe apenas os dados do produto, sem opções diretas para editar ou excluir cada item. Incluir uma coluna de 'Ações' com botões para edição e exclusão agilizará a gestão dos produtos.
+  [Funcionalidade | prioridade Média] Implementar controle de paginação na listagem
+     A tabela exibe todos os produtos de forma contínua, o que pode causar problemas de usabilidade e performance à medida que o volume de dados aumentar. Adicionar paginação (ex: 10 itens por página).
+  [Funcionalidade | prioridade Média] Permitir ordenação ao clicar no cabeçalho das colunas
+     Permitir que o usuário ordene os produtos de forma crescente/decrescente clicando nos cabeçalhos da tabela (ex: ordenar por Nome, Preço ou Estoque).
+  [Funcionalidade | prioridade Média] Adicionar filtro por Categoria na busca
+     Atualmente existe apenas a busca por texto livre. Adicionar um campo de seleção (dropdown) para filtrar os produtos por categoria facilitaria a navegação do usuário.
+  [Acessibilidade | prioridade Média] Adicionar atributo 'aria-label' no campo e botão de busca
+     O formulário de busca não possui um rótulo explicativo visível associado nem atributos ARIA adequados, dificultando a navegação por leitor de tela.
+  [Texto | prioridade Baixa] Aprimorar texto do contador do rodapé da tabela
+     O texto '5 produto(s)' pode ser formatado de forma mais descritiva como 'Exibindo 5 de 5 produtos' para fornecer melhor contexto quando filtros forem aplicados.
+
+CAMINHO PERCORRIDO
+    1. 22:11:12 [CT01] Preparar o banco: DELETE FROM produtos WHERE nome LIKE 'TESTE %' -> OK (216 ms) prints/001_CT01_preparar_banco.png
+    2. 22:11:12 [CT01] Abrir /index.php -> OK (155 ms) prints/002_CT01_abrir.png
+    3. 22:11:12 [CT01] Fazer login com o usuário '{dados.email}' -> OK (259 ms) prints/003_CT01_logar.png
+    4. 22:11:12 [CT01] Verificar se a URL contém 'produtos.php' -> OK (62 ms) prints/004_CT01_verificar_url.png
+    5. 22:11:12 [CT01] Verificar se o texto 'Olá, QA Treino' aparece -> OK (62 ms) prints/005_CT01_verificar_texto.png
+    6. 22:11:12 [CT01] Conferir no banco: SELECT COUNT(*) FROM log_acessos WHERE acao='login' AND quando >= NOW() - INTERVAL 1 MINUTE -> OK (45 ms) prints/006_CT01_verificar_banco.png
+    7. 22:11:13 [CT02] Preparar o banco: DELETE FROM produtos WHERE nome LIKE 'TESTE %' -> OK (47 ms) prints/007_CT02_preparar_banco.png
+    8. 22:11:13 [CT02] Abrir /index.php -> OK (119 ms) prints/008_CT02_abrir.png
+    9. 22:11:13 [CT02] Preencher 'rotulo=E-mail' com '{dados.email}' -> OK (89 ms) prints/009_CT02_preencher.png
+   10. 22:11:13 [CT02] Preencher 'rotulo=Senha' com 'errada' -> OK (62 ms) prints/010_CT02_preencher.png
+   11. 22:11:13 [CT02] Clicar em 'papel=button:Entrar' -> OK (201 ms) prints/011_CT02_clicar.png
+   12. 22:11:13 [CT02] Verificar mensagem de erro 'E-mail ou senha incorretos.' -> OK (62 ms) prints/012_CT02_verificar_mensagem.png
+   13. 22:11:13 [CT03] Preparar o banco: DELETE FROM produtos WHERE nome LIKE 'TESTE %' -> OK (49 ms) prints/013_CT03_preparar_banco.png
+   14. 22:11:13 [CT03] Abrir /index.php -> OK (128 ms) prints/014_CT03_abrir.png
+   15. 22:11:14 [CT03] Fazer login com o usuário '{dados.email}' -> OK (278 ms) prints/015_CT03_logar.png
+   16. 22:11:14 [CT03] Clicar em 'Novo produto' -> OK (166 ms) prints/016_CT03_clicar.png
+   17. 22:11:14 [CT03] Preencher o formulário de cadastro e enviar em 'Salvar produto' -> OK (217 ms) prints/017_CT03_cadastrar.png
+   18. 22:11:14 [CT03] Verificar mensagem de sucesso 'Produto cadastrado com sucesso!' -> OK (61 ms) prints/018_CT03_verificar_mensagem.png
+   19. 22:11:14 [CT03] Verificar se o texto '{dados.produto}' aparece em '#tabela-produtos' -> OK (47 ms) prints/019_CT03_verificar_texto.png
+   20. 22:11:14 [CT03] Conferir no banco: SELECT COUNT(*) FROM produtos WHERE nome = '{dados.produto}' -> OK (44 ms) prints/020_CT03_verificar_banco.png
+   21. 22:11:14 [CT03] Conferir no banco: SELECT ROUND(preco, 2) FROM produtos WHERE nome = '{dados.produto}' -> OK (46 ms) prints/021_CT03_verificar_banco.png
+   22. 22:11:15 [CT04] Preparar o banco: DELETE FROM produtos WHERE nome LIKE 'TESTE %' -> OK (50 ms) prints/022_CT04_preparar_banco.png
+   23. 22:11:15 [CT04] Abrir /index.php -> OK (124 ms) prints/023_CT04_abrir.png
+   24. 22:11:15 [CT04] Fazer login com o usuário '{dados.email}' -> OK (285 ms) prints/024_CT04_logar.png
+   25. 22:11:15 [CT04] Abrir /produto_novo.php -> OK (88 ms) prints/025_CT04_abrir.png
+   26. 22:11:15 [CT04] Preencher o formulário de cadastro e enviar em '#salvar' -> OK (186 ms) prints/026_CT04_cadastrar.png
+   27. 22:11:15 [CT04] Verificar se o texto 'mínimo 3 letras' aparece em '#erro-nome' -> OK (58 ms) prints/027_CT04_verificar_texto.png
+   28. 22:11:15 [CT04] Conferir no banco: SELECT id FROM produtos WHERE nome = 'TE' -> OK (49 ms) prints/028_CT04_verificar_banco.png
+   29. 22:11:16 [CT05] Preparar o banco: DELETE FROM produtos WHERE nome LIKE 'TESTE %' -> OK (58 ms) prints/029_CT05_preparar_banco.png
+   30. 22:11:16 [CT05] Requisição GET /api/produtos.php -> OK (149 ms) prints/030_CT05_requisitar.png
+   31. 22:11:16 [CT05] Verificar se o status HTTP é 200 -> OK (62 ms) prints/031_CT05_verificar_status.png
+   32. 22:11:16 [CT05] Validar o JSON contra o esquema (JSON Schema) -> OK (202 ms) prints/032_CT05_verificar_esquema.png
+   33. 22:11:16 [CT05] Consultar o banco: SELECT COUNT(*) FROM produtos -> OK (56 ms) prints/033_CT05_consultar_banco.png
+   34. 22:11:16 [CT05] Verificar o campo JSON 'total' = '{dados.total_banco}' -> OK (32 ms) prints/034_CT05_verificar_json.png
+   35. 22:11:16 [CT05] Verificar se respondeu em até 1500 ms -> OK (30 ms) prints/035_CT05_verificar_tempo.png
+   36. 22:11:16 [CT06] Preparar o banco: DELETE FROM produtos WHERE nome LIKE 'TESTE %' -> OK (64 ms) prints/036_CT06_preparar_banco.png
+   37. 22:11:17 [CT06] Requisição POST /api/produtos.php -> OK (63 ms) prints/037_CT06_requisitar.png
+   38. 22:11:17 [CT06] Verificar se o status HTTP é 201 -> OK (42 ms) prints/038_CT06_verificar_status.png
+   39. 22:11:17 [CT06] Guardar 'id' como {dados.novo_id} -> OK (45 ms) prints/039_CT06_guardar.png
+   40. 22:11:17 [CT06] Conferir no banco: SELECT estoque FROM produtos WHERE id = {dados.novo_id} -> OK (43 ms) prints/040_CT06_verificar_banco.png
+   41. 22:11:17 [CT06] Requisição GET /api/produtos.php?id={dados.novo_id} -> OK (62 ms) prints/041_CT06_requisitar.png
+   42. 22:11:17 [CT06] Verificar o campo JSON 'nome' = '{dados.produto} API' -> OK (45 ms) prints/042_CT06_verificar_json.png
+   43. 22:11:17 [CT07] Preparar o banco: DELETE FROM produtos WHERE nome LIKE 'TESTE %' -> OK (47 ms) prints/043_CT07_preparar_banco.png
+   44. 22:11:17 [CT07] Abrir /index.php -> OK (121 ms) prints/044_CT07_abrir.png
+   45. 22:11:17 [CT07] Verificar desempenho de carregamento da página -> OK (339 ms) prints/045_CT07_verificar_desempenho.png
+   46. 22:11:17 [CT07] Verificar cabeçalhos e cookies de segurança -> OK (63 ms) prints/046_CT07_verificar_seguranca.png
+   47. 22:11:18 [CT07] Teste de carga: 30 requisições em /api/produtos.php -> OK (138 ms) prints/047_CT07_teste_carga.png
+   48. 22:11:18 [CT07] Verificar acessibilidade (axe-core / WCAG) -> FALHA (218 ms) prints/048_CT07_verificar_acessibilidade_FALHA.png
+   49. 22:11:19 [EXP01] Exploração: '#nome' com campo vazio -> OK (637 ms) prints/049_EXP01_exploracao_vazio.png
+   50. 22:11:20 [EXP02] Exploração: '#nome' com caracteres especiais/HTML -> FALHA (1129 ms) prints/050_EXP02_exploracao_especiais.png
+   51. 22:11:21 [EXP03] Exploração: '#preco' com número negativo -> FALHA (1146 ms) prints/051_EXP03_exploracao_num_negativo.png
+   52. 22:11:21 [EXP04] Exploração: '#preco' com letras em campo numérico -> OK (664 ms) prints/052_EXP04_exploracao_num_letras.png
+   53. 22:11:23 [EXP05] Exploração: '#estoque' com número negativo -> FALHA (1069 ms) prints/053_EXP05_exploracao_num_negativo.png
+   54. 22:11:24 [EXP06] Exploração: '#estoque' com letras em campo numérico -> FALHA (1080 ms) prints/054_EXP06_exploracao_num_letras.png
+
+Gerado por Sentinela QA v1.0.0

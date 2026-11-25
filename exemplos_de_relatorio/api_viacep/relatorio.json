@@ -1,0 +1,410 @@
+{
+  "versao_robo": "1.0.0",
+  "cabecalho": {
+    "Sistema": "ViaCEP + JSONPlaceholder (APIs públicas)",
+    "Versão": "API REST",
+    "Data": "20/11/2026 19:38",
+    "Responsável": "Mateus",
+    "Ambiente": "APIs públicas de teste (HTTP (urllib) · Windows 11)",
+    "Alvo": "https://viacep.com.br",
+    "Roteiro": "api_viacep.yaml",
+    "Finalidade": "-",
+    "Duração": "2s"
+  },
+  "sistema": "ViaCEP + JSONPlaceholder (APIs públicas)",
+  "objetivo": "Validar status HTTP, contrato do JSON, tempo de resposta e tratamento de entradas inválidas.",
+  "funcionalidades": [
+    {
+      "id": "F01",
+      "nome": "Consulta de CEP",
+      "criterios": [
+        "CEP existente retorna 200 com logradouro, cidade e UF",
+        "CEP com formato inválido retorna 400",
+        "CEP inexistente retorna o campo \"erro\""
+      ]
+    },
+    {
+      "id": "F02",
+      "nome": "Criação de recurso (POST)",
+      "criterios": [
+        "POST com JSON válido retorna 201 e o id criado"
+      ]
+    }
+  ],
+  "resumo": {
+    "total": 4,
+    "aprovados": 4,
+    "reprovados": 0,
+    "taxa": 100,
+    "defeitos": 0,
+    "defeitos_por_severidade": {},
+    "observacoes": 0,
+    "sugestoes": 6,
+    "acoes": 22,
+    "exploracao": false,
+    "ia": true
+  },
+  "casos": [
+    {
+      "id": "CT01",
+      "descricao": "Consultar CEP existente (Praça da Sé, São Paulo)",
+      "funcionalidade": "F01",
+      "passos": [
+        "Requisição GET /ws/01001000/json/",
+        "Verificar se o status HTTP é 200",
+        "Verificar o cabeçalho 'content-type'",
+        "Verificar o campo JSON 'cep' = '01001-000'",
+        "Verificar o campo JSON 'localidade' = 'São Paulo'",
+        "Verificar o campo JSON 'uf' = 'SP'",
+        "Verificar o campo JSON 'logradouro'",
+        "Verificar se respondeu em até 5000 ms"
+      ],
+      "esperado": "HTTP 200, localidade São Paulo, UF SP",
+      "obtido": "Status HTTP 200; Cabeçalho 'content-type': application/json; charset=utf-8; 'cep' = '01001-000'; 'localidade' = 'São Paulo'; 'uf' = 'SP'; 'logradouro' contém 'Praça da Sé'; Respondeu em 395 ms (≤ 5000)",
+      "status": "APROVADO",
+      "print": "prints/001_CT01_resposta.json",
+      "duracao_s": 0.4
+    },
+    {
+      "id": "CT02",
+      "descricao": "CEP com formato inválido (3 dígitos)",
+      "funcionalidade": "F01",
+      "passos": [
+        "Requisição GET /ws/123/json/",
+        "Verificar se o status HTTP é 400"
+      ],
+      "esperado": "HTTP 400 (requisição inválida)",
+      "obtido": "Status HTTP 400",
+      "status": "APROVADO",
+      "print": "prints/009_CT02_resposta.json",
+      "duracao_s": 0.4
+    },
+    {
+      "id": "CT03",
+      "descricao": "CEP com formato válido mas inexistente",
+      "funcionalidade": "F01",
+      "passos": [
+        "Requisição GET /ws/99999999/json/",
+        "Verificar se o status HTTP é 200",
+        "Verificar o campo JSON 'erro' = 'True'",
+        "Verificar o campo JSON 'logradouro'"
+      ],
+      "esperado": "HTTP 200 com o campo \"erro\"",
+      "obtido": "Status HTTP 200; 'erro' = 'true'; Campo 'logradouro' ausente (correto)",
+      "status": "APROVADO",
+      "print": "prints/011_CT03_resposta.json",
+      "duracao_s": 0.4
+    },
+    {
+      "id": "CT04",
+      "descricao": "Criar post (POST) e consultar um post existente",
+      "funcionalidade": "F02",
+      "passos": [
+        "Requisição POST https://jsonplaceholder.typicode.com/posts",
+        "Verificar se o status HTTP é 201",
+        "Verificar o campo JSON 'id'",
+        "Verificar o campo JSON 'title' = 'Teste do Sentinela QA'",
+        "Guardar 'userId' como {dados.usuario}",
+        "Requisição GET https://jsonplaceholder.typicode.com/users/{dados.usuario}",
+        "Verificar se o status HTTP é [200, 299]",
+        "Verificar o campo JSON 'address.city'"
+      ],
+      "esperado": "HTTP 201 com id; GET do post 1 retorna userId 1",
+      "obtido": "Status HTTP 201; 'id' é do tipo numero; 'title' = 'Teste do Sentinela QA'; Status 200 dentro de 200–299; Campo 'address.city' existe",
+      "status": "APROVADO",
+      "print": "prints/020_CT04_resposta.json",
+      "duracao_s": 0.5
+    }
+  ],
+  "defeitos": [],
+  "observacoes": [],
+  "sugestoes": [
+    {
+      "categoria": "Usabilidade",
+      "titulo": "Exibição do tempo de resposta em todos os passos de requisição",
+      "descricao": "Adicionar o tempo exato de resposta em milissegundos para todas as requisições HTTP no log de execução (e não apenas na validação do CT01), facilitando a identificação de gargalos de performance e diagnósticos rápidos pelo time de QA.",
+      "prioridade": "Média",
+      "evidencia": "Passos 1, 9, 11 e 15 do caminho de execução"
+    },
+    {
+      "categoria": "Texto",
+      "titulo": "Padronização da casing na validação do atributo booleano de erro",
+      "descricao": "No passo 13, a checagem é descrita como 'erro = True' (com maiúscula), enquanto no retorno do JSON original do ViaCEP a chave/valor é representada em minúsculo ('erro' = 'true' ou valor booleano true). É importante padronizar a escrita no log para refletir a especificação real da API.",
+      "prioridade": "Média",
+      "evidencia": "Passo 13 ('Verificar o campo JSON erro = True')"
+    },
+    {
+      "categoria": "Funcionalidade",
+      "titulo": "Restrição do código de status HTTP na consulta de usuários",
+      "descricao": "No passo 21 do CT04, a asserção aceita qualquer status no intervalo [200, 299]. Para consultas GET de recursos existentes, deve-se validar estritamente o status HTTP 200 OK, evitando que respostas como 204 (No Content) ou 202 (Accepted) passem indevidamente como sucesso de busca.",
+      "prioridade": "Alta",
+      "evidencia": "Passo 21 ('Verificar se o status HTTP é [200, 299]')"
+    },
+    {
+      "categoria": "Funcionalidade",
+      "titulo": "Ajuste do SLA de tempo de resposta para consultas de API",
+      "descricao": "O CT01 utiliza um limite máximo de tolerância de 5000 ms. Para requisições de consulta de CEP em microsserviços, recomenda-se reduzir o threshold de tempo limite para 1000 ms ou 2000 ms, garantindo a detecção precoce de degradação de desempenho.",
+      "prioridade": "Média",
+      "evidencia": "Passo 8 ('Verificar se respondeu em até 5000 ms')"
+    },
+    {
+      "categoria": "Funcionalidade",
+      "titulo": "Validação completa de schema JSON (JSON Schema Validation)",
+      "descricao": "Substituir ou complementar a verificação pontual de campos isolados (ex: 'cep', 'localidade', 'address.city') por uma validação completa baseada em JSON Schema, garantindo a verificação rigorosa de tipos, campos obrigatórios e estrutura de contrato das APIs.",
+      "prioridade": "Média",
+      "evidencia": "Passos 4, 5, 6, 7, 17, 18 e 22"
+    },
+    {
+      "categoria": "Acessibilidade",
+      "titulo": "Padronização de corpos de resposta de erro HTTP 400 (Problem Details)",
+      "descricao": "Garantir que a resposta da API para CEP com formato inválido (HTTP 400) retorne um payload estruturado no padrão RFC 7807 (Problem Details), fornecendo mensagens claras e descritivas legíveis por leitores de tela em painéis/dashboards que consomem a API.",
+      "prioridade": "Baixa",
+      "evidencia": "Passo 10 ('Verificar se o status HTTP é 400')"
+    }
+  ],
+  "acoes": [
+    {
+      "ordem": 1,
+      "horario": "19:38:33",
+      "caso_id": "CT01",
+      "comando": "requisitar",
+      "descricao": "Requisição GET /ws/01001000/json/",
+      "status": "ok",
+      "print": "prints/001_CT01_resposta.json",
+      "duracao_ms": 397,
+      "detalhe": "GET https://viacep.com.br/ws/01001000/json/ → HTTP 200 em 395 ms"
+    },
+    {
+      "ordem": 2,
+      "horario": "19:38:33",
+      "caso_id": "CT01",
+      "comando": "verificar_status",
+      "descricao": "Verificar se o status HTTP é 200",
+      "status": "ok",
+      "print": "prints/001_CT01_resposta.json",
+      "duracao_ms": 0,
+      "detalhe": "Status HTTP 200"
+    },
+    {
+      "ordem": 3,
+      "horario": "19:38:33",
+      "caso_id": "CT01",
+      "comando": "verificar_cabecalho",
+      "descricao": "Verificar o cabeçalho 'content-type'",
+      "status": "ok",
+      "print": "prints/001_CT01_resposta.json",
+      "duracao_ms": 0,
+      "detalhe": "Cabeçalho 'content-type': application/json; charset=utf-8"
+    },
+    {
+      "ordem": 4,
+      "horario": "19:38:33",
+      "caso_id": "CT01",
+      "comando": "verificar_json",
+      "descricao": "Verificar o campo JSON 'cep' = '01001-000'",
+      "status": "ok",
+      "print": "prints/001_CT01_resposta.json",
+      "duracao_ms": 0,
+      "detalhe": "'cep' = '01001-000'"
+    },
+    {
+      "ordem": 5,
+      "horario": "19:38:33",
+      "caso_id": "CT01",
+      "comando": "verificar_json",
+      "descricao": "Verificar o campo JSON 'localidade' = 'São Paulo'",
+      "status": "ok",
+      "print": "prints/001_CT01_resposta.json",
+      "duracao_ms": 0,
+      "detalhe": "'localidade' = 'São Paulo'"
+    },
+    {
+      "ordem": 6,
+      "horario": "19:38:33",
+      "caso_id": "CT01",
+      "comando": "verificar_json",
+      "descricao": "Verificar o campo JSON 'uf' = 'SP'",
+      "status": "ok",
+      "print": "prints/001_CT01_resposta.json",
+      "duracao_ms": 0,
+      "detalhe": "'uf' = 'SP'"
+    },
+    {
+      "ordem": 7,
+      "horario": "19:38:33",
+      "caso_id": "CT01",
+      "comando": "verificar_json",
+      "descricao": "Verificar o campo JSON 'logradouro'",
+      "status": "ok",
+      "print": "prints/001_CT01_resposta.json",
+      "duracao_ms": 0,
+      "detalhe": "'logradouro' contém 'Praça da Sé'"
+    },
+    {
+      "ordem": 8,
+      "horario": "19:38:33",
+      "caso_id": "CT01",
+      "comando": "verificar_tempo",
+      "descricao": "Verificar se respondeu em até 5000 ms",
+      "status": "ok",
+      "print": "prints/001_CT01_resposta.json",
+      "duracao_ms": 0,
+      "detalhe": "Respondeu em 395 ms (≤ 5000)"
+    },
+    {
+      "ordem": 9,
+      "horario": "19:38:33",
+      "caso_id": "CT02",
+      "comando": "requisitar",
+      "descricao": "Requisição GET /ws/123/json/",
+      "status": "ok",
+      "print": "prints/009_CT02_resposta.json",
+      "duracao_ms": 366,
+      "detalhe": "GET https://viacep.com.br/ws/123/json/ → HTTP 400 em 364 ms"
+    },
+    {
+      "ordem": 10,
+      "horario": "19:38:33",
+      "caso_id": "CT02",
+      "comando": "verificar_status",
+      "descricao": "Verificar se o status HTTP é 400",
+      "status": "ok",
+      "print": "prints/009_CT02_resposta.json",
+      "duracao_ms": 0,
+      "detalhe": "Status HTTP 400"
+    },
+    {
+      "ordem": 11,
+      "horario": "19:38:33",
+      "caso_id": "CT03",
+      "comando": "requisitar",
+      "descricao": "Requisição GET /ws/99999999/json/",
+      "status": "ok",
+      "print": "prints/011_CT03_resposta.json",
+      "duracao_ms": 367,
+      "detalhe": "GET https://viacep.com.br/ws/99999999/json/ → HTTP 200 em 365 ms"
+    },
+    {
+      "ordem": 12,
+      "horario": "19:38:33",
+      "caso_id": "CT03",
+      "comando": "verificar_status",
+      "descricao": "Verificar se o status HTTP é 200",
+      "status": "ok",
+      "print": "prints/011_CT03_resposta.json",
+      "duracao_ms": 0,
+      "detalhe": "Status HTTP 200"
+    },
+    {
+      "ordem": 13,
+      "horario": "19:38:33",
+      "caso_id": "CT03",
+      "comando": "verificar_json",
+      "descricao": "Verificar o campo JSON 'erro' = 'True'",
+      "status": "ok",
+      "print": "prints/011_CT03_resposta.json",
+      "duracao_ms": 0,
+      "detalhe": "'erro' = 'true'"
+    },
+    {
+      "ordem": 14,
+      "horario": "19:38:33",
+      "caso_id": "CT03",
+      "comando": "verificar_json",
+      "descricao": "Verificar o campo JSON 'logradouro'",
+      "status": "ok",
+      "print": "prints/011_CT03_resposta.json",
+      "duracao_ms": 0,
+      "detalhe": "Campo 'logradouro' ausente (correto)"
+    },
+    {
+      "ordem": 15,
+      "horario": "19:38:34",
+      "caso_id": "CT04",
+      "comando": "requisitar",
+      "descricao": "Requisição POST https://jsonplaceholder.typicode.com/posts",
+      "status": "ok",
+      "print": "prints/015_CT04_resposta.json",
+      "duracao_ms": 318,
+      "detalhe": "POST https://jsonplaceholder.typicode.com/posts → HTTP 201 em 316 ms"
+    },
+    {
+      "ordem": 16,
+      "horario": "19:38:34",
+      "caso_id": "CT04",
+      "comando": "verificar_status",
+      "descricao": "Verificar se o status HTTP é 201",
+      "status": "ok",
+      "print": "prints/015_CT04_resposta.json",
+      "duracao_ms": 0,
+      "detalhe": "Status HTTP 201"
+    },
+    {
+      "ordem": 17,
+      "horario": "19:38:34",
+      "caso_id": "CT04",
+      "comando": "verificar_json",
+      "descricao": "Verificar o campo JSON 'id'",
+      "status": "ok",
+      "print": "prints/015_CT04_resposta.json",
+      "duracao_ms": 0,
+      "detalhe": "'id' é do tipo numero"
+    },
+    {
+      "ordem": 18,
+      "horario": "19:38:34",
+      "caso_id": "CT04",
+      "comando": "verificar_json",
+      "descricao": "Verificar o campo JSON 'title' = 'Teste do Sentinela QA'",
+      "status": "ok",
+      "print": "prints/015_CT04_resposta.json",
+      "duracao_ms": 0,
+      "detalhe": "'title' = 'Teste do Sentinela QA'"
+    },
+    {
+      "ordem": 19,
+      "horario": "19:38:34",
+      "caso_id": "CT04",
+      "comando": "guardar",
+      "descricao": "Guardar 'userId' como {dados.usuario}",
+      "status": "ok",
+      "print": "prints/015_CT04_resposta.json",
+      "duracao_ms": 0,
+      "detalhe": "Guardado {dados.usuario} = 1"
+    },
+    {
+      "ordem": 20,
+      "horario": "19:38:34",
+      "caso_id": "CT04",
+      "comando": "requisitar",
+      "descricao": "Requisição GET https://jsonplaceholder.typicode.com/users/{dados.usuario}",
+      "status": "ok",
+      "print": "prints/020_CT04_resposta.json",
+      "duracao_ms": 169,
+      "detalhe": "GET https://jsonplaceholder.typicode.com/users/1 → HTTP 200 em 168 ms"
+    },
+    {
+      "ordem": 21,
+      "horario": "19:38:34",
+      "caso_id": "CT04",
+      "comando": "verificar_status",
+      "descricao": "Verificar se o status HTTP é [200, 299]",
+      "status": "ok",
+      "print": "prints/020_CT04_resposta.json",
+      "duracao_ms": 0,
+      "detalhe": "Status 200 dentro de 200–299"
+    },
+    {
+      "ordem": 22,
+      "horario": "19:38:34",
+      "caso_id": "CT04",
+      "comando": "verificar_json",
+      "descricao": "Verificar o campo JSON 'address.city'",
+      "status": "ok",
+      "print": "prints/020_CT04_resposta.json",
+      "duracao_ms": 0,
+      "detalhe": "Campo 'address.city' existe"
+    }
+  ],
+  "avisos": []
+}

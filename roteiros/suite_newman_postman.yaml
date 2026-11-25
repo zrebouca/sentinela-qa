@@ -1,0 +1,10 @@
+# Roteiro do tipo SUITE: o Sentinela roda uma suíte de outro framework e lê o resultado (JUnit XML)
+# para colocar no mesmo relatório, histórico e gestão de defeitos.
+sistema: "API ViaCEP — coleção do Postman (Newman)"
+versao: "framework: newman"
+responsavel: Mateus
+ambiente: Local
+objetivo: "Coleção do Postman gerada pelo próprio Sentinela, rodada pelo Newman"
+tipo: suite
+ferramenta: newman
+pasta: ../exemplos_frameworks/newman_postman

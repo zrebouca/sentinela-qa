@@ -1,0 +1,24 @@
+appId: com.android.chrome
+name: "CT06 - Cadastro com CPF inválido"
+---
+- openLink: "http://10.0.2.2:8000/cadastro.html"
+- tapOn:
+    id: "nome"
+- eraseText
+- inputText: "Léo Vasconcelos"
+- tapOn:
+    id: "email"
+- eraseText
+- inputText: "mcardoso@example.org"
+- tapOn:
+    id: "cpf"
+- eraseText
+- inputText: "111.111.111-11"
+- tapOn:
+    id: "cep"
+- eraseText
+- inputText: "41176490"
+- tapOn:
+    id: "salvar"
+- assertVisible: "CPF inválido."
+# TODO: 'verificar_url' não tem equivalente direto no Maestro

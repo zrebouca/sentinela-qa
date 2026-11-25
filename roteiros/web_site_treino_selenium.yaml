@@ -1,0 +1,119 @@
+# MESMO roteiro do site de treino, rodando com SELENIUM WebDriver (motor: selenium) em vez do Playwright.
+# Roteiro do SITE DE TREINO local (pasta site_treino/), previsível e sem depender da internet.
+# Antes de rodar, suba o site:   sentinela site-treino      (fica em http://127.0.0.1:8000)
+# É este roteiro que o CI roda para provar que o Sentinela funciona (todos os casos devem passar).
+# Com --explorar, a exploração encontra o "bug plantado": o telefone não é validado.
+
+sistema: Loja Treino (Selenium WebDriver)
+motor: selenium
+versao: "1.0"
+responsavel: Mateus
+ambiente: Local
+objetivo: Validar login, busca, conteúdo dinâmico e o cadastro de clientes com validação de CPF, e-mail e CEP.
+alvo: http://127.0.0.1:8000
+tempo_limite: 8
+
+dados:
+  senha: "{env.TREINO_SENHA|treino123}"   # senha fictícia do site de treino
+  nome: "{faker.first_name} {faker.last_name}"
+  email: "{faker.email}"
+  cpf: "{faker.cpf}"
+  cep: "{faker.postcode}"
+
+funcionalidades:
+  - id: F01
+    nome: Login
+    criterios:
+      - Usuário e senha corretos levam ao painel com boas-vindas
+      - Senha errada ou campos vazios mostram mensagem de erro
+  - id: F02
+    nome: Painel
+    criterios:
+      - A busca filtra os produtos
+      - As ofertas aparecem depois do carregamento
+  - id: F03
+    nome: Cadastro de cliente
+    criterios:
+      - Dados válidos salvam o cadastro com mensagem de sucesso
+      - CPF inválido é bloqueado com mensagem clara
+
+casos:
+  - id: CT01
+    funcionalidade: F01
+    descricao: Login com usuário válido
+    esperado: Painel com "Bem-vindo, qa!"
+    severidade: Crítica
+    passos:
+      - abrir: /index.html
+      - logar: { usuario: qa, senha: "{dados.senha}", campo_usuario: "rotulo=Usuário", campo_senha: "rotulo=Senha", botao: "Entrar" }
+      - verificar_url: painel.html
+      - verificar_texto: "Bem-vindo, qa!"
+
+  - id: CT02
+    funcionalidade: F01
+    descricao: Login com senha errada
+    esperado: Mensagem "Usuário ou senha inválidos."
+    passos:
+      - abrir: /index.html
+      - preencher: { campo: "rotulo=Usuário", valor: qa }
+      - preencher: { campo: "rotulo=Senha", valor: errada }
+      - apertar_tecla: { tecla: Enter, campo: "rotulo=Senha" }
+      - verificar_mensagem: { tipo: erro, texto: "Usuário ou senha inválidos." }
+      - verificar_url: index.html
+
+  - id: CT03
+    funcionalidade: F01
+    descricao: Login com campos vazios
+    esperado: Mensagem pedindo para preencher
+    passos:
+      - abrir: /index.html
+      - clicar: "Entrar"
+      - verificar_mensagem: { tipo: erro, texto: "Preencha usuário e senha." }
+
+  - id: CT04
+    funcionalidade: F02
+    descricao: Buscar produto e carregar ofertas
+    esperado: Só a mochila aparece na busca; ofertas aparecem após o carregamento
+    passos:
+      - abrir: /index.html
+      - logar: { usuario: qa, senha: "{dados.senha}", campo_usuario: "#usuario", campo_senha: "#senha", botao: "#entrar" }
+      - buscar: { campo: "placeholder=Buscar produto", termo: mochila }
+      - verificar_texto: "Mochila escolar"
+      - verificar_elemento: { alvo: "#lista li", quantidade: 1 }
+      - clicar: "Carregar ofertas"
+      - esperar: { texto: "3 ofertas disponíveis hoje!" }
+      - verificar_sem_texto: "Carregando..."
+
+  - id: CT05
+    funcionalidade: F03
+    descricao: Cadastro com dados válidos (Faker pt_BR)
+    esperado: Mensagem "Cadastro realizado com sucesso!"
+    severidade: Alta
+    passos:
+      - abrir: /cadastro.html
+      - cadastrar:
+          campos:
+            "rotulo=Nome completo": "{dados.nome}"
+            "rotulo=E-mail": "{dados.email}"
+            "rotulo=CPF": "{dados.cpf}"
+            "rotulo=CEP": "{dados.cep}"
+            "rotulo=Telefone": "{faker.cellphone_number}"
+          enviar: "Salvar cadastro"
+      - verificar_url: sucesso.html
+      - verificar_mensagem: { tipo: sucesso, texto: "Cadastro realizado com sucesso!" }
+
+  - id: CT06
+    funcionalidade: F03
+    descricao: Cadastro com CPF inválido
+    esperado: Mensagem "CPF inválido." e o cadastro não é salvo
+    passos:
+      - abrir: /cadastro.html
+      - cadastrar:
+          campos:
+            "#nome": "{dados.nome}"
+            "#email": "{dados.email}"
+            "#cpf": "111.111.111-11"
+            "#cep": "{dados.cep}"
+          enviar: "#salvar"
+      - verificar_texto: { elemento: "#erro-cpf", texto: "CPF inválido." }
+      - verificar_url: cadastro.html

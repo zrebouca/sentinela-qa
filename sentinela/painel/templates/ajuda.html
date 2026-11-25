@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block titulo %}Guia de comandos{% endblock %}
+{% block cabecalho %}Guia de comandos{% endblock %}
+{% block subtitulo %}Tudo o que dá para escrever num roteiro{% endblock %}
+{% block conteudo %}
+<div class="grade g-2-1">
+  <section class="card">
+    <h2>Comandos de ação</h2>
+    <div class="tabela mt-p"><table>
+      <thead><tr><th>Comando</th><th>Exemplo</th><th>Para quê</th></tr></thead><tbody>
+      {% for c, ex, d in [
+        ('abrir', 'abrir: /login', 'Abre uma página (relativa ao alvo) ou o programa'),
+        ('logar', 'logar: { usuario: ana, senha: "{env.SENHA}" }', 'Preenche usuário e senha e entra'),
+        ('cadastrar', 'cadastrar: { campos: { "#nome": "{faker.name}" }, enviar: Salvar }', 'Preenche vários campos e envia'),
+        ('preencher', 'preencher: { campo: "rotulo=E-mail", valor: "{faker.email}" }', 'Apaga e escreve num campo'),
+        ('digitar', 'digitar: { campo: "#busca", texto: notebook }', 'Digita tecla por tecla'),
+        ('buscar', 'buscar: { termo: notebook }', 'Escreve na busca e aperta Enter'),
+        ('clicar', 'clicar: "Entrar"', 'Clica (também: clicar_duplo)'),
+        ('passar_mouse', 'passar_mouse: ".menu"', 'Hover sobre um elemento'),
+        ('arrastar', 'arrastar: { de: "#a", para: "#b" }', 'Arrasta e solta'),
+        ('rolar', 'rolar: fim   ·   rolar: { ate: "#rodape" }', 'baixo, cima, topo, fim, pixels'),
+        ('apertar_tecla', 'apertar_tecla: Enter', 'Tab, Esc, Ctrl+A...'),
+        ('esperar', 'esperar: { texto: Pronto }   ·   { sumir: "#loading" }', 'Espera algo acontecer (evite segundos fixos)'),
+        ('selecionar', 'selecionar: { campo: "#uf", opcao: Bahia }', 'Escolhe opção de lista'),
+        ('marcar / desmarcar', 'marcar: "#aceito"', 'Checkbox'),
+        ('enviar_arquivo', 'enviar_arquivo: { campo: "#upload", arquivo: arquivos/doc.pdf }', 'Upload'),
+        ('recarregar · voltar · capturar_tela · fechar', '- recarregar', 'Utilitários'),
+      ] %}<tr><td><b>{{ c }}</b></td><td><code>{{ ex }}</code></td><td class="pequeno">{{ d }}</td></tr>{% endfor %}
+      </tbody></table></div>
+
+    <h2 class="mt">Verificações (critérios de sucesso)</h2>
+    <div class="tabela mt-p"><table>
+      <thead><tr><th>Comando</th><th>Exemplo</th></tr></thead><tbody>
+      {% for c, ex in [
+        ('verificar_texto', 'verificar_texto: Bem-vindo   ·   { elemento: "#saldo", texto: "R$ 10" }'),
+        ('verificar_sem_texto', 'verificar_sem_texto: Erro'),
+        ('verificar_elemento', 'verificar_elemento: "#logout"   ·   { alvo: ".item", quantidade: 3 }'),
+        ('verificar_url', 'verificar_url: /painel   ·   { igual: "https://..." }'),
+        ('verificar_titulo', 'verificar_titulo: Painel'),
+        ('verificar_valor', 'verificar_valor: { campo: "#cep", valor: "01001000" }'),
+        ('verificar_mensagem', 'verificar_mensagem: { tipo: sucesso, texto: "Salvo!" }'),
+      ] %}<tr><td><b>{{ c }}</b></td><td><code>{{ ex }}</code></td></tr>{% endfor %}
+      </tbody></table></div>
+    <h2 class="mt">Testes de API (REST/JSON)</h2>
+    <p class="pequeno suave">Use <code>tipo: api</code> no roteiro (sem navegador) — ou misture com passos web.</p>
+    <div class="tabela mt-p"><table>
+      <thead><tr><th>Comando</th><th>Exemplo</th></tr></thead><tbody>
+      {% for c, ex in [
+        ('requisitar', 'requisitar: GET /ws/01001000/json/   ·   { metodo: POST, url: /posts, corpo: { title: Teste } }'),
+        ('verificar_status', 'verificar_status: 200   ·   { entre: [200, 299] }'),
+        ('verificar_json', 'verificar_json: { campo: localidade, valor: São Paulo }   ·   { campo: "itens[0].id", existe: true }'),
+        ('verificar_tempo', 'verificar_tempo: { maximo_ms: 2000 }'),
+        ('verificar_cabecalho', 'verificar_cabecalho: { nome: content-type, contem: json }'),
+        ('guardar', 'guardar: { campo: id, como: novo_id }   → depois use {dados.novo_id}'),
+      ] %}<tr><td><b>{{ c }}</b></td><td><code>{{ ex }}</code></td></tr>{% endfor %}
+      </tbody></table></div>
+
+    <h2 class="mt">Banco de dados (MySQL/MariaDB) dentro dos testes</h2>
+    <p class="pequeno suave">Configure <code>banco: { host, usuario, senha: "{env.SENTINELA_DB_SENHA|}", nome }</code> no roteiro.</p>
+    <div class="tabela mt-p"><table>
+      <thead><tr><th>Comando</th><th>Exemplo</th></tr></thead><tbody>
+      {% for c, ex in [
+        ('verificar_banco', 'verificar_banco: { sql: "SELECT COUNT(*) FROM produtos WHERE id = 5", valor: 1 }   ·   { existe: false }   ·   { linhas: 3 }'),
+        ('consultar_banco', 'consultar_banco: { sql: "SELECT MAX(id) FROM produtos", guardar_como: ultimo_id }'),
+        ('preparar_banco', 'preparar_banco: "DELETE FROM produtos WHERE estoque < 0"   (único que altera dados)'),
+      ] %}<tr><td><b>{{ c }}</b></td><td><code>{{ ex }}</code></td></tr>{% endfor %}
+      </tbody></table></div>
+
+    <h2 class="mt">Qualidade extra (bibliotecas gratuitas)</h2>
+    <div class="tabela mt-p"><table>
+      <thead><tr><th>Comando</th><th>Exemplo</th><th>Biblioteca</th></tr></thead><tbody>
+      {% for c, ex, lib in [
+        ('verificar_acessibilidade', 'verificar_acessibilidade: { impacto_minimo: serious, max_violacoes: 0 }', 'axe-core (WCAG 2.1)'),
+        ('verificar_esquema', 'verificar_esquema: { arquivo: esquemas/produto.json }', 'jsonschema'),
+        ('comparar_visual', 'comparar_visual: { nome: tela_login, tolerancia: 1 }', 'Pillow (regressão visual)'),
+        ('verificar_desempenho', 'verificar_desempenho: { carregamento_ms: 3000, lcp_ms: 2500 }', 'Navigation Timing / LCP'),
+        ('teste_carga', 'teste_carga: { url: /api, requisicoes: 50, concorrencia: 10, p95_ms: 800 }', 'threads (só em sistemas seus)'),
+        ('verificar_seguranca', 'verificar_seguranca: { exigir: [x-content-type-options] }', 'cabeçalhos e cookies'),
+        ('varredura_seguranca', 'varredura_seguranca: { injecao: [{ url: /produtos.php, parametro: busca }], login: { url: /login.php, campos: {...} } }', '14 pontos OWASP — só em sistemas seus'),
+        ('verificar_injecao', 'verificar_injecao: { url: /busca, parametro: q }', 'SQL injection + XSS num parâmetro'),
+        ('verificar_links', 'verificar_links: { limite: 40 }', 'links quebrados'),
+      ] %}<tr><td><b>{{ c }}</b></td><td><code>{{ ex }}</code></td><td class="pequeno">{{ lib }}</td></tr>{% endfor %}
+      </tbody></table></div>
+    <p class="pequeno suave">No roteiro também: <code>dispositivo: "iPhone 13"</code> (emulação de celular) e <code>navegador: msedge</code>.</p>
+
+    <h2 class="mt">Gherkin (BDD) em português</h2>
+    <p class="pequeno suave">Arquivos <code>.feature</code> também são roteiros. Converta um YAML com <code>sentinela gherkin --roteiro x.yaml</code>.</p>
+    <pre class="bloco"># language: pt
+# alvo: http://127.0.0.1:8000
+Funcionalidade: Login
+
+  @CT01 @critica
+  Cenário: Login com usuário válido
+    Dado que eu acesso "/index.html"
+    Quando eu preencho "rotulo=Usuário" com "qa"
+    E eu clico em "Entrar"
+    Então a URL deve conter "painel.html"
+    E devo ver "Bem-vindo, qa!"</pre>
+    <p class="pequeno suave">Frases aceitas: <i>eu acesso “…”</i>, <i>eu faço login com “…” e “…”</i>, <i>eu preencho “…” com “…”</i>,
+      <i>eu clico em “…”</i>, <i>eu aperto a tecla “…”</i>, <i>eu seleciono “…” em “…”</i>, <i>eu busco por “…”</i>,
+      <i>eu espero “…” aparecer</i>, <i>eu envio GET “…”</i>, <i>devo ver “…”</i>, <i>não devo ver “…”</i>,
+      <i>devo ver a mensagem de erro “…”</i>, <i>a URL deve conter “…”</i>, <i>o status deve ser 200</i>,
+      <i>o campo JSON “…” deve ser “…”</i>.</p>
+
+    <p class="pequeno suave mt-p">Se qualquer passo falhar, o caso fica <b>REPROVADO</b>, os passos seguintes não rodam e um defeito é aberto com a severidade do caso.</p>
+  </section>
+
+  <aside>
+    <section class="card">
+      <h2>Como apontar para um elemento</h2>
+      <h3 class="mt" style="font-size:14px">Web</h3>
+      <ul class="pequeno" style="padding-left:18px">
+        <li><code>testid=login</code> — data-testid (o mais estável)</li>
+        <li><code>rotulo=E-mail</code> — pelo label do campo</li>
+        <li><code>papel=button:Entrar</code> — papel de acessibilidade</li>
+        <li><code>#id</code>, <code>.classe</code>, <code>input[name=x]</code> — CSS</li>
+        <li><code>texto=Esqueci a senha</code>, <code>placeholder=Buscar</code></li>
+        <li><code>Entrar</code> — sem prefixo: tenta rótulo, botão, link e texto</li>
+      </ul>
+      <h3 class="mt" style="font-size:14px">Desktop</h3>
+      <ul class="pequeno" style="padding-left:18px">
+        <li><code>id=num7Button</code> — AutomationId (o mais estável)</li>
+        <li><code>nome=Sete</code>, <code>tipo=Button;nome=Igual a</code></li>
+        <li><code>{ x: 120, y: 300 }</code> — coordenada (último recurso)</li>
+      </ul>
+    </section>
+    <section class="card mt">
+      <h2>Massa de dados</h2>
+      <ul class="pequeno" style="padding-left:18px">
+        <li><code>{faker.name}</code>, <code>{faker.cpf}</code>, <code>{faker.email}</code>, <code>{faker.cellphone_number}</code></li>
+        <li><code>{env.SENHA}</code> — do arquivo .env (segredos)</li>
+        <li><code>{dados.nome}</code> — da seção <code>dados:</code> do roteiro</li>
+      </ul>
+    </section>
+    <section class="card mt">
+      <h2>Exploração de validações</h2>
+      <pre class="bloco">exploracao:
+  preparar:
+    - abrir: /cadastro
+  campos:
+    "#nome":  { tipo: nome }
+    "#email": { tipo: email }
+    "#cpf":   { tipo: cpf }
+  enviar: Cadastrar
+  sucesso_se: { url_contem: /ok }</pre>
+      <p class="pequeno suave">Tipos: texto, nome, email, cpf, cep, telefone, numero, senha.</p>
+    </section>
+  </aside>
+</div>
+<section class="card mt">
+  <div class="cab"><div><h2>Roteiro modelo</h2><div class="sub">Ponto de partida usado em “Novo roteiro”</div></div></div>
+  <pre class="bloco">{{ modelo }}</pre>
+</section>
+{% endblock %}

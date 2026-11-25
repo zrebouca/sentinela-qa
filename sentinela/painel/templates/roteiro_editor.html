@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% set editando = rot and rot.id %}
+{% block titulo %}{{ rot.nome if editando else 'Novo roteiro' }}{% endblock %}
+{% block cabecalho %}{{ rot.nome if editando else 'Novo roteiro' }}{% endblock %}
+{% block subtitulo %}Escreva os casos de teste — o roteiro é validado antes de salvar{% endblock %}
+{% block acoes %}
+<a class="btn" href="{{ url_for('roteiros') }}">{{ icone('voltar', 16) }} Voltar</a>
+{% if editando %}
+<select class="btn" style="width:auto;margin:0" onchange="if(this.value) location.href='{{ url_for('roteiro_exportar', rid=rot.id, formato='X') }}'.replace('/X', '/' + this.value); this.value=''" aria-label="Exportar para outro framework">
+  <option value="">⇩ Exportar para…</option>
+  {% for k, n in [('playwright-ts','Playwright TypeScript'),('cypress','Cypress'),('selenium-py','Selenium + pytest'),('pytest-api','pytest + requests (API)'),('restassured','RestAssured + JUnit 5'),('postman','Coleção do Postman'),('appium-py','Appium (Android)'),('maestro','Maestro (mobile)')] %}<option value="{{ k }}">{{ n }}</option>{% endfor %}
+</select>
+<a class="btn prim" href="{{ url_for('executar', projeto=rot.projeto_id, roteiro=rot.id) }}">{{ icone('executar', 16) }} Executar</a>{% endif %}
+{% endblock %}
+{% block conteudo %}
+<form method="post" enctype="multipart/form-data" class="grade g-2-1" id="form-roteiro">
+  <section class="card">
+    <div class="cab"><div><h2>Conteúdo (YAML)</h2><div class="sub">YAML (2 espaços de recuo) ou Gherkin em português (Funcionalidade / Cenário / Dado / Quando / Então).</div></div>
+      <div class="dir flex"><button type="button" class="btn peq" id="btn-validar">{{ icone('check', 14) }} Validar</button></div></div>
+    <textarea class="codigo" name="conteudo" id="conteudo" spellcheck="false">{{ conteudo }}</textarea>
+  </section>
+  <aside>
+    <section class="card">
+      <h2>Dados do roteiro</h2>
+      <label class="campo mt">Projeto
+        <select name="projeto_id">{% for p in projetos %}<option value="{{ p.id }}" {{ 'selected' if p.id == rot.projeto_id }}>{{ p.nome }}</option>{% endfor %}</select></label>
+      <label class="campo">Nome do roteiro
+        <input type="text" name="nome" required value="{{ rot.nome or '' }}" placeholder="Ex.: Fluxo de login"></label>
+      <label class="campo">Descrição
+        <input type="text" name="descricao" value="{{ rot.descricao or '' }}" placeholder="O que este roteiro cobre"></label>
+      <label class="campo">Ou importar um arquivo .yaml, .json ou .feature (Gherkin)
+        <input type="file" name="arquivo" accept=".yaml,.yml,.json,.feature" style="margin-top:6px">
+        <span class="dica">Se escolher um arquivo, ele substitui o texto do editor.</span></label>
+      <button class="btn prim" style="width:100%;justify-content:center">{{ icone('check', 16) }} Validar e salvar</button>
+    </section>
+    <section class="card mt" id="resultado">
+      <h2>Validação</h2>
+      <p class="suave pequeno mt-p" id="res-texto">Clique em “Validar” para conferir o roteiro sem salvar.</p>
+      <ul id="res-casos" class="pequeno" style="padding-left:18px;margin:0"></ul>
+    </section>
+    <section class="card mt">
+      <h2>Comandos mais usados</h2>
+      <pre class="bloco" style="margin-top:10px">- abrir: /login
+- preencher: { campo: "#email", valor: "{faker.email}" }
+- clicar: "Entrar"
+- verificar_texto: "Bem-vindo"
+- verificar_url: /painel
+- verificar_mensagem: { tipo: erro, texto: "Senha inválida" }</pre>
+      <a class="pequeno" href="{{ url_for('ajuda') }}" target="_blank">Ver todos os comandos {{ icone('abrir', 12) }}</a>
+    </section>
+  </aside>
+</form>
+{% if editando %}
+<form method="post" action="{{ url_for('roteiro_excluir', rid=rot.id) }}" class="mt" data-confirmar="Excluir este roteiro? O histórico de execuções é mantido.">
+  <button class="btn perigo">{{ icone('lixo', 16) }} Excluir roteiro</button></form>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+  // Tab no editor insere 2 espaços (em vez de pular de campo)
+  const ed = document.getElementById('conteudo');
+  ed.addEventListener('keydown', e => {
+    if (e.key === 'Tab') { e.preventDefault(); const s = ed.selectionStart;
+      ed.value = ed.value.slice(0, s) + '  ' + ed.value.slice(ed.selectionEnd); ed.selectionStart = ed.selectionEnd = s + 2; }
+  });
+  // Validação sem salvar
+  document.getElementById('btn-validar').addEventListener('click', async () => {
+    const txt = document.getElementById('res-texto'), lista = document.getElementById('res-casos');
+    txt.textContent = 'Validando...'; lista.innerHTML = '';
+    const r = await fetch('{{ url_for("api_validar") }}', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ conteudo: ed.value }) }).then(r => r.json());
+    if (!r.ok) { txt.innerHTML = '<span class="selo vermelho">Com erro</span> '; txt.append(r.erro); return; }
+    txt.innerHTML = `<span class="selo verde">Roteiro válido</span> ${r.casos.length} caso(s)${r.exploracao ? ' · com exploração' : ''}`;
+    r.casos.forEach(c => { const li = document.createElement('li'); li.textContent = `${c.id} — ${c.descricao} (${c.passos} passos)`; lista.append(li); });
+  });
+</script>
+{% endblock %}

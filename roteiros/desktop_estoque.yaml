@@ -1,0 +1,96 @@
+# Roteiro do ESTOQUE DESKTOP — sistema de treino em Windows Forms (C#), na pasta sistemas_treino/estoque_desktop.
+# O Sentinela compila o .exe sozinho na primeira vez (com o csc.exe que já vem no Windows).
+# Os controles são encontrados pelo AutomationId (o "Name" de cada controle no código C#).
+# O CT05 encontra o BUG PLANTADO: quantidade negativa é aceita.
+
+sistema: Estoque Desktop (WinForms)
+versao: "treino"
+responsavel: Mateus
+ambiente: Desktop Windows (.NET Framework)
+objetivo: Validar login, cadastro com validações, busca e exclusão de produtos num sistema desktop real.
+alvo: sistemas_treino/estoque_desktop/EstoqueDesktop.exe   # relativo à pasta do Sentinela
+janela: "^Estoque Desktop"
+tempo_limite: 8
+
+funcionalidades:
+  - id: F01
+    nome: Login
+    criterios:
+      - Senha errada mostra mensagem e não entra
+      - Usuário válido abre o cadastro
+  - id: F02
+    nome: Cadastro de produtos
+    criterios:
+      - Produto válido entra na lista e atualiza o total
+      - Preço zero/negativo e quantidade negativa são recusados
+
+casos:
+  - id: CT01
+    funcionalidade: F01
+    descricao: Login com senha errada
+    esperado: Mensagem "Usuário ou senha inválidos."
+    passos:
+      - preencher: { campo: "id=txtUsuario", valor: qa }
+      - preencher: { campo: "id=txtSenha", valor: errada }
+      - clicar: "id=btnEntrar"
+      - verificar_texto: { elemento: "id=lblMensagemLogin", texto: "Usuário ou senha inválidos." }
+
+  - id: CT02
+    funcionalidade: F01
+    descricao: Login com usuário válido
+    esperado: Tela de cadastro aberta com o título "Estoque Desktop — qa"
+    severidade: Crítica
+    passos:
+      - preencher: { campo: "id=txtSenha", valor: "{env.ESTOQUE_SENHA|treino123}" }
+      - clicar: "id=btnEntrar"
+      - verificar_elemento: "id=txtNome"
+      - verificar_titulo: "qa"
+
+  - id: CT03
+    funcionalidade: F02
+    descricao: Adicionar produto válido
+    esperado: Mensagem de sucesso, item na lista e total com 4 produtos
+    severidade: Alta
+    passos:
+      - preencher: { campo: "id=txtNome", valor: "Teclado mecânico" }
+      - preencher: { campo: "id=txtPreco", valor: "249,90" }
+      - preencher: { campo: "id=txtQuantidade", valor: "5" }
+      - selecionar: { campo: "id=cmbCategoria", opcao: "Informática" }
+      - clicar: "id=btnAdicionar"
+      - verificar_texto: { elemento: "id=lblStatus", texto: "Produto adicionado com sucesso!" }
+      - verificar_texto: "Teclado mecânico"
+      - verificar_texto: { elemento: "id=lblTotal", texto: "4 produto(s)" }
+
+  - id: CT04
+    funcionalidade: F02
+    descricao: Preço zero é recusado
+    esperado: Mensagem de preço inválido e nada adicionado
+    passos:
+      - preencher: { campo: "id=txtNome", valor: "Produto grátis" }
+      - preencher: { campo: "id=txtPreco", valor: "0" }
+      - preencher: { campo: "id=txtQuantidade", valor: "1" }
+      - clicar: "id=btnAdicionar"
+      - verificar_texto: { elemento: "id=lblStatus", texto: "Preço inválido" }
+      - verificar_sem_texto: "Produto grátis"
+
+  - id: CT05
+    funcionalidade: F02
+    descricao: Quantidade negativa deve ser recusada
+    esperado: Mensagem "Quantidade inválida" e o produto NÃO entra na lista
+    severidade: Alta
+    passos:
+      - preencher: { campo: "id=txtNome", valor: "Estoque negativo" }
+      - preencher: { campo: "id=txtPreco", valor: "10" }
+      - preencher: { campo: "id=txtQuantidade", valor: "-3" }
+      - clicar: "id=btnAdicionar"
+      - verificar_texto: { elemento: "id=lblStatus", texto: "Quantidade inválida" }
+
+  - id: CT06
+    funcionalidade: F02
+    descricao: Buscar produto
+    esperado: Mensagem com 1 produto encontrado para "mouse"
+    passos:
+      - preencher: { campo: "id=txtBusca", valor: mouse }
+      - clicar: "id=btnBuscar"
+      - verificar_texto: { elemento: "id=lblStatus", texto: "1 produto(s) encontrado(s)" }
+      - clicar: "id=btnLimparBusca"

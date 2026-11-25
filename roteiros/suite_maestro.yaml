@@ -1,0 +1,10 @@
+# Roteiro do tipo SUITE: o Sentinela roda uma suíte de outro framework e lê o resultado (JUnit XML)
+# para colocar no mesmo relatório, histórico e gestão de defeitos.
+sistema: "Loja Treino — Maestro (mobile)"
+versao: "framework: maestro"
+responsavel: Mateus
+ambiente: Local
+objetivo: "Fluxos Maestro para web mobile (precisa de Maestro e emulador Android)"
+tipo: suite
+ferramenta: maestro
+pasta: ../exemplos_frameworks/maestro

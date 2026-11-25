@@ -1,0 +1,6 @@
+appId: com.android.chrome
+name: "CT03 - Login com campos vazios"
+---
+- openLink: "http://10.0.2.2:8000/index.html"
+- tapOn: "Entrar"
+- assertVisible: "Preencha usuário e senha."

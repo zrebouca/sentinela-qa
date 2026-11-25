@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+{% block titulo %}Testar API{% endblock %}
+{% block cabecalho %}Testar API{% endblock %}
+{% block subtitulo %}Monte a requisição, adicione verificações, veja a resposta e salve como caso de teste — no estilo do Postman{% endblock %}
+{% block acoes %}
+<form method="post" action="{{ url_for('postman_importar') }}" enctype="multipart/form-data" class="flex" id="form-postman">
+  <label class="btn" style="margin:0">{{ icone('upload', 16) }} Importar coleção do Postman
+    <input type="file" name="colecao" accept=".json" style="display:none" onchange="this.form.submit()"></label>
+</form>
+{% endblock %}
+{% block conteudo %}
+<section class="card">
+  <div class="flex wrap" style="margin-bottom:10px">
+    <span class="pequeno suave">Exemplos rápidos:</span>
+    {% for id, rot in [('cep', 'ViaCEP: CEP'), ('feriados', 'BrasilAPI: feriados'), ('login', 'DummyJSON: login (JWT)'),
+                        ('me', 'DummyJSON: rota protegida'), ('booker', 'Restful-Booker: token'), ('graphql', 'GraphQL: países'),
+                        ('loja', 'Loja PHP (XAMPP)')] %}
+    <button type="button" class="btn peq" data-exemplo="{{ id }}">{{ rot }}</button>{% endfor %}
+  </div>
+  <div class="barra-url">
+    <select id="metodo" aria-label="Método HTTP">{% for m in ['GET','POST','PUT','PATCH','DELETE','HEAD'] %}<option>{{ m }}</option>{% endfor %}</select>
+    <input type="text" id="url" placeholder="https://api.exemplo.com/recurso — use {{ '{{' }}variavel{{ '}}' }} para variáveis" aria-label="URL">
+    <button class="btn prim" id="enviar">{{ icone('executar', 16) }} Enviar</button>
+  </div>
+</section>
+
+<div class="grade g2 mt">
+  <section class="card">
+    <div class="abas" role="tablist" id="abas-req">
+      <button class="ativa" data-aba="t-params">Parâmetros</button><button data-aba="t-cab">Cabeçalhos</button>
+      <button data-aba="t-auth">Autenticação</button><button data-aba="t-corpo">Corpo</button>
+      <button data-aba="t-verif">Verificações <span class="contador-aba" id="n-verif">0</span></button>
+      <button data-aba="t-vars">Variáveis</button>
+    </div>
+    <div class="painel-aba ativa" id="t-params"><div class="linhas" id="params"></div>
+      <button class="btn peq mt-p" data-add="params">{{ icone('mais', 14) }} Parâmetro</button></div>
+    <div class="painel-aba" id="t-cab"><div class="linhas" id="cabs"></div>
+      <button class="btn peq mt-p" data-add="cabs">{{ icone('mais', 14) }} Cabeçalho</button></div>
+    <div class="painel-aba" id="t-auth">
+      <label class="campo">Tipo<select id="auth-tipo"><option value="">Sem autenticação</option><option value="bearer">Bearer token (JWT)</option>
+        <option value="basic">Basic (usuário e senha)</option><option value="apikey">Chave de API (cabeçalho)</option></select></label>
+      <div id="auth-bearer" class="auth-op"><label class="campo">Token<input type="text" id="auth-token" placeholder="{{ '{{' }}token{{ '}}' }}"></label></div>
+      <div id="auth-basic" class="auth-op grade g2" style="gap:10px"><label class="campo">Usuário<input type="text" id="auth-usuario"></label>
+        <label class="campo">Senha<input type="password" id="auth-senha" autocomplete="off"></label></div>
+      <div id="auth-apikey" class="auth-op grade g2" style="gap:10px"><label class="campo">Nome do cabeçalho<input type="text" id="auth-chave-nome" placeholder="X-API-Key"></label>
+        <label class="campo">Valor<input type="text" id="auth-chave-valor"></label></div>
+      <p class="pequeno suave">Dica: não deixe senhas reais salvas — use variáveis e o arquivo .env nos roteiros.</p>
+    </div>
+    <div class="painel-aba" id="t-corpo">
+      <textarea id="corpo" class="codigo" style="min-height:220px" placeholder='{ "nome": "Teste", "preco": 10 }' spellcheck="false"></textarea>
+      <div class="flex mt-p"><button type="button" class="btn peq" id="formatar">Formatar JSON</button>
+        <span class="pequeno suave">JSON (enviado com Content-Type: application/json) ou texto puro.</span></div>
+    </div>
+    <div class="painel-aba" id="t-verif"><p class="pequeno suave" style="margin-top:0">Critérios de sucesso — rodam a cada envio. Campo JSON: <code>data.items[0].nome</code></p>
+      <div class="linhas" id="verifs"></div>
+      <button class="btn peq mt-p" data-add="verifs">{{ icone('mais', 14) }} Verificação</button></div>
+    <div class="painel-aba" id="t-vars"><p class="pequeno suave" style="margin-top:0">Use <code>{{ '{{' }}nome{{ '}}' }}</code> na URL, cabeçalhos, corpo e token.
+      A verificação “Guardar campo em variável” preenche aqui sozinha (ex.: o token do login).</p>
+      <div class="linhas" id="vars"></div><button class="btn peq mt-p" data-add="vars">{{ icone('mais', 14) }} Variável</button></div>
+  </section>
+
+  <section class="card">
+    <div class="cab"><div><h2>Resposta</h2></div>
+      <div class="dir flex" id="resumo-resp"><span class="suave pequeno">Envie uma requisição</span></div></div>
+    <div class="abas" role="tablist" id="abas-resp">
+      <button class="ativa" data-aba="r-corpo">Corpo</button><button data-aba="r-cab">Cabeçalhos</button>
+      <button data-aba="r-verif">Verificações</button><button data-aba="r-codigo">Código</button>
+    </div>
+    <div class="painel-aba ativa" id="r-corpo"><pre class="bloco resposta" id="resp-corpo">—</pre></div>
+    <div class="painel-aba" id="r-cab"><pre class="bloco resposta" id="resp-cab">—</pre></div>
+    <div class="painel-aba" id="r-verif"><ul class="atividade" id="resp-verif"><li class="suave">Sem verificações ainda.</li></ul></div>
+    <div class="painel-aba" id="r-codigo">
+      <div class="flex wrap" style="margin-bottom:8px">{% for l, n in [('curl', 'cURL'), ('python', 'Python (requests)'), ('js', 'JavaScript (fetch)'), ('restassured', 'Java (RestAssured)'), ('postman', 'Teste do Postman')] %}
+        <button type="button" class="btn peq" data-codigo="{{ l }}">{{ n }}</button>{% endfor %}</div>
+      <pre class="bloco resposta" id="resp-codigo">Escolha a linguagem.</pre>
+    </div>
+  </section>
+</div>
+
+<div class="grade g-2-1 mt">
+  <section class="card">
+    <div class="cab"><div><h2>Salvar como caso de teste</h2><div class="sub">Vira um caso no roteiro “Testador de API” do projeto — e pode rodar em Executar, no CI ou ser exportado para RestAssured/Postman</div></div></div>
+    <div class="grade g2" style="gap:12px">
+      <label class="campo">Projeto<select id="salvar-projeto">{% for p in projetos %}<option value="{{ p.id }}">{{ p.nome }}{{ ' (API)' if p.tipo == 'api' }}</option>{% endfor %}</select></label>
+      <label class="campo">Nome do caso<input type="text" id="salvar-nome" placeholder="Ex.: Consultar CEP existente"></label>
+    </div>
+    <div class="flex"><button class="btn prim" id="salvar">{{ icone('check', 16) }} Salvar caso</button><span class="pequeno" id="salvar-msg"></span></div>
+  </section>
+  <section class="card">
+    <h2>Histórico</h2>
+    <ul class="atividade pequeno" id="historico"><li class="suave">Nada ainda.</li></ul>
+  </section>
+</div>
+
+<section class="card mt">
+  <div class="cab"><div><h2>Roteiros de API e exportação</h2><div class="sub">Rode no Sentinela ou baixe como projeto de outro framework</div></div></div>
+  {% if roteiros_api %}
+  <div class="tabela"><table><thead><tr><th>Roteiro</th><th>Projeto</th><th>Exportar para</th><th></th></tr></thead><tbody>
+  {% for r in roteiros_api %}<tr><td><a href="{{ url_for('roteiro_editor', rid=r.id) }}"><b>{{ r.nome }}</b></a></td><td>{{ r.projeto }}</td>
+    <td class="flex wrap">{% for f, n in [('postman', 'Postman'), ('restassured', 'RestAssured'), ('pytest-api', 'pytest'), ('playwright-ts', 'Playwright TS'), ('cypress', 'Cypress')] %}
+      <a class="btn peq" href="{{ url_for('roteiro_exportar', rid=r.id, formato=f) }}">{{ n }}</a>{% endfor %}</td>
+    <td><a class="btn peq prim" href="{{ url_for('executar', roteiro=r.id) }}">{{ icone('executar', 13) }}</a></td></tr>{% endfor %}
+  </tbody></table></div>
+  {% else %}<p class="suave">Nenhum roteiro de API ainda — salve um caso acima ou importe uma coleção do Postman.</p>{% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<style>
+  .barra-url { display: grid; grid-template-columns: 120px 1fr auto; gap: 10px; align-items: center; }
+  .barra-url select, .barra-url input { margin: 0; }
+  .linhas .linha { display: grid; grid-template-columns: 1fr 1fr 34px; gap: 8px; margin-bottom: 8px; align-items: center; }
+  .linhas .linha.v { grid-template-columns: 1.2fr 1fr 1fr 34px; }
+  .linhas input, .linhas select, .linhas textarea { margin: 0; }
+  .linha .x { border: 1px solid var(--linha); background: #fff; border-radius: 8px; height: 38px; cursor: pointer; color: var(--vermelho); }
+  pre.resposta { max-height: 460px; overflow: auto; margin: 10px 0 0; white-space: pre-wrap; word-break: break-word; }
+  .contador-aba { background: var(--azul); color: #fff; border-radius: 99px; font-size: 11px; padding: 0 6px; margin-left: 4px; }
+  .auth-op { display: none; } .auth-op.on { display: grid; }
+  #historico li { cursor: pointer; } #historico li:hover { background: #f6f8fd; }
+  @media (max-width: 820px) { .barra-url { grid-template-columns: 1fr; } .linhas .linha, .linhas .linha.v { grid-template-columns: 1fr; } }
+</style>
+<script>
+  const VERIF = {{ verificacoes|tojson }};
+  const URL_ENVIAR = "{{ url_for('api_tester_enviar') }}", URL_SALVAR = "{{ url_for('api_tester_salvar') }}";
+</script>
+<script>{% raw %}
+  // (bloco "raw": aqui {{variavel}} é a sintaxe de variáveis do testador, não do Jinja)
+  const $ = (id) => document.getElementById(id);
+  // ------------------------------------------------------------ linhas chave/valor
+  function linha(lista, k = '', v = '', extra = {}) {
+    const div = document.createElement('div');
+    if (lista === 'verifs') {
+      div.className = 'linha v';
+      const sel = document.createElement('select');
+      Object.entries(VERIF).forEach(([cod, nome]) => sel.add(new Option(nome, cod, false, cod === (extra.tipo || 'status'))));
+      const campo = Object.assign(document.createElement('input'), { placeholder: 'campo (ex.: data.id)', value: extra.campo || '' });
+      const valor = Object.assign(document.createElement('input'), { placeholder: 'valor esperado', value: extra.valor ?? '' });
+      const ajustar = () => {
+        const t = sel.value;
+        campo.style.visibility = ['status', 'status_entre', 'tempo', 'esquema'].includes(t) ? 'hidden' : 'visible';
+        valor.style.visibility = ['json_existe', 'json_ausente'].includes(t) ? 'hidden' : 'visible';
+        valor.placeholder = { status: '200', status_entre: '200-299', tempo: '1000', esquema: '{"type":"object","required":["id"]}',
+          json_tipo: 'texto | numero | lista | objeto | booleano', guardar: 'nome da variável', cabecalho: 'json' }[t] || 'valor esperado';
+        campo.placeholder = t === 'cabecalho' ? 'content-type' : 'campo (ex.: data.id)';
+      };
+      sel.addEventListener('change', ajustar); div.append(sel, campo, valor); ajustar();
+    } else {
+      div.className = 'linha';
+      div.append(Object.assign(document.createElement('input'), { placeholder: lista === 'vars' ? 'nome' : 'chave', value: k }),
+                 Object.assign(document.createElement('input'), { placeholder: 'valor', value: v }));
+    }
+    const x = Object.assign(document.createElement('button'), { type: 'button', className: 'x', textContent: '×', title: 'Remover' });
+    x.addEventListener('click', () => { div.remove(); contar(); salvarVars(); });
+    div.append(x); $(lista).append(div); contar();
+    return div;
+  }
+  const lerKV = (lista) => [...$(lista).children].map(d => ({ k: d.children[0].value.trim(), v: d.children[1].value }));
+  const lerVerif = () => [...$('verifs').children].map(d => ({ tipo: d.children[0].value, campo: d.children[1].value, valor: d.children[2].value }));
+  const contar = () => { $('n-verif').textContent = $('verifs').children.length; };
+  document.querySelectorAll('[data-add]').forEach(b => b.addEventListener('click', () => linha(b.dataset.add)));
+
+  // ------------------------------------------------------------ variáveis {{x}} (guardadas neste navegador)
+  function vars() { const o = {}; lerKV('vars').forEach(p => { if (p.k) o[p.k] = p.v; }); return o; }
+  function salvarVars() { try { localStorage.setItem('sentinela_api_vars', JSON.stringify(vars())); } catch (e) {} }
+  function definirVar(nome, valor) {
+    const existente = [...$('vars').children].find(d => d.children[0].value === nome);
+    if (existente) existente.children[1].value = valor; else linha('vars', nome, valor);
+    salvarVars();
+  }
+  const sub = (s) => String(s ?? '').replace(/\{\{\s*([\w.-]+)\s*\}\}/g, (m, n) => (n in vars() ? vars()[n] : m));
+  try { Object.entries(JSON.parse(localStorage.getItem('sentinela_api_vars') || '{}')).forEach(([k, v]) => linha('vars', k, v)); } catch (e) {}
+  $('vars').addEventListener('input', salvarVars);
+
+  // ------------------------------------------------------------ abas
+  function abas(grupo) {
+    document.querySelectorAll(`#${grupo} button`).forEach(b => b.addEventListener('click', () => {
+      document.querySelectorAll(`#${grupo} button`).forEach(x => x.classList.toggle('ativa', x === b));
+      b.closest('section').querySelectorAll(':scope > .painel-aba').forEach(p => p.classList.toggle('ativa', p.id === b.dataset.aba));
+    }));
+  }
+  abas('abas-req'); abas('abas-resp');
+  $('auth-tipo').addEventListener('change', () => document.querySelectorAll('.auth-op').forEach(d => d.classList.toggle('on', d.id === 'auth-' + $('auth-tipo').value)));
+  $('formatar').addEventListener('click', () => { try { $('corpo').value = JSON.stringify(JSON.parse($('corpo').value), null, 2); } catch (e) { alert('O corpo não é um JSON válido: ' + e.message); } });
+
+  // ------------------------------------------------------------ montar e enviar
+  function montar(substituir = true) {
+    const s = substituir ? sub : (x) => x;
+    return { metodo: $('metodo').value, url: s($('url').value.trim()),
+      consulta: lerKV('params').map(p => ({ k: p.k, v: s(p.v) })), cabecalhos: lerKV('cabs').map(p => ({ k: p.k, v: s(p.v) })),
+      auth: { tipo: $('auth-tipo').value, token: s($('auth-token').value), usuario: s($('auth-usuario').value), senha: $('auth-senha').value,
+              chave_nome: $('auth-chave-nome').value, chave_valor: s($('auth-chave-valor').value) },
+      corpo: s($('corpo').value), verificacoes: lerVerif() };
+  }
+  async function enviar() {
+    const d = montar();
+    $('resumo-resp').innerHTML = '<span class="selo azul">Enviando...</span>';
+    const r = await fetch(URL_ENVIAR, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) }).then(x => x.json());
+    if (!r.ok) { $('resumo-resp').innerHTML = ''; $('resp-corpo').textContent = '✘ ' + r.erro; return; }
+    const cor = r.status < 300 ? 'verde' : r.status < 400 ? 'azul' : r.status < 500 ? 'laranja' : 'vermelho';
+    const passou = r.resultados.filter(x => x.ok).length;
+    $('resumo-resp').innerHTML = `<span class="selo ${cor}">${r.status}</span><span class="selo cinza">${r.tempo_ms} ms</span>` +
+      `<span class="selo cinza">${(r.tamanho / 1024).toFixed(1)} KB</span>` +
+      (r.resultados.length ? `<span class="selo ${passou === r.resultados.length ? 'verde' : 'vermelho'}">${passou}/${r.resultados.length} verificações</span>` : '');
+    $('resp-corpo').textContent = r.corpo || '(sem corpo)';
+    $('resp-cab').textContent = Object.entries(r.cabecalhos).map(([k, v]) => `${k}: ${v}`).join('\n');
+    const ul = $('resp-verif'); ul.innerHTML = '';
+    r.resultados.forEach(x => { const li = document.createElement('li'); li.innerHTML = `<span class="selo ${x.ok ? 'verde' : 'vermelho'}">${x.ok ? 'OK' : 'FALHOU'}</span>`;
+      li.append(' ' + x.msg); ul.append(li); });
+    if (!r.resultados.length) ul.innerHTML = '<li class="suave">Nenhuma verificação — adicione na aba Verificações.</li>';
+    Object.entries(r.variaveis || {}).forEach(([k, v]) => definirVar(k, typeof v === 'object' ? JSON.stringify(v) : String(v)));
+    historico(montar(false), r.status);
+  }
+  $('enviar').addEventListener('click', enviar);
+  $('url').addEventListener('keydown', e => { if (e.key === 'Enter') enviar(); });
+
+  // ------------------------------------------------------------ histórico (neste navegador)
+  function historico(req, status) {
+    let h = []; try { h = JSON.parse(localStorage.getItem('sentinela_api_hist') || '[]'); } catch (e) {}
+    if (req) { h.unshift({ req, status, quando: new Date().toLocaleTimeString('pt-BR') }); h = h.slice(0, 15);
+      try { localStorage.setItem('sentinela_api_hist', JSON.stringify(h)); } catch (e) {} }
+    const ul = $('historico'); ul.innerHTML = h.length ? '' : '<li class="suave">Nada ainda.</li>';
+    h.forEach(item => { const li = document.createElement('li');
+      li.innerHTML = `<span class="selo ${item.status < 400 ? 'verde' : 'vermelho'}">${item.status}</span>`;
+      li.append(` ${item.req.metodo} ${item.req.url.slice(0, 70)} · ${item.quando}`); li.addEventListener('click', () => carregar(item.req)); ul.append(li); });
+  }
+  function carregar(req) {
+    $('metodo').value = req.metodo; $('url').value = req.url; $('corpo').value = req.corpo || '';
+    ['params', 'cabs', 'verifs'].forEach(l => { $(l).innerHTML = ''; });
+    (req.consulta || []).forEach(p => linha('params', p.k, p.v)); (req.cabecalhos || []).forEach(p => linha('cabs', p.k, p.v));
+    (req.verificacoes || []).forEach(v => linha('verifs', '', '', v));
+    const a = req.auth || {}; $('auth-tipo').value = a.tipo || ''; $('auth-token').value = a.token || ''; $('auth-usuario').value = a.usuario || '';
+    $('auth-chave-nome').value = a.chave_nome || ''; $('auth-chave-valor').value = a.chave_valor || '';
+    $('auth-tipo').dispatchEvent(new Event('change')); contar();
+  }
+  historico();
+
+  // ------------------------------------------------------------ exemplos prontos (APIs públicas e gratuitas)
+  const EXEMPLOS = {
+    cep: { metodo: 'GET', url: 'https://viacep.com.br/ws/01001000/json/', verificacoes: [{ tipo: 'status', valor: '200' },
+      { tipo: 'json_igual', campo: 'localidade', valor: 'São Paulo' }, { tipo: 'tempo', valor: '3000' },
+      { tipo: 'esquema', valor: '{"type":"object","required":["cep","logradouro","uf"]}' }] },
+    feriados: { metodo: 'GET', url: 'https://brasilapi.com.br/api/feriados/v1/2026', verificacoes: [{ tipo: 'status', valor: '200' },
+      { tipo: 'json_tipo', campo: '', valor: 'lista' }, { tipo: 'json_contem', campo: '', valor: 'Tiradentes' }] },
+    login: { metodo: 'POST', url: 'https://dummyjson.com/auth/login', corpo: '{\n  "username": "emilys",\n  "password": "emilyspass"\n}',
+      verificacoes: [{ tipo: 'status', valor: '200' }, { tipo: 'json_existe', campo: 'accessToken' }, { tipo: 'guardar', campo: 'accessToken', valor: 'token' }] },
+    me: { metodo: 'GET', url: 'https://dummyjson.com/auth/me', auth: { tipo: 'bearer', token: '{{token}}' },
+      verificacoes: [{ tipo: 'status', valor: '200' }, { tipo: 'json_igual', campo: 'username', valor: 'emilys' }] },
+    booker: { metodo: 'POST', url: 'https://restful-booker.herokuapp.com/auth', corpo: '{\n  "username": "admin",\n  "password": "password123"\n}',
+      verificacoes: [{ tipo: 'status', valor: '200' }, { tipo: 'guardar', campo: 'token', valor: 'booker_token' }] },
+    graphql: { metodo: 'POST', url: 'https://countries.trevorblades.com/', corpo: '{\n  "query": "{ country(code: \\"BR\\") { name capital currency } }"\n}',
+      verificacoes: [{ tipo: 'status', valor: '200' }, { tipo: 'json_igual', campo: 'data.country.capital', valor: 'Brasília' }] },
+    loja: { metodo: 'GET', url: 'http://localhost/sentinela-loja/api/produtos.php', verificacoes: [{ tipo: 'status', valor: '200' },
+      { tipo: 'json_tipo', campo: 'produtos', valor: 'lista' }, { tipo: 'cabecalho', campo: 'content-type', valor: 'json' }] },
+  };
+  document.querySelectorAll('[data-exemplo]').forEach(b => b.addEventListener('click', () => { carregar(EXEMPLOS[b.dataset.exemplo]); $('salvar-nome').value = b.textContent; }));
+
+  // ------------------------------------------------------------ salvar como caso
+  $('salvar').addEventListener('click', async () => {
+    const d = Object.assign(montar(false), { projeto_id: $('salvar-projeto').value, nome: $('salvar-nome').value });
+    const r = await fetch(URL_SALVAR, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) }).then(x => x.json());
+    $('salvar-msg').innerHTML = r.ok ? `<span style="color:var(--verde)">${r.msg}</span> <a href="${r.link}">abrir roteiro</a>` : `<span style="color:var(--vermelho)">${r.erro}</span>`;
+  });
+
+  // ------------------------------------------------------------ gerar código
+  function codigo(ling) {
+    const d = montar(); const cab = {}; d.cabecalhos.forEach(c => { if (c.k) cab[c.k] = c.v; });
+    if (d.auth.tipo === 'bearer') cab['Authorization'] = 'Bearer ' + d.auth.token;
+    const qs = d.consulta.filter(p => p.k).map(p => `${encodeURIComponent(p.k)}=${encodeURIComponent(p.v)}`).join('&');
+    const url = d.url + (qs ? (d.url.includes('?') ? '&' : '?') + qs : ''); const corpo = d.corpo.trim();
+    const temCorpo = corpo && !['GET', 'HEAD'].includes(d.metodo);
+    if (temCorpo) cab['Content-Type'] = 'application/json';
+    if (ling === 'curl') return `curl -X ${d.metodo} "${url}"` + Object.entries(cab).map(([k, v]) => ` \\\n  -H "${k}: ${v}"`).join('') + (temCorpo ? ` \\\n  -d '${corpo.replace(/\n\s*/g, ' ')}'` : '');
+    if (ling === 'python') return `import requests\n\nr = requests.request("${d.metodo}", "${url}"` + (Object.keys(cab).length ? `,\n    headers=${JSON.stringify(cab)}` : '') +
+      (temCorpo ? `,\n    json=${corpo.replace(/\n\s*/g, ' ').replace(/\btrue\b/g, 'True').replace(/\bfalse\b/g, 'False').replace(/\bnull\b/g, 'None')}` : '') + `, timeout=20)\nprint(r.status_code, r.json())`;
+    if (ling === 'js') return `const r = await fetch("${url}", {\n  method: "${d.metodo}",\n  headers: ${JSON.stringify(cab)},` + (temCorpo ? `\n  body: JSON.stringify(${corpo.replace(/\n\s*/g, ' ')}),` : '') + `\n});\nconsole.log(r.status, await r.json());`;
+    if (ling === 'restassured') {
+      const ver = lerVerif().map(v => v.tipo === 'status' ? `\n    .statusCode(${v.valor})` : v.tipo === 'json_igual' ? `\n    .body("${v.campo}", equalTo("${v.valor}"))` :
+        v.tipo === 'tempo' ? `\n    .time(lessThan(${v.valor}L))` : v.tipo === 'json_existe' ? `\n    .body("${v.campo}", notNullValue())` : '').join('');
+      return `given()` + Object.entries(cab).map(([k, v]) => `\n    .header("${k}", "${v}")`).join('') + (temCorpo ? `\n    .body(${JSON.stringify(corpo.replace(/\n\s*/g, ' '))})` : '') +
+        `\n.when()\n    .request("${d.metodo}", "${url}")\n.then()` + ver + ';';
+    }
+    if (ling === 'postman') return lerVerif().map(v => v.tipo === 'status' ? `pm.test("Status ${v.valor}", () => pm.response.to.have.status(${v.valor}));` :
+      v.tipo === 'tempo' ? `pm.test("Tempo < ${v.valor} ms", () => pm.expect(pm.response.responseTime).to.be.below(${v.valor}));` :
+      v.tipo === 'json_igual' ? `pm.test("${v.campo} = ${v.valor}", () => pm.expect(String(pm.response.json().${v.campo})).to.eql("${v.valor}"));` :
+      v.tipo === 'guardar' ? `pm.collectionVariables.set("${v.valor}", pm.response.json().${v.campo});` : `// ${VERIF[v.tipo]}: ${v.campo} ${v.valor}`).join('\n') || '// Adicione verificações para gerar os testes do Postman';
+  }
+  document.querySelectorAll('[data-codigo]').forEach(b => b.addEventListener('click', () => { $('resp-codigo').textContent = codigo(b.dataset.codigo); }));
+
+  carregar(EXEMPLOS.cep);
+{% endraw %}</script>
+{% endblock %}

@@ -1,0 +1,10 @@
+# Roteiro do tipo SUITE: o Sentinela roda uma suíte de outro framework e lê o resultado (JUnit XML)
+# para colocar no mesmo relatório, histórico e gestão de defeitos.
+sistema: "Loja Treino — Cypress"
+versao: "framework: cypress"
+responsavel: Mateus
+ambiente: Local
+objetivo: "Testes gerados em Cypress (a primeira execução baixa o Cypress, cerca de 500 MB)"
+tipo: suite
+ferramenta: cypress
+pasta: ../exemplos_frameworks/cypress

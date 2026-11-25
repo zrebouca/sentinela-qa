@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block titulo %}Bem-vindo{% endblock %}
+{% block cabecalho %}Bem-vindo ao Sentinela QA{% endblock %}
+{% block subtitulo %}Vamos configurar seu primeiro teste{% endblock %}
+{% block acoes %}{% endblock %}
+{% block conteudo %}
+<section class="card boas-vindas">
+  <div class="esq">
+    <span class="selo azul">{{ icone('escudo', 14) }} Primeiros passos</span>
+    <h2 class="mt">Seu vigia de qualidade<br>para sistemas web e desktop</h2>
+    <p class="suave" style="font-size:15px;max-width:520px">Cadastre o sistema que vai testar, escreva um roteiro com os passos e
+      os critérios de sucesso, e deixe o Sentinela executar, tirar prints, procurar falhas de validação e gerar o relatório.</p>
+    <div class="grade g2 mt" style="max-width:560px">
+      <form method="post" action="{{ url_for('importar_exemplos') }}">
+        <button class="btn prim" style="width:100%;justify-content:center;padding:14px">{{ icone('camada', 18) }} Importar exemplos prontos</button>
+        <div class="pequeno suave mt-p">Sauce Demo, The Internet e Calculadora do Windows (sites e programas de demonstração).</div>
+      </form>
+      <div>
+        <a class="btn" style="width:100%;justify-content:center;padding:14px" href="{{ url_for('projeto_form') }}">{{ icone('mais', 18) }} Cadastrar meu projeto</a>
+        <div class="pequeno suave mt-p">Informe nome, URL ou .exe e a finalidade dos testes.</div>
+      </div>
+    </div>
+    {% if not ia.configurada %}
+    <div class="aviso amarelo mt">{{ icone('ia') }}<span>A IA está desligada. Ela é opcional — para receber sugestões de melhoria,
+      <a href="{{ url_for('configuracoes') }}">configure a chave do Gemini</a>.</span></div>{% endif %}
+  </div>
+  <div class="dir">
+    {% for ic, t, d in [
+      ('projetos', 'Registre tudo', 'Projetos, roteiros, execuções e defeitos ficam guardados num banco local.'),
+      ('executar', 'Execute com um clique', 'Escolha a finalidade, se usa IA e se faz exploração. Acompanhe ao vivo.'),
+      ('lupa', 'Encontre falhas', 'Dados inválidos (Faker pt_BR), acessibilidade básica e erros de console.'),
+      ('ia', 'Receba sugestões', 'A IA analisa os prints e sugere melhorias de usabilidade, texto e acessibilidade.'),
+      ('defeitos', 'Gerencie os bugs', 'Severidade, evidência, passos para reproduzir e status até o fechamento.'),
+    ] %}
+    <div class="item"><span class="ic">{{ icone(ic, 18) }}</span><div><b>{{ t }}</b><div style="color:#cfdcff">{{ d }}</div></div></div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

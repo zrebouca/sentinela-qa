@@ -1,0 +1,10 @@
+# Roteiro do tipo SUITE: o Sentinela roda uma suíte de outro framework e lê o resultado (JUnit XML)
+# para colocar no mesmo relatório, histórico e gestão de defeitos.
+sistema: "API ViaCEP — RestAssured + JUnit 5"
+versao: "framework: maven"
+responsavel: Mateus
+ambiente: Local
+objetivo: "Testes de API em Java (precisa de JDK 17 e Maven instalados)"
+tipo: suite
+ferramenta: maven
+pasta: ../exemplos_frameworks/restassured_java

@@ -1,0 +1,160 @@
+========================================================================
+RELATÓRIO DE TESTES — Estoque Desktop (WinForms)
+========================================================================
+Sistema:      Estoque Desktop (WinForms)
+Versão:       treino
+Data:         20/11/2026 22:11
+Responsável:  Mateus
+Ambiente:     Desktop Windows (.NET Framework) (Windows UI Automation (pywinauto) · Windows 11)
+Alvo:         sistemas_treino/estoque_desktop/EstoqueDesktop.exe
+Roteiro:      desktop_estoque.yaml
+Finalidade:   -
+Duração:      71s
+
+RESUMO
+  Casos: 6 | Aprovados: 5 | Reprovados: 1 | Taxa: 83%
+  Defeitos: 1 | Observações: 0 | Sugestões da IA: 6
+
+OBJETIVO
+  Validar login, cadastro com validações, busca e exclusão de produtos num sistema desktop real.
+
+FUNCIONALIDADES E CRITÉRIOS DE ACEITAÇÃO
+  F01 - Login
+     • Senha errada mostra mensagem e não entra
+     • Usuário válido abre o cadastro
+  F02 - Cadastro de produtos
+     • Produto válido entra na lista e atualiza o total
+     • Preço zero/negativo e quantidade negativa são recusados
+
+CASOS DE TESTE
+  [APROVADO] CT01 — Login com senha errada
+     Passos:
+       1. Preencher 'id=txtUsuario' com 'qa'
+       2. Preencher 'id=txtSenha' com 'errada'
+       3. Clicar em 'id=btnEntrar'
+       4. Verificar se o texto 'Usuário ou senha inválidos.' aparece em 'id=lblMensagemLogin'
+     Esperado: Mensagem "Usuário ou senha inválidos."
+     Obtido:   'id=lblMensagemLogin' contém 'Usuário ou senha inválidos.' (exibido: 'Usuário ou senha inválidos.')
+     Evidência: prints/004_CT01_verificar_texto.png
+
+  [APROVADO] CT02 — Login com usuário válido
+     Passos:
+       1. Preencher 'id=txtSenha' com '{env.ESTOQUE_SENHA|treino123}'
+       2. Clicar em 'id=btnEntrar'
+       3. Verificar se o elemento 'id=txtNome' existe
+       4. Verificar se o título contém 'qa'
+     Esperado: Tela de cadastro aberta com o título "Estoque Desktop — qa"
+     Obtido:   Elemento 'id=txtNome' existe; Título contém 'qa'
+     Evidência: prints/008_CT02_verificar_titulo.png
+
+  [APROVADO] CT03 — Adicionar produto válido
+     Passos:
+       1. Preencher 'id=txtNome' com 'Teclado mecânico'
+       2. Preencher 'id=txtPreco' com '249,90'
+       3. Preencher 'id=txtQuantidade' com '5'
+       4. Selecionar 'Informática' em 'id=cmbCategoria'
+       5. Clicar em 'id=btnAdicionar'
+       6. Verificar se o texto 'Produto adicionado com sucesso!' aparece em 'id=lblStatus'
+       7. Verificar se o texto 'Teclado mecânico' aparece
+       8. Verificar se o texto '4 produto(s)' aparece em 'id=lblTotal'
+     Esperado: Mensagem de sucesso, item na lista e total com 4 produtos
+     Obtido:   'id=lblStatus' contém 'Produto adicionado com sucesso!' (exibido: 'Produto adicionado com sucesso!'); Texto 'Teclado mecânico' visível; 'id=lblTotal' contém '4 produto(s)' (exibido: '4 produto(s) · 90 unidade(s) · Valor em estoque: R$ 4.891,00')
+     Evidência: prints/016_CT03_verificar_texto.png
+
+  [APROVADO] CT04 — Preço zero é recusado
+     Passos:
+       1. Preencher 'id=txtNome' com 'Produto grátis'
+       2. Preencher 'id=txtPreco' com '0'
+       3. Preencher 'id=txtQuantidade' com '1'
+       4. Clicar em 'id=btnAdicionar'
+       5. Verificar se o texto 'Preço inválido' aparece em 'id=lblStatus'
+       6. Verificar se o texto 'Produto grátis' NÃO aparece
+     Esperado: Mensagem de preço inválido e nada adicionado
+     Obtido:   'id=lblStatus' contém 'Preço inválido' (exibido: 'Preço inválido: use um valor maior que zero (ex.: 19,90).'); Texto 'Produto grátis' não aparece (correto)
+     Evidência: prints/022_CT04_verificar_sem_texto.png
+
+  [REPROVADO] CT05 — Quantidade negativa deve ser recusada
+     Passos:
+       1. Preencher 'id=txtNome' com 'Estoque negativo'
+       2. Preencher 'id=txtPreco' com '10'
+       3. Preencher 'id=txtQuantidade' com '-3'
+       4. Clicar em 'id=btnAdicionar'
+       5. Verificar se o texto 'Quantidade inválida' aparece em 'id=lblStatus'
+     Esperado: Mensagem "Quantidade inválida" e o produto NÃO entra na lista
+     Obtido:   Falhou no passo 5 (Verificar se o texto 'Quantidade inválida' aparece em 'id=lblStatus'): Texto 'Quantidade inválida' não encontrado em 'id=lblStatus' (exibido: 'Produto adicionado com sucesso!')
+     Evidência: prints/027_CT05_verificar_texto_FALHA.png
+
+  [APROVADO] CT06 — Buscar produto
+     Passos:
+       1. Preencher 'id=txtBusca' com 'mouse'
+       2. Clicar em 'id=btnBuscar'
+       3. Verificar se o texto '1 produto(s) encontrado(s)' aparece em 'id=lblStatus'
+       4. Clicar em 'id=btnLimparBusca'
+     Esperado: Mensagem com 1 produto encontrado para "mouse"
+     Obtido:   'id=lblStatus' contém '1 produto(s) encontrado(s)' (exibido: '1 produto(s) encontrado(s) para "mouse".')
+     Evidência: prints/031_CT06_clicar.png
+
+DEFEITOS
+  BUG-001 | Alta | Aberto | origem: Roteiro
+     CT05 — Quantidade negativa deve ser recusada: Texto 'Quantidade inválida' não encontrado em 'id=lblStatus' (exibido: 'Produto adicionado com sucesso!')
+     Passos para reproduzir:
+       1. Preencher 'id=txtNome' com 'Estoque negativo'
+       2. Preencher 'id=txtPreco' com '10'
+       3. Preencher 'id=txtQuantidade' com '-3'
+       4. Clicar em 'id=btnAdicionar'
+       5. Verificar se o texto 'Quantidade inválida' aparece em 'id=lblStatus'
+     Esperado: Mensagem "Quantidade inválida" e o produto NÃO entra na lista
+     Obtido:   Falhou no passo 5 (Verificar se o texto 'Quantidade inválida' aparece em 'id=lblStatus'): Texto 'Quantidade inválida' não encontrado em 'id=lblStatus' (exibido: 'Produto adicionado com sucesso!')
+     Evidência: prints/027_CT05_verificar_texto_FALHA.png
+
+O QUE FOI ENCONTRADO (OBSERVAÇÕES)
+  Nenhuma observação.
+
+MELHORIAS E IDEIAS (SUGESTÕES DA IA — avaliar antes de aplicar)
+  [Usabilidade | prioridade Média] Limpar mensagens de status ao iniciar novo preenchimento
+     As mensagens de status (sucesso ou erro) permanecem visíveis na tela enquanto o usuário digita novos dados nos campos, causando confusão visual. O ideal é que a mensagem do 'lblStatus' seja limpa assim que qualquer campo de entrada for modificado.
+  [Usabilidade | prioridade Alta] Solicitar confirmação antes de excluir um produto
+     O botão 'Excluir selecionado' pode levar à perda acidental de dados se clicado por engano. Recomenda-se exibir uma caixa de diálogo de confirmação (modal) antes de efetivar a remoção do item selecionado.
+  [Funcionalidade | prioridade Média] Adicionar recurso de edição para produtos cadastrados
+     A interface permite apenas adicionar e excluir itens na tabela. Incluir um botão ou ação para 'Editar' permitiria atualizar preço, quantidade ou categoria sem a necessidade de excluir e recadastrar o produto.
+  [Texto | prioridade Baixa] Melhorar a mensagem de estado inicial no cadastro
+     Ao abrir a tela de cadastro, o rótulo de status exibe apenas o texto 'Pronto.', o que traz pouca clareza. Sugere-se deixar o texto vazio ou substituir por uma mensagem orientativa como 'Preencha os dados e clique em Adicionar'.
+  [Acessibilidade | prioridade Média] Aumentar o contraste do texto de resumo no rodapé
+     A barra de status inferior que exibe a contagem total e valor em estoque utiliza fonte pequena e tom cinza que pode ter contraste insuficiente segundo as diretrizes da WCAG, dificultando a leitura para usuários com baixa visão.
+  [Usabilidade | prioridade Média] Ocultar dicas de credenciais em builds que não sejam de teste
+     O texto explicativo exibindo usuário e senha fixos na tela de login ('qa · senha: treino123') deve ser condicional ao ambiente de desenvolvimento/treino, garantindo que não seja exibido em versões finais do sistema.
+
+CAMINHO PERCORRIDO
+    1. 22:11:51 [CT01] Preencher 'id=txtUsuario' com 'qa' -> OK (2915 ms) prints/001_CT01_preencher.png
+    2. 22:11:54 [CT01] Preencher 'id=txtSenha' com 'errada' -> OK (2389 ms) prints/002_CT01_preencher.png
+    3. 22:11:56 [CT01] Clicar em 'id=btnEntrar' -> OK (2125 ms) prints/003_CT01_clicar.png
+    4. 22:11:58 [CT01] Verificar se o texto 'Usuário ou senha inválidos.' aparece em 'id=lblMensagemLogin' -> OK (2076 ms) prints/004_CT01_verificar_texto.png
+    5. 22:12:00 [CT02] Preencher 'id=txtSenha' com '{env.ESTOQUE_SENHA|treino123}' -> OK (1913 ms) prints/005_CT02_preencher.png
+    6. 22:12:01 [CT02] Clicar em 'id=btnEntrar' -> OK (1754 ms) prints/006_CT02_clicar.png
+    7. 22:12:03 [CT02] Verificar se o elemento 'id=txtNome' existe -> OK (1785 ms) prints/007_CT02_verificar_elemento.png
+    8. 22:12:04 [CT02] Verificar se o título contém 'qa' -> OK (1117 ms) prints/008_CT02_verificar_titulo.png
+    9. 22:12:06 [CT03] Preencher 'id=txtNome' com 'Teclado mecânico' -> OK (1800 ms) prints/009_CT03_preencher.png
+   10. 22:12:08 [CT03] Preencher 'id=txtPreco' com '249,90' -> OK (1844 ms) prints/010_CT03_preencher.png
+   11. 22:12:10 [CT03] Preencher 'id=txtQuantidade' com '5' -> OK (1672 ms) prints/011_CT03_preencher.png
+   12. 22:12:12 [CT03] Selecionar 'Informática' em 'id=cmbCategoria' -> OK (1867 ms) prints/012_CT03_selecionar.png
+   13. 22:12:14 [CT03] Clicar em 'id=btnAdicionar' -> OK (2811 ms) prints/013_CT03_clicar.png
+   14. 22:12:16 [CT03] Verificar se o texto 'Produto adicionado com sucesso!' aparece em 'id=lblStatus' -> OK (1765 ms) prints/014_CT03_verificar_texto.png
+   15. 22:12:18 [CT03] Verificar se o texto 'Teclado mecânico' aparece -> OK (1684 ms) prints/015_CT03_verificar_texto.png
+   16. 22:12:20 [CT03] Verificar se o texto '4 produto(s)' aparece em 'id=lblTotal' -> OK (1867 ms) prints/016_CT03_verificar_texto.png
+   17. 22:12:22 [CT04] Preencher 'id=txtNome' com 'Produto grátis' -> OK (1865 ms) prints/017_CT04_preencher.png
+   18. 22:12:24 [CT04] Preencher 'id=txtPreco' com '0' -> OK (2100 ms) prints/018_CT04_preencher.png
+   19. 22:12:26 [CT04] Preencher 'id=txtQuantidade' com '1' -> OK (2100 ms) prints/019_CT04_preencher.png
+   20. 22:12:28 [CT04] Clicar em 'id=btnAdicionar' -> OK (1866 ms) prints/020_CT04_clicar.png
+   21. 22:12:29 [CT04] Verificar se o texto 'Preço inválido' aparece em 'id=lblStatus' -> OK (1752 ms) prints/021_CT04_verificar_texto.png
+   22. 22:12:31 [CT04] Verificar se o texto 'Produto grátis' NÃO aparece -> OK (1348 ms) prints/022_CT04_verificar_sem_texto.png
+   23. 22:12:32 [CT05] Preencher 'id=txtNome' com 'Estoque negativo' -> OK (1686 ms) prints/023_CT05_preencher.png
+   24. 22:12:34 [CT05] Preencher 'id=txtPreco' com '10' -> OK (1847 ms) prints/024_CT05_preencher.png
+   25. 22:12:36 [CT05] Preencher 'id=txtQuantidade' com '-3' -> OK (1849 ms) prints/025_CT05_preencher.png
+   26. 22:12:38 [CT05] Clicar em 'id=btnAdicionar' -> OK (1667 ms) prints/026_CT05_clicar.png
+   27. 22:12:48 [CT05] Verificar se o texto 'Quantidade inválida' aparece em 'id=lblStatus' -> FALHA (10186 ms) prints/027_CT05_verificar_texto_FALHA.png
+   28. 22:12:50 [CT06] Preencher 'id=txtBusca' com 'mouse' -> OK (1830 ms) prints/028_CT06_preencher.png
+   29. 22:12:52 [CT06] Clicar em 'id=btnBuscar' -> OK (1983 ms) prints/029_CT06_clicar.png
+   30. 22:12:53 [CT06] Verificar se o texto '1 produto(s) encontrado(s)' aparece em 'id=lblStatus' -> OK (1699 ms) prints/030_CT06_verificar_texto.png
+   31. 22:12:55 [CT06] Clicar em 'id=btnLimparBusca' -> OK (1684 ms) prints/031_CT06_clicar.png
+
+Gerado por Sentinela QA v1.0.0

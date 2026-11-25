@@ -1,0 +1,898 @@
+{
+  "versao_robo": "1.0.0",
+  "cabecalho": {
+    "Sistema": "Sauce Demo (loja de demonstração)",
+    "Versão": "web",
+    "Data": "20/11/2026 17:20",
+    "Responsável": "Mateus",
+    "Ambiente": "Demonstração pública (Google Chrome 157.0.8103.80 · Windows 11)",
+    "Alvo": "https://www.saucedemo.com",
+    "Roteiro": "web_saucedemo.yaml",
+    "Finalidade": "-",
+    "Duração": "26s"
+  },
+  "sistema": "Sauce Demo (loja de demonstração)",
+  "objetivo": "Validar login, catálogo, carrinho e finalização de compra da loja de demonstração, e explorar as validações do formulário de entrega.\n",
+  "funcionalidades": [
+    {
+      "id": "F01",
+      "nome": "Login",
+      "criterios": [
+        "Usuário válido acessa a página de produtos",
+        "Usuário bloqueado vê mensagem explicando o bloqueio",
+        "Senha errada mostra mensagem de erro e não entra"
+      ]
+    },
+    {
+      "id": "F02",
+      "nome": "Catálogo e carrinho",
+      "criterios": [
+        "Ordenar por preço (menor para maior) coloca o produto mais barato primeiro",
+        "Adicionar produto atualiza o contador do carrinho"
+      ]
+    },
+    {
+      "id": "F03",
+      "nome": "Checkout",
+      "criterios": [
+        "Com dados de entrega válidos, a compra é concluída com mensagem de agradecimento",
+        "Sem o primeiro nome, o sistema mostra erro e não avança"
+      ]
+    }
+  ],
+  "resumo": {
+    "total": 6,
+    "aprovados": 6,
+    "reprovados": 0,
+    "taxa": 100,
+    "defeitos": 5,
+    "defeitos_por_severidade": {
+      "Média": 2,
+      "Baixa": 3
+    },
+    "observacoes": 3,
+    "sugestoes": 6,
+    "acoes": 50,
+    "exploracao": true,
+    "ia": true
+  },
+  "casos": [
+    {
+      "id": "CT01",
+      "descricao": "Login com usuário válido",
+      "funcionalidade": "F01",
+      "passos": [
+        "Abrir /",
+        "Fazer login com o usuário '{dados.usuario}'",
+        "Verificar se a URL contém 'inventory.html'",
+        "Verificar se o texto 'Products' aparece"
+      ],
+      "esperado": "A página de produtos (Products) é exibida",
+      "obtido": "URL contém 'inventory.html' (https://www.saucedemo.com/inventory.html); Texto 'Products' visível",
+      "status": "APROVADO",
+      "print": "prints/004_CT01_verificar_texto.png",
+      "duracao_s": 1.3
+    },
+    {
+      "id": "CT02",
+      "descricao": "Login com usuário bloqueado",
+      "funcionalidade": "F01",
+      "passos": [
+        "Abrir /",
+        "Preencher '#user-name' com 'locked_out_user'",
+        "Preencher '#password' com '{dados.senha}'",
+        "Clicar em '#login-button'",
+        "Verificar mensagem de erro 'Sorry, this user has been locked out'",
+        "Verificar se a URL é 'https://www.saucedemo.com/'"
+      ],
+      "esperado": "Mensagem informando que o usuário está bloqueado",
+      "obtido": "Mensagem de erro exibida: 'Sorry, this user has been locked out'; URL é https://www.saucedemo.com/",
+      "status": "APROVADO",
+      "print": "prints/010_CT02_verificar_url.png",
+      "duracao_s": 1.1
+    },
+    {
+      "id": "CT03",
+      "descricao": "Login com senha errada",
+      "funcionalidade": "F01",
+      "passos": [
+        "Abrir /",
+        "Preencher '#user-name' com '{dados.usuario}'",
+        "Preencher '#password' com 'senha_errada_123'",
+        "Apertar a tecla Enter",
+        "Verificar se o elemento 'testid=error' existe",
+        "Verificar se o texto 'Username and password do not match' aparece"
+      ],
+      "esperado": "Mensagem de usuário/senha incorretos",
+      "obtido": "Elemento 'testid=error' visível; Texto 'Username and password do not match' visível",
+      "status": "APROVADO",
+      "print": "prints/016_CT03_verificar_texto.png",
+      "duracao_s": 1.1
+    },
+    {
+      "id": "CT04",
+      "descricao": "Ordenar produtos por menor preço e adicionar ao carrinho",
+      "funcionalidade": "F02",
+      "passos": [
+        "Abrir /",
+        "Fazer login com o usuário '{dados.usuario}'",
+        "Selecionar 'Price (low to high)' em 'testid=product-sort-container'",
+        "Verificar se o texto 'Sauce Labs Onesie' aparece em '.inventory_item_name'",
+        "Passar o mouse sobre '.inventory_item_name'",
+        "Clicar em 'testid=add-to-cart-sauce-labs-onesie'",
+        "Verificar se o texto '1' aparece em '.shopping_cart_badge'",
+        "Rolar a página para fim"
+      ],
+      "esperado": "Produto mais barato aparece primeiro e o carrinho mostra 1 item",
+      "obtido": "'.inventory_item_name' contém 'Sauce Labs Onesie'; '.shopping_cart_badge' contém '1'",
+      "status": "APROVADO",
+      "print": "prints/024_CT04_rolar.png",
+      "duracao_s": 1.7
+    },
+    {
+      "id": "CT05",
+      "descricao": "Compra completa com dados de entrega válidos (Faker pt_BR)",
+      "funcionalidade": "F03",
+      "passos": [
+        "Abrir /",
+        "Fazer login com o usuário '{dados.usuario}'",
+        "Clicar em 'testid=add-to-cart-sauce-labs-backpack'",
+        "Clicar em '.shopping_cart_link'",
+        "Clicar em 'Checkout'",
+        "Preencher o formulário de cadastro e enviar em '#continue'",
+        "Verificar se a URL contém 'checkout-step-two'",
+        "Clicar em 'Finish'",
+        "Verificar mensagem de sucesso 'Thank you for your order!'"
+      ],
+      "esperado": "Mensagem \"Thank you for your order!\"",
+      "obtido": "URL contém 'checkout-step-two' (https://www.saucedemo.com/checkout-step-two.html); Mensagem de sucesso exibida: 'Thank you for your order!'",
+      "status": "APROVADO",
+      "print": "prints/033_CT05_verificar_mensagem.png",
+      "duracao_s": 1.7
+    },
+    {
+      "id": "CT06",
+      "descricao": "Checkout sem o primeiro nome",
+      "funcionalidade": "F03",
+      "passos": [
+        "Abrir /",
+        "Fazer login com o usuário '{dados.usuario}'",
+        "Clicar em '.shopping_cart_link'",
+        "Clicar em '#checkout'",
+        "Preencher '#last-name' com '{dados.sobrenome}'",
+        "Preencher '#postal-code' com '{dados.cep}'",
+        "Clicar em '#continue'",
+        "Verificar se o texto 'First Name is required' aparece",
+        "Verificar se a URL contém 'checkout-step-one'"
+      ],
+      "esperado": "Erro \"First Name is required\" e o fluxo não avança",
+      "obtido": "Texto 'First Name is required' visível; URL contém 'checkout-step-one' (https://www.saucedemo.com/checkout-step-one.html)",
+      "status": "APROVADO",
+      "print": "prints/042_CT06_verificar_url.png",
+      "duracao_s": 1.5
+    }
+  ],
+  "defeitos": [
+    {
+      "id": "BUG-001",
+      "descricao": "O campo '#first-name' aceita apenas espaços ('     ') sem validação",
+      "severidade": "Média",
+      "status": "Aberto",
+      "passos_reproducao": [
+        "Abrir /",
+        "Fazer login com o usuário '{dados.usuario}'",
+        "Clicar em '.shopping_cart_link'",
+        "Clicar em '#checkout'",
+        "Preencher '#first-name' com '     '",
+        "Preencher '#last-name' com 'Sampaio'",
+        "Preencher '#postal-code' com '29975727'",
+        "Clicar em '#continue'"
+      ],
+      "esperado": "O sistema deveria bloquear apenas espaços e mostrar uma mensagem clara",
+      "obtido": "O formulário foi aceito e o fluxo seguiu para a próxima etapa",
+      "evidencia": "prints/044_EXP02_exploracao_espacos.png",
+      "origem": "Exploração",
+      "caso_id": "EXP02"
+    },
+    {
+      "id": "BUG-002",
+      "descricao": "O campo '#first-name' aceita caracteres especiais/HTML ('<script>alert(1)</script>'\"%;') sem validação",
+      "severidade": "Média",
+      "status": "Aberto",
+      "passos_reproducao": [
+        "Abrir /",
+        "Fazer login com o usuário '{dados.usuario}'",
+        "Clicar em '.shopping_cart_link'",
+        "Clicar em '#checkout'",
+        "Preencher '#first-name' com '<script>alert(1)</script>'\"%;'",
+        "Preencher '#last-name' com 'da Conceição'",
+        "Preencher '#postal-code' com '57146210'",
+        "Clicar em '#continue'"
+      ],
+      "esperado": "O sistema deveria bloquear caracteres especiais/HTML e mostrar uma mensagem clara",
+      "obtido": "O formulário foi aceito e o fluxo seguiu para a próxima etapa",
+      "evidencia": "prints/045_EXP03_exploracao_especiais.png",
+      "origem": "Exploração",
+      "caso_id": "EXP03"
+    },
+    {
+      "id": "BUG-003",
+      "descricao": "O campo '#first-name' aceita nome só com números ('12345') sem validação",
+      "severidade": "Baixa",
+      "status": "Aberto",
+      "passos_reproducao": [
+        "Abrir /",
+        "Fazer login com o usuário '{dados.usuario}'",
+        "Clicar em '.shopping_cart_link'",
+        "Clicar em '#checkout'",
+        "Preencher '#first-name' com '12345'",
+        "Preencher '#last-name' com 'Vargas'",
+        "Preencher '#postal-code' com '50805622'",
+        "Clicar em '#continue'"
+      ],
+      "esperado": "O sistema deveria bloquear nome só com números e mostrar uma mensagem clara",
+      "obtido": "O formulário foi aceito e o fluxo seguiu para a próxima etapa",
+      "evidencia": "prints/046_EXP04_exploracao_nome_numeros.png",
+      "origem": "Exploração",
+      "caso_id": "EXP04"
+    },
+    {
+      "id": "BUG-004",
+      "descricao": "O campo '#postal-code' aceita CEP com letras ('ABCDE-FGH') sem validação",
+      "severidade": "Baixa",
+      "status": "Aberto",
+      "passos_reproducao": [
+        "Abrir /",
+        "Fazer login com o usuário '{dados.usuario}'",
+        "Clicar em '.shopping_cart_link'",
+        "Clicar em '#checkout'",
+        "Preencher '#first-name' com 'Dante'",
+        "Preencher '#last-name' com 'Borges'",
+        "Preencher '#postal-code' com 'ABCDE-FGH'",
+        "Clicar em '#continue'"
+      ],
+      "esperado": "O sistema deveria bloquear CEP com letras e mostrar uma mensagem clara",
+      "obtido": "O formulário foi aceito e o fluxo seguiu para a próxima etapa",
+      "evidencia": "prints/049_EXP07_exploracao_cep_letras.png",
+      "origem": "Exploração",
+      "caso_id": "EXP07"
+    },
+    {
+      "id": "BUG-005",
+      "descricao": "O campo '#postal-code' aceita CEP curto demais ('123') sem validação",
+      "severidade": "Baixa",
+      "status": "Aberto",
+      "passos_reproducao": [
+        "Abrir /",
+        "Fazer login com o usuário '{dados.usuario}'",
+        "Clicar em '.shopping_cart_link'",
+        "Clicar em '#checkout'",
+        "Preencher '#first-name' com 'Liam'",
+        "Preencher '#last-name' com 'Melo'",
+        "Preencher '#postal-code' com '123'",
+        "Clicar em '#continue'"
+      ],
+      "esperado": "O sistema deveria bloquear CEP curto demais e mostrar uma mensagem clara",
+      "obtido": "O formulário foi aceito e o fluxo seguiu para a próxima etapa",
+      "evidencia": "prints/050_EXP08_exploracao_cep_curto.png",
+      "origem": "Exploração",
+      "caso_id": "EXP08"
+    }
+  ],
+  "observacoes": [
+    {
+      "categoria": "Exploração",
+      "texto": "'#first-name' com campo vazio: bloqueado corretamente — o formulário não avançou (sem mensagem visível — avaliar se o usuário entende o motivo)",
+      "print": "prints/043_EXP01_exploracao_vazio.png"
+    },
+    {
+      "categoria": "Exploração",
+      "texto": "'#last-name' com campo vazio: bloqueado corretamente — o formulário não avançou (sem mensagem visível — avaliar se o usuário entende o motivo)",
+      "print": "prints/047_EXP05_exploracao_vazio.png"
+    },
+    {
+      "categoria": "Exploração",
+      "texto": "'#postal-code' com campo vazio: bloqueado corretamente — o formulário não avançou (sem mensagem visível — avaliar se o usuário entende o motivo)",
+      "print": "prints/048_EXP06_exploracao_vazio.png"
+    }
+  ],
+  "sugestoes": [
+    {
+      "categoria": "Acessibilidade",
+      "titulo": "Melhorar contraste nos botões de ação principal",
+      "descricao": "Os botões principais como 'Login' e 'Finish' usam texto verde-escuro sobre fundo verde-claro. Isso apresenta baixo contraste de cores, violando diretrizes da WCAG e dificultando a leitura para pessoas com baixa visão.",
+      "prioridade": "Alta",
+      "evidencia": "prints/001_CT01_abrir.png"
+    },
+    {
+      "categoria": "Texto",
+      "titulo": "Remover prefixo informal das mensagens de erro",
+      "descricao": "A mensagem de erro de login exibe a expressão 'Epic sadface:', que possui tom excessivamente informal e pouco profissional para uma experiência de checkout padrão. Recomenda-se manter apenas o texto explicativo do erro.",
+      "prioridade": "Baixa",
+      "evidencia": "prints/016_CT03_verificar_texto.png"
+    },
+    {
+      "categoria": "Funcionalidade",
+      "titulo": "Impedir avanço no checkout com carrinho vazio",
+      "descricao": "O sistema permite avançar para a etapa de 'Checkout: Overview' e exibir totais zerados ($0.00) sem nenhum item listado no resumo de compra. Deve-se redirecionar o usuário ou bloquear o fluxo de checkout caso o carrinho não possua itens.",
+      "prioridade": "Alta",
+      "evidencia": "prints/044_EXP02_exploracao_espacos.png"
+    },
+    {
+      "categoria": "Usabilidade",
+      "titulo": "Destaque visual direto nos campos com erro de validação",
+      "descricao": "Ao submeter o formulário de entrega com inconsistências ou campos vazios, a indicação de erro ocorre por mensagem genérica no topo, mas falta um destaque individual de borda ou ícone de alerta diretamente nos inputs afetados para orientar o foco do usuário.",
+      "prioridade": "Média",
+      "evidencia": "passo 43 (observacoes do resumo)"
+    },
+    {
+      "categoria": "Funcionalidade",
+      "titulo": "Permitir seleção de forma de pagamento e frete",
+      "descricao": "Na etapa de resumo do pedido ('Checkout: Overview'), as informações de pagamento (SauceCard #31337) e frete (Free Pony Express Delivery!) aparecem de forma fixa. Adicionar opções para alteração desses dados tornaria o fluxo de e-commerce mais realista e completo.",
+      "prioridade": "Média",
+      "evidencia": "prints/031_CT05_verificar_url.png"
+    },
+    {
+      "categoria": "Acessibilidade",
+      "titulo": "Adicionar rótulos acessíveis aos links sociais no rodapé",
+      "descricao": "Os ícones das redes sociais no rodapé utilizam apenas elementos visuais SVG sem textos alternativos ou atributos 'aria-label', o que impede que leitores de tela anunciem o destino dos links para usuários com deficiência visual.",
+      "prioridade": "Baixa",
+      "evidencia": "prints/031_CT05_verificar_url.png"
+    }
+  ],
+  "acoes": [
+    {
+      "ordem": 1,
+      "horario": "17:20:48",
+      "caso_id": "CT01",
+      "comando": "abrir",
+      "descricao": "Abrir /",
+      "status": "ok",
+      "print": "prints/001_CT01_abrir.png",
+      "duracao_ms": 766,
+      "detalhe": "Página aberta: https://www.saucedemo.com/ (HTTP 200)"
+    },
+    {
+      "ordem": 2,
+      "horario": "17:20:48",
+      "caso_id": "CT01",
+      "comando": "logar",
+      "descricao": "Fazer login com o usuário '{dados.usuario}'",
+      "status": "ok",
+      "print": "prints/002_CT01_logar.png",
+      "duracao_ms": 198,
+      "detalhe": "Login enviado com o usuário 'standard_user'"
+    },
+    {
+      "ordem": 3,
+      "horario": "17:20:48",
+      "caso_id": "CT01",
+      "comando": "verificar_url",
+      "descricao": "Verificar se a URL contém 'inventory.html'",
+      "status": "ok",
+      "print": "prints/003_CT01_verificar_url.png",
+      "duracao_ms": 59,
+      "detalhe": "URL contém 'inventory.html' (https://www.saucedemo.com/inventory.html)"
+    },
+    {
+      "ordem": 4,
+      "horario": "17:20:48",
+      "caso_id": "CT01",
+      "comando": "verificar_texto",
+      "descricao": "Verificar se o texto 'Products' aparece",
+      "status": "ok",
+      "print": "prints/004_CT01_verificar_texto.png",
+      "duracao_ms": 72,
+      "detalhe": "Texto 'Products' visível"
+    },
+    {
+      "ordem": 5,
+      "horario": "17:20:49",
+      "caso_id": "CT02",
+      "comando": "abrir",
+      "descricao": "Abrir /",
+      "status": "ok",
+      "print": "prints/005_CT02_abrir.png",
+      "duracao_ms": 655,
+      "detalhe": "Página aberta: https://www.saucedemo.com/ (HTTP 200)"
+    },
+    {
+      "ordem": 6,
+      "horario": "17:20:49",
+      "caso_id": "CT02",
+      "comando": "preencher",
+      "descricao": "Preencher '#user-name' com 'locked_out_user'",
+      "status": "ok",
+      "print": "prints/006_CT02_preencher.png",
+      "duracao_ms": 59,
+      "detalhe": "'#user-name' preenchido"
+    },
+    {
+      "ordem": 7,
+      "horario": "17:20:49",
+      "caso_id": "CT02",
+      "comando": "preencher",
+      "descricao": "Preencher '#password' com '{dados.senha}'",
+      "status": "ok",
+      "print": "prints/007_CT02_preencher.png",
+      "duracao_ms": 31,
+      "detalhe": "'#password' preenchido"
+    },
+    {
+      "ordem": 8,
+      "horario": "17:20:49",
+      "caso_id": "CT02",
+      "comando": "clicar",
+      "descricao": "Clicar em '#login-button'",
+      "status": "ok",
+      "print": "prints/008_CT02_clicar.png",
+      "duracao_ms": 89,
+      "detalhe": "Clicou em '#login-button'"
+    },
+    {
+      "ordem": 9,
+      "horario": "17:20:49",
+      "caso_id": "CT02",
+      "comando": "verificar_mensagem",
+      "descricao": "Verificar mensagem de erro 'Sorry, this user has been locked out'",
+      "status": "ok",
+      "print": "prints/009_CT02_verificar_mensagem.png",
+      "duracao_ms": 50,
+      "detalhe": "Mensagem de erro exibida: 'Sorry, this user has been locked out'"
+    },
+    {
+      "ordem": 10,
+      "horario": "17:20:49",
+      "caso_id": "CT02",
+      "comando": "verificar_url",
+      "descricao": "Verificar se a URL é 'https://www.saucedemo.com/'",
+      "status": "ok",
+      "print": "prints/010_CT02_verificar_url.png",
+      "duracao_ms": 46,
+      "detalhe": "URL é https://www.saucedemo.com/"
+    },
+    {
+      "ordem": 11,
+      "horario": "17:20:50",
+      "caso_id": "CT03",
+      "comando": "abrir",
+      "descricao": "Abrir /",
+      "status": "ok",
+      "print": "prints/011_CT03_abrir.png",
+      "duracao_ms": 669,
+      "detalhe": "Página aberta: https://www.saucedemo.com/ (HTTP 200)"
+    },
+    {
+      "ordem": 12,
+      "horario": "17:20:50",
+      "caso_id": "CT03",
+      "comando": "preencher",
+      "descricao": "Preencher '#user-name' com '{dados.usuario}'",
+      "status": "ok",
+      "print": "prints/012_CT03_preencher.png",
+      "duracao_ms": 80,
+      "detalhe": "'#user-name' preenchido"
+    },
+    {
+      "ordem": 13,
+      "horario": "17:20:50",
+      "caso_id": "CT03",
+      "comando": "preencher",
+      "descricao": "Preencher '#password' com 'senha_errada_123'",
+      "status": "ok",
+      "print": "prints/013_CT03_preencher.png",
+      "duracao_ms": 44,
+      "detalhe": "'#password' preenchido"
+    },
+    {
+      "ordem": 14,
+      "horario": "17:20:50",
+      "caso_id": "CT03",
+      "comando": "apertar_tecla",
+      "descricao": "Apertar a tecla Enter",
+      "status": "ok",
+      "print": "prints/014_CT03_apertar_tecla.png",
+      "duracao_ms": 82,
+      "detalhe": "Tecla Enter pressionada"
+    },
+    {
+      "ordem": 15,
+      "horario": "17:20:50",
+      "caso_id": "CT03",
+      "comando": "verificar_elemento",
+      "descricao": "Verificar se o elemento 'testid=error' existe",
+      "status": "ok",
+      "print": "prints/015_CT03_verificar_elemento.png",
+      "duracao_ms": 87,
+      "detalhe": "Elemento 'testid=error' visível"
+    },
+    {
+      "ordem": 16,
+      "horario": "17:20:50",
+      "caso_id": "CT03",
+      "comando": "verificar_texto",
+      "descricao": "Verificar se o texto 'Username and password do not match' aparece",
+      "status": "ok",
+      "print": "prints/016_CT03_verificar_texto.png",
+      "duracao_ms": 49,
+      "detalhe": "Texto 'Username and password do not match' visível"
+    },
+    {
+      "ordem": 17,
+      "horario": "17:20:51",
+      "caso_id": "CT04",
+      "comando": "abrir",
+      "descricao": "Abrir /",
+      "status": "ok",
+      "print": "prints/017_CT04_abrir.png",
+      "duracao_ms": 685,
+      "detalhe": "Página aberta: https://www.saucedemo.com/ (HTTP 200)"
+    },
+    {
+      "ordem": 18,
+      "horario": "17:20:51",
+      "caso_id": "CT04",
+      "comando": "logar",
+      "descricao": "Fazer login com o usuário '{dados.usuario}'",
+      "status": "ok",
+      "print": "prints/018_CT04_logar.png",
+      "duracao_ms": 228,
+      "detalhe": "Login enviado com o usuário 'standard_user'"
+    },
+    {
+      "ordem": 19,
+      "horario": "17:20:51",
+      "caso_id": "CT04",
+      "comando": "selecionar",
+      "descricao": "Selecionar 'Price (low to high)' em 'testid=product-sort-container'",
+      "status": "ok",
+      "print": "prints/019_CT04_selecionar.png",
+      "duracao_ms": 103,
+      "detalhe": "Opção 'Price (low to high)' selecionada"
+    },
+    {
+      "ordem": 20,
+      "horario": "17:20:51",
+      "caso_id": "CT04",
+      "comando": "verificar_texto",
+      "descricao": "Verificar se o texto 'Sauce Labs Onesie' aparece em '.inventory_item_name'",
+      "status": "ok",
+      "print": "prints/020_CT04_verificar_texto.png",
+      "duracao_ms": 103,
+      "detalhe": "'.inventory_item_name' contém 'Sauce Labs Onesie'"
+    },
+    {
+      "ordem": 21,
+      "horario": "17:20:51",
+      "caso_id": "CT04",
+      "comando": "passar_mouse",
+      "descricao": "Passar o mouse sobre '.inventory_item_name'",
+      "status": "ok",
+      "print": "prints/021_CT04_passar_mouse.png",
+      "duracao_ms": 96,
+      "detalhe": "Mouse sobre '.inventory_item_name'"
+    },
+    {
+      "ordem": 22,
+      "horario": "17:20:52",
+      "caso_id": "CT04",
+      "comando": "clicar",
+      "descricao": "Clicar em 'testid=add-to-cart-sauce-labs-onesie'",
+      "status": "ok",
+      "print": "prints/022_CT04_clicar.png",
+      "duracao_ms": 142,
+      "detalhe": "Clicou em 'testid=add-to-cart-sauce-labs-onesie'"
+    },
+    {
+      "ordem": 23,
+      "horario": "17:20:52",
+      "caso_id": "CT04",
+      "comando": "verificar_texto",
+      "descricao": "Verificar se o texto '1' aparece em '.shopping_cart_badge'",
+      "status": "ok",
+      "print": "prints/023_CT04_verificar_texto.png",
+      "duracao_ms": 95,
+      "detalhe": "'.shopping_cart_badge' contém '1'"
+    },
+    {
+      "ordem": 24,
+      "horario": "17:20:52",
+      "caso_id": "CT04",
+      "comando": "rolar",
+      "descricao": "Rolar a página para fim",
+      "status": "ok",
+      "print": "prints/024_CT04_rolar.png",
+      "duracao_ms": 92,
+      "detalhe": "Rolou (fim)"
+    },
+    {
+      "ordem": 25,
+      "horario": "17:20:53",
+      "caso_id": "CT05",
+      "comando": "abrir",
+      "descricao": "Abrir /",
+      "status": "ok",
+      "print": "prints/025_CT05_abrir.png",
+      "duracao_ms": 712,
+      "detalhe": "Página aberta: https://www.saucedemo.com/ (HTTP 200)"
+    },
+    {
+      "ordem": 26,
+      "horario": "17:20:53",
+      "caso_id": "CT05",
+      "comando": "logar",
+      "descricao": "Fazer login com o usuário '{dados.usuario}'",
+      "status": "ok",
+      "print": "prints/026_CT05_logar.png",
+      "duracao_ms": 132,
+      "detalhe": "Login enviado com o usuário 'standard_user'"
+    },
+    {
+      "ordem": 27,
+      "horario": "17:20:53",
+      "caso_id": "CT05",
+      "comando": "clicar",
+      "descricao": "Clicar em 'testid=add-to-cart-sauce-labs-backpack'",
+      "status": "ok",
+      "print": "prints/027_CT05_clicar.png",
+      "duracao_ms": 101,
+      "detalhe": "Clicou em 'testid=add-to-cart-sauce-labs-backpack'"
+    },
+    {
+      "ordem": 28,
+      "horario": "17:20:53",
+      "caso_id": "CT05",
+      "comando": "clicar",
+      "descricao": "Clicar em '.shopping_cart_link'",
+      "status": "ok",
+      "print": "prints/028_CT05_clicar.png",
+      "duracao_ms": 99,
+      "detalhe": "Clicou em '.shopping_cart_link'"
+    },
+    {
+      "ordem": 29,
+      "horario": "17:20:53",
+      "caso_id": "CT05",
+      "comando": "clicar",
+      "descricao": "Clicar em 'Checkout'",
+      "status": "ok",
+      "print": "prints/029_CT05_clicar.png",
+      "duracao_ms": 118,
+      "detalhe": "Clicou em 'Checkout'"
+    },
+    {
+      "ordem": 30,
+      "horario": "17:20:53",
+      "caso_id": "CT05",
+      "comando": "cadastrar",
+      "descricao": "Preencher o formulário de cadastro e enviar em '#continue'",
+      "status": "ok",
+      "print": "prints/030_CT05_cadastrar.png",
+      "duracao_ms": 187,
+      "detalhe": "3 campo(s) preenchido(s)"
+    },
+    {
+      "ordem": 31,
+      "horario": "17:20:53",
+      "caso_id": "CT05",
+      "comando": "verificar_url",
+      "descricao": "Verificar se a URL contém 'checkout-step-two'",
+      "status": "ok",
+      "print": "prints/031_CT05_verificar_url.png",
+      "duracao_ms": 64,
+      "detalhe": "URL contém 'checkout-step-two' (https://www.saucedemo.com/checkout-step-two.html)"
+    },
+    {
+      "ordem": 32,
+      "horario": "17:20:53",
+      "caso_id": "CT05",
+      "comando": "clicar",
+      "descricao": "Clicar em 'Finish'",
+      "status": "ok",
+      "print": "prints/032_CT05_clicar.png",
+      "duracao_ms": 108,
+      "detalhe": "Clicou em 'Finish'"
+    },
+    {
+      "ordem": 33,
+      "horario": "17:20:53",
+      "caso_id": "CT05",
+      "comando": "verificar_mensagem",
+      "descricao": "Verificar mensagem de sucesso 'Thank you for your order!'",
+      "status": "ok",
+      "print": "prints/033_CT05_verificar_mensagem.png",
+      "duracao_ms": 46,
+      "detalhe": "Mensagem de sucesso exibida: 'Thank you for your order!'"
+    },
+    {
+      "ordem": 34,
+      "horario": "17:20:54",
+      "caso_id": "CT06",
+      "comando": "abrir",
+      "descricao": "Abrir /",
+      "status": "ok",
+      "print": "prints/034_CT06_abrir.png",
+      "duracao_ms": 692,
+      "detalhe": "Página aberta: https://www.saucedemo.com/ (HTTP 200)"
+    },
+    {
+      "ordem": 35,
+      "horario": "17:20:54",
+      "caso_id": "CT06",
+      "comando": "logar",
+      "descricao": "Fazer login com o usuário '{dados.usuario}'",
+      "status": "ok",
+      "print": "prints/035_CT06_logar.png",
+      "duracao_ms": 146,
+      "detalhe": "Login enviado com o usuário 'standard_user'"
+    },
+    {
+      "ordem": 36,
+      "horario": "17:20:55",
+      "caso_id": "CT06",
+      "comando": "clicar",
+      "descricao": "Clicar em '.shopping_cart_link'",
+      "status": "ok",
+      "print": "prints/036_CT06_clicar.png",
+      "duracao_ms": 128,
+      "detalhe": "Clicou em '.shopping_cart_link'"
+    },
+    {
+      "ordem": 37,
+      "horario": "17:20:55",
+      "caso_id": "CT06",
+      "comando": "clicar",
+      "descricao": "Clicar em '#checkout'",
+      "status": "ok",
+      "print": "prints/037_CT06_clicar.png",
+      "duracao_ms": 59,
+      "detalhe": "Clicou em '#checkout'"
+    },
+    {
+      "ordem": 38,
+      "horario": "17:20:55",
+      "caso_id": "CT06",
+      "comando": "preencher",
+      "descricao": "Preencher '#last-name' com '{dados.sobrenome}'",
+      "status": "ok",
+      "print": "prints/038_CT06_preencher.png",
+      "duracao_ms": 67,
+      "detalhe": "'#last-name' preenchido"
+    },
+    {
+      "ordem": 39,
+      "horario": "17:20:55",
+      "caso_id": "CT06",
+      "comando": "preencher",
+      "descricao": "Preencher '#postal-code' com '{dados.cep}'",
+      "status": "ok",
+      "print": "prints/039_CT06_preencher.png",
+      "duracao_ms": 62,
+      "detalhe": "'#postal-code' preenchido"
+    },
+    {
+      "ordem": 40,
+      "horario": "17:20:55",
+      "caso_id": "CT06",
+      "comando": "clicar",
+      "descricao": "Clicar em '#continue'",
+      "status": "ok",
+      "print": "prints/040_CT06_clicar.png",
+      "duracao_ms": 77,
+      "detalhe": "Clicou em '#continue'"
+    },
+    {
+      "ordem": 41,
+      "horario": "17:20:55",
+      "caso_id": "CT06",
+      "comando": "verificar_texto",
+      "descricao": "Verificar se o texto 'First Name is required' aparece",
+      "status": "ok",
+      "print": "prints/041_CT06_verificar_texto.png",
+      "duracao_ms": 48,
+      "detalhe": "Texto 'First Name is required' visível"
+    },
+    {
+      "ordem": 42,
+      "horario": "17:20:55",
+      "caso_id": "CT06",
+      "comando": "verificar_url",
+      "descricao": "Verificar se a URL contém 'checkout-step-one'",
+      "status": "ok",
+      "print": "prints/042_CT06_verificar_url.png",
+      "duracao_ms": 62,
+      "detalhe": "URL contém 'checkout-step-one' (https://www.saucedemo.com/checkout-step-one.html)"
+    },
+    {
+      "ordem": 43,
+      "horario": "17:20:59",
+      "caso_id": "EXP01",
+      "comando": "explorar",
+      "descricao": "Exploração: '#first-name' com campo vazio",
+      "status": "ok",
+      "print": "prints/043_EXP01_exploracao_vazio.png",
+      "duracao_ms": 4165,
+      "detalhe": "o formulário não avançou (sem mensagem visível — avaliar se o usuário entende o motivo)"
+    },
+    {
+      "ordem": 44,
+      "horario": "17:21:00",
+      "caso_id": "EXP02",
+      "comando": "explorar",
+      "descricao": "Exploração: '#first-name' com apenas espaços",
+      "status": "falha",
+      "print": "prints/044_EXP02_exploracao_espacos.png",
+      "duracao_ms": 917,
+      "detalhe": "Sistema ACEITOU o valor inválido"
+    },
+    {
+      "ordem": 45,
+      "horario": "17:21:01",
+      "caso_id": "EXP03",
+      "comando": "explorar",
+      "descricao": "Exploração: '#first-name' com caracteres especiais/HTML",
+      "status": "falha",
+      "print": "prints/045_EXP03_exploracao_especiais.png",
+      "duracao_ms": 954,
+      "detalhe": "Sistema ACEITOU o valor inválido"
+    },
+    {
+      "ordem": 46,
+      "horario": "17:21:02",
+      "caso_id": "EXP04",
+      "comando": "explorar",
+      "descricao": "Exploração: '#first-name' com nome só com números",
+      "status": "falha",
+      "print": "prints/046_EXP04_exploracao_nome_numeros.png",
+      "duracao_ms": 924,
+      "detalhe": "Sistema ACEITOU o valor inválido"
+    },
+    {
+      "ordem": 47,
+      "horario": "17:21:06",
+      "caso_id": "EXP05",
+      "comando": "explorar",
+      "descricao": "Exploração: '#last-name' com campo vazio",
+      "status": "ok",
+      "print": "prints/047_EXP05_exploracao_vazio.png",
+      "duracao_ms": 3928,
+      "detalhe": "o formulário não avançou (sem mensagem visível — avaliar se o usuário entende o motivo)"
+    },
+    {
+      "ordem": 48,
+      "horario": "17:21:10",
+      "caso_id": "EXP06",
+      "comando": "explorar",
+      "descricao": "Exploração: '#postal-code' com campo vazio",
+      "status": "ok",
+      "print": "prints/048_EXP06_exploracao_vazio.png",
+      "duracao_ms": 4133,
+      "detalhe": "o formulário não avançou (sem mensagem visível — avaliar se o usuário entende o motivo)"
+    },
+    {
+      "ordem": 49,
+      "horario": "17:21:11",
+      "caso_id": "EXP07",
+      "comando": "explorar",
+      "descricao": "Exploração: '#postal-code' com CEP com letras",
+      "status": "falha",
+      "print": "prints/049_EXP07_exploracao_cep_letras.png",
+      "duracao_ms": 907,
+      "detalhe": "Sistema ACEITOU o valor inválido"
+    },
+    {
+      "ordem": 50,
+      "horario": "17:21:12",
+      "caso_id": "EXP08",
+      "comando": "explorar",
+      "descricao": "Exploração: '#postal-code' com CEP curto demais",
+      "status": "falha",
+      "print": "prints/050_EXP08_exploracao_cep_curto.png",
+      "duracao_ms": 917,
+      "detalhe": "Sistema ACEITOU o valor inválido"
+    }
+  ],
+  "avisos": [
+    "Modelo 'gemini-3.5-flash' indisponível para esta chave; usado 'gemini-3.6-flash'. Para fixar, defina SENTINELA_MODELO_IA=gemini-3.6-flash no .env."
+  ]
+}

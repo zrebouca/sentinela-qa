@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block titulo %}{{ proj.nome }}{% endblock %}
+{% block cabecalho %}<span class="flex"><span class="bolinha" style="background:{{ proj.cor }};width:14px;height:14px"></span>{{ proj.nome }}</span>{% endblock %}
+{% block subtitulo %}{{ TIPOS[proj.tipo] }} · {{ proj.alvo }}{% endblock %}
+{% block acoes %}
+<a class="btn" href="{{ url_for('projeto_form', pid=proj.id) }}">{{ icone('editar', 16) }} Editar</a>
+<a class="btn prim" href="{{ url_for('executar', projeto=proj.id) }}">{{ icone('executar', 16) }} Executar</a>
+{% endblock %}
+{% block conteudo %}
+<div class="grade g-1-2">
+  <section class="card">
+    <h2>Ficha do projeto</h2>
+    <dl class="ficha mt">
+      <dt>Tipo</dt><dd>{{ TIPOS[proj.tipo] }}</dd>
+      <dt>Alvo</dt><dd>{% if proj.tipo in ('web', 'api') %}<a href="{{ proj.alvo }}" target="_blank" rel="noopener">{{ proj.alvo }}</a>{% else %}{{ proj.alvo }}{% endif %}</dd>
+      <dt>Versão</dt><dd>{{ proj.versao or '-' }}</dd>
+      <dt>Responsável</dt><dd>{{ proj.responsavel or '-' }}</dd>
+      <dt>Ambiente</dt><dd>{{ proj.ambiente or '-' }}</dd>
+      <dt>Finalidade</dt><dd style="font-weight:400">{{ proj.finalidade or '-' }}</dd>
+      <dt>Cadastrado</dt><dd>{{ proj.criado_em|data_br }}</dd>
+    </dl>
+  </section>
+  <section class="card">
+    <div class="cab">
+      <div class="abas" role="tablist">
+        <button class="ativa" data-aba="a-rot">Roteiros ({{ roteiros|length }})</button>
+        <button data-aba="a-exe">Execuções ({{ execs|length }})</button>
+        <button data-aba="a-def">Defeitos ({{ defeitos|length }})</button>
+      </div>
+      <a class="btn peq dir" href="{{ url_for('roteiro_editor', projeto=proj.id) }}">{{ icone('mais', 14) }} Roteiro</a>
+    </div>
+    <div class="painel-aba ativa" id="a-rot">
+      {% for r in roteiros %}
+      {% set u = (r.ultima or '').split('|') %}
+      <div class="proj-linha">
+        <span class="avatar c-verde">{{ icone('roteiros', 18) }}</span>
+        <div style="flex:1"><a href="{{ url_for('roteiro_editor', rid=r.id) }}"><b>{{ r.nome }}</b></a>
+          <div class="pequeno suave">{{ r.descricao or 'Sem descrição' }} · {{ r.execs }} execução(ões)</div></div>
+        {% if u|length == 3 and u[0] == 'Concluída' %}<span class="selo {{ 'verde' if u[1] == u[2] else 'vermelho' }}">última: {{ u[1] }}/{{ u[2] }}</span>{% endif %}
+        <a class="btn peq prim" href="{{ url_for('executar', projeto=proj.id, roteiro=r.id) }}">{{ icone('executar', 13) }}</a>
+      </div>
+      {% else %}<div class="vazio">Nenhum roteiro. <a href="{{ url_for('roteiro_editor', projeto=proj.id) }}">Criar o primeiro</a>.</div>{% endfor %}
+    </div>
+    <div class="painel-aba" id="a-exe">{% set ultimas = execs %}{% include "_tabela_execucoes.html" %}</div>
+    <div class="painel-aba" id="a-def">
+      {% if defeitos %}<div class="tabela"><table><thead><tr><th>Código</th><th>Descrição</th><th>Severidade</th><th>Status</th></tr></thead><tbody>
+      {% for d in defeitos %}<tr class="clicavel" data-href="{{ url_for('defeito_detalhe', did=d.id) }}"><td><b>{{ d.codigo }}</b><div class="pequeno suave">exec. #{{ d.execucao_id }}</div></td>
+        <td>{{ d.descricao }}</td><td><span class="selo sev-{{ d.severidade }}">{{ d.severidade }}</span></td><td><span class="selo {{ d.status }}">{{ d.status }}</span></td></tr>{% endfor %}
+      </tbody></table></div>{% else %}<div class="vazio">Nenhum defeito registrado. 🎉</div>{% endif %}
+    </div>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  document.querySelectorAll('.abas button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.abas button').forEach(x => x.classList.toggle('ativa', x === b));
+    document.querySelectorAll('.painel-aba').forEach(p => p.classList.toggle('ativa', p.id === b.dataset.aba));
+  }));
+</script>
+{% endblock %}

@@ -1,0 +1,248 @@
+{% macro evid(rel, alt, classe='mini') -%}
+  {%- if rel.endswith('.png') -%}<img class="{{ classe }}" loading="lazy" src="{{ img(rel) }}" alt="{{ alt }}">
+  {%- else -%}<a class="arq" href="{{ img(rel) }}" target="_blank" download="{{ rel.split('/')[-1] }}">📄 resposta da API</a>{%- endif -%}
+{%- endmacro %}
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relatório de Testes — {{ sistema }}</title>
+<style>
+  :root {
+    --bg: #f5f6f8; --card: #ffffff; --text: #1d2330; --muted: #5d6678; --line: #e3e6ec;
+    --accent: #3157d5; --ok: #15803d; --ok-bg: #e7f6ec; --bad: #c62828; --bad-bg: #fdecec;
+    --warn: #a15c00; --warn-bg: #fff4e0; --info: #2d5fa8; --info-bg: #e9f0fb; --ia: #6b3fc4; --ia-bg: #f1ebfd;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12151b; --card: #1b1f27; --text: #e6e9ef; --muted: #9aa3b5; --line: #2c323d;
+      --accent: #7b9cff; --ok: #5fd08a; --ok-bg: #173323; --bad: #ff7b7b; --bad-bg: #3a1c1f;
+      --warn: #ffb74d; --warn-bg: #3a2c14; --info: #8fb6ff; --info-bg: #1c2a40; --ia: #b99bff; --ia-bg: #2a2142;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.5 "Segoe UI", system-ui, -apple-system, sans-serif; }
+  header.topo { background: var(--card); border-bottom: 1px solid var(--line); padding: 24px 16px; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
+  h1 { margin: 0 0 4px; font-size: 26px; }
+  h2 { font-size: 19px; margin: 0 0 14px; display: flex; align-items: center; gap: 10px; }
+  h2 .n { background: var(--accent); color: #fff; border-radius: 6px; font-size: 13px; padding: 1px 8px; }
+  .sub { color: var(--muted); margin: 0; }
+  nav { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  nav a { color: var(--accent); text-decoration: none; font-size: 13px; padding: 4px 10px;
+          border: 1px solid var(--line); border-radius: 999px; }
+  nav a:hover { background: var(--info-bg); }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+            padding: 20px; margin: 18px 0; overflow: hidden; }
+  .cab { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px 20px; margin-top: 16px; }
+  .cab div span { display: block; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  .cab div b { font-weight: 600; word-break: break-word; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+  .tile { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .tile .v { font-size: 28px; font-weight: 700; line-height: 1.1; }
+  .tile .l { color: var(--muted); font-size: 13px; }
+  .tile.ok .v { color: var(--ok); } .tile.bad .v { color: var(--bad); } .tile.ia .v { color: var(--ia); }
+  .barra { height: 12px; border-radius: 99px; background: var(--bad-bg); overflow: hidden; margin: 16px 0 6px; }
+  .barra i { display: block; height: 100%; background: var(--ok); }
+  .veredito { font-weight: 600; margin: 10px 0 0; }
+  .aviso { background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: 8px 12px; margin: 10px 0 0; font-size: 14px; }
+  .tabela { width: 100%; overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 760px; }
+  th, td { text-align: left; vertical-align: top; padding: 9px 10px; border-bottom: 1px solid var(--line); font-size: 14px; }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  td ol { margin: 0; padding-left: 18px; }
+  .badge { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+  .APROVADO, .ok { background: var(--ok-bg); color: var(--ok); }
+  .REPROVADO, .falha { background: var(--bad-bg); color: var(--bad); }
+  .sev-Crítica, .sev-Alta { background: var(--bad-bg); color: var(--bad); }
+  .sev-Média { background: var(--warn-bg); color: var(--warn); }
+  .sev-Baixa { background: var(--info-bg); color: var(--info); }
+  .cat { background: var(--info-bg); color: var(--info); }
+  .sug { background: var(--ia-bg); color: var(--ia); }
+  td img.mini { min-width: 120px; }
+  a.arq { font-size: 13px; white-space: nowrap; }
+  img.mini { width: 150px; max-width: 100%; border: 1px solid var(--line); border-radius: 6px; cursor: zoom-in; display: block; }
+  .defeito { border: 1px solid var(--line); border-left: 4px solid var(--bad); border-radius: 10px; padding: 14px 16px; margin: 12px 0;
+             display: grid; grid-template-columns: 1fr 260px; gap: 16px; }
+  .defeito.sevb-Média { border-left-color: var(--warn); } .defeito.sevb-Baixa { border-left-color: var(--info); }
+  .defeito img.mini { width: 100%; }
+  .defeito h3 { margin: 0 0 6px; font-size: 16px; }
+  .meta { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .k { color: var(--muted); font-size: 13px; font-weight: 600; margin: 8px 0 2px; }
+  ul.obs { list-style: none; padding: 0; margin: 0; }
+  ul.obs li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; gap: 10px; align-items: baseline; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+  .card-sug { border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+  .card-sug h3 { font-size: 15px; margin: 8px 0 4px; }
+  .card-sug p { margin: 0; color: var(--muted); font-size: 14px; }
+  .vazio { color: var(--muted); font-style: italic; }
+  .func { margin: 0 0 10px; } .func ul { margin: 4px 0 0; }
+  tr.falha-linha td { background: color-mix(in srgb, var(--bad-bg) 55%, transparent); }
+  footer { color: var(--muted); text-align: center; font-size: 13px; padding: 10px 0 40px; }
+  #lupa { position: fixed; inset: 0; background: rgba(0,0,0,.82); display: none; align-items: center; justify-content: center; z-index: 9; cursor: zoom-out; padding: 16px; }
+  #lupa img { max-width: 100%; max-height: 92vh; border-radius: 8px; }
+  #lupa.on { display: flex; }
+  @media (max-width: 720px) { .defeito { grid-template-columns: 1fr; } h1 { font-size: 21px; } section { padding: 16px; } }
+  @media print { nav, #lupa { display: none !important; } section { break-inside: avoid; } }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="wrap">
+    <div style="display:flex;align-items:center;gap:14px"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-hidden="true" width="44" height="44" style="flex:none">  <defs>    <linearGradient id="sq-escudo" x1="0" y1="0" x2="1" y2="1">      <stop offset="0" stop-color="#3d6ef0"/>      <stop offset="1" stop-color="#13348f"/>    </linearGradient>    <linearGradient id="sq-brilho" x1="0" y1="0" x2="0" y2="1">      <stop offset="0" stop-color="#ffffff" stop-opacity=".35"/>      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>    </linearGradient>  </defs>  <!-- escudo -->  <path d="M64 6 L112 22 V60 C112 90 92 110 64 122 C36 110 16 90 16 60 V22 Z" fill="url(#sq-escudo)"/>  <path d="M64 6 L112 22 V60 C112 66 111 72 109 77 C94 52 40 40 18 52 L16 22 Z" fill="url(#sq-brilho)"/>  <!-- olho / radar -->  <path d="M30 64 C40 48 52 41 64 41 C76 41 88 48 98 64 C88 80 76 87 64 87 C52 87 40 80 30 64 Z"        fill="none" stroke="#ffffff" stroke-width="6" stroke-linejoin="round"/>  <circle cx="64" cy="64" r="15" fill="#ffffff"/>  <!-- check dentro da pupila -->  <path d="M57 64.5 L62 69.5 L72 58.5" fill="none" stroke="#1d4bd0" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>  <!-- ondas do radar -->  <path d="M93 34 A40 40 0 0 1 104 46" fill="none" stroke="#9fe3c4" stroke-width="5" stroke-linecap="round"/>  <path d="M87 42 A30 30 0 0 1 95 51" fill="none" stroke="#9fe3c4" stroke-width="5" stroke-linecap="round" opacity=".8"/></svg><h1>Relatório de Testes — {{ sistema }}</h1></div>
+    <p class="sub">Execução automatizada pelo Sentinela QA</p>
+    <div class="cab">
+      {% for k, v in cabecalho.items() %}<div><span>{{ k }}</span><b>{{ v or '-' }}</b></div>{% endfor %}
+    </div>
+    <nav>
+      <a href="#resumo">Resumo</a><a href="#objetivo">Objetivo</a><a href="#testes">Testes realizados</a>
+      <a href="#bugs">Erros e bugs</a><a href="#encontrado">O que foi encontrado</a>
+      <a href="#melhorias">Melhorias e ideias</a><a href="#caminho">Caminho percorrido</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+<section id="resumo">
+  <h2>Resumo</h2>
+  <div class="tiles">
+    <div class="tile"><div class="v">{{ resumo.total }}</div><div class="l">casos executados</div></div>
+    <div class="tile ok"><div class="v">{{ resumo.aprovados }}</div><div class="l">aprovados</div></div>
+    <div class="tile bad"><div class="v">{{ resumo.reprovados }}</div><div class="l">reprovados</div></div>
+    <div class="tile bad"><div class="v">{{ resumo.defeitos }}</div><div class="l">defeitos registrados</div></div>
+    <div class="tile"><div class="v">{{ resumo.observacoes }}</div><div class="l">observações</div></div>
+    <div class="tile ia"><div class="v">{{ resumo.sugestoes }}</div><div class="l">sugestões da IA</div></div>
+  </div>
+  <div class="barra" title="{{ resumo.taxa }}% aprovado"><i style="width: {{ resumo.taxa }}%"></i></div>
+  <p class="sub">{{ resumo.taxa }}% dos casos aprovados · {{ resumo.acoes }} ações registradas
+    {%- if resumo.exploracao %} · exploração de validações executada{% endif %}
+    {%- if resumo.defeitos_por_severidade %} · defeitos por severidade:
+      {% for s, n in resumo.defeitos_por_severidade.items() %}{{ s }} {{ n }}{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}</p>
+  <p class="veredito">
+    {% if resumo.reprovados == 0 and resumo.defeitos == 0 %}✅ Todos os casos passaram e nenhum defeito foi encontrado.
+    {% elif resumo.reprovados == 0 %}⚠️ Todos os casos do roteiro passaram, mas a exploração encontrou {{ resumo.defeitos }} defeito(s).
+    {% else %}❌ {{ resumo.reprovados }} caso(s) reprovado(s). Veja a seção “Erros e bugs”.{% endif %}
+  </p>
+  {% for a in avisos %}<p class="aviso">⚠ {{ a }}</p>{% endfor %}
+</section>
+
+<section id="objetivo">
+  <h2>Objetivo</h2>
+  <p>{{ objetivo or 'Não informado no roteiro.' }}</p>
+  {% if funcionalidades %}
+  <div class="k">Funcionalidades e critérios de aceitação</div>
+  {% for f in funcionalidades %}
+    <div class="func"><b>{{ f.id }} — {{ f.nome }}</b>
+      {% if f.criterios %}<ul>{% for c in f.criterios %}<li>{{ c }}</li>{% endfor %}</ul>{% endif %}
+    </div>
+  {% endfor %}
+  {% endif %}
+</section>
+
+<section id="testes">
+  <h2>Testes realizados <span class="n">{{ casos|length }}</span></h2>
+  <div class="tabela"><table>
+    <thead><tr><th>ID</th><th>Descrição</th><th>Passos</th><th>Esperado</th><th>Obtido</th><th>Status</th><th>Evidência</th></tr></thead>
+    <tbody>
+    {% for c in casos %}
+      <tr>
+        <td><b>{{ c.id }}</b>{% if c.funcionalidade %}<br><span class="sub">{{ c.funcionalidade }}</span>{% endif %}</td>
+        <td>{{ c.descricao }}<br><span class="sub">{{ c.duracao_s }}s</span></td>
+        <td><ol>{% for p in c.passos %}<li>{{ p }}</li>{% endfor %}</ol></td>
+        <td>{{ c.esperado or '-' }}</td>
+        <td>{{ c.obtido }}</td>
+        <td><span class="badge {{ c.status }}">{{ c.status }}</span></td>
+        <td>{% if c.print %}{{ evid(c.print, "Print do caso " ~ c.id) }}{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+
+<section id="bugs">
+  <h2>Erros e bugs <span class="n">{{ defeitos|length }}</span></h2>
+  {% for d in defeitos %}
+    <div class="defeito sevb-{{ d.severidade }}">
+      <div>
+        <div class="meta">
+          <span class="badge falha">{{ d.id }}</span>
+          <span class="badge sev-{{ d.severidade }}">Severidade {{ d.severidade }}</span>
+          <span class="badge cat">{{ d.status }}</span>
+          <span class="badge cat">Origem: {{ d.origem }}</span>
+        </div>
+        <h3>{{ d.descricao }}</h3>
+        <div class="k">Passos para reproduzir</div>
+        <ol>{% for p in d.passos_reproducao %}<li>{{ p }}</li>{% endfor %}</ol>
+        <div class="k">Resultado esperado</div><div>{{ d.esperado or '-' }}</div>
+        <div class="k">Resultado obtido</div><div>{{ d.obtido }}</div>
+      </div>
+      <div>{% if d.evidencia %}<div class="k">Evidência</div>{{ evid(d.evidencia, "Evidência do " ~ d.id) }}{% endif %}</div>
+    </div>
+  {% else %}
+    <p class="vazio">Nenhum defeito encontrado nesta execução.</p>
+  {% endfor %}
+</section>
+
+<section id="encontrado">
+  <h2>O que foi encontrado <span class="n">{{ observacoes|length }}</span></h2>
+  <p class="sub">Observações automáticas: acessibilidade básica, erros de console/rede e resultado da exploração de validações.</p>
+  {% if observacoes %}
+  <ul class="obs">
+    {% for o in observacoes %}<li><span class="badge cat">{{ o.categoria }}</span><span>{{ o.texto }}</span></li>{% endfor %}
+  </ul>
+  {% else %}<p class="vazio">Nenhuma observação registrada.</p>{% endif %}
+</section>
+
+<section id="melhorias">
+  <h2>Melhorias e ideias <span class="n">{{ sugestoes|length }}</span></h2>
+  <p class="sub">Geradas por IA a partir dos prints e do log. São <b>sugestões</b>: avalie com o time antes de transformar em requisito.</p>
+  {% if sugestoes %}
+  <div class="cards">
+    {% for s in sugestoes %}
+      <div class="card-sug">
+        <span class="badge sug">Sugestão · {{ s.categoria }}</span>
+        <span class="badge sev-{{ s.prioridade }}">Prioridade {{ s.prioridade }}</span>
+        <h3>{{ s.titulo }}</h3>
+        <p>{{ s.descricao }}</p>
+        {% if s.evidencia %}<p style="margin-top:6px;font-size:12px">Base: {{ s.evidencia }}</p>{% endif %}
+      </div>
+    {% endfor %}
+  </div>
+  {% else %}<p class="vazio">A análise por IA não foi executada nesta rodada (veja os avisos no Resumo).</p>{% endif %}
+</section>
+
+<section id="caminho">
+  <h2>Caminho percorrido <span class="n">{{ acoes|length }}</span></h2>
+  <div class="tabela"><table>
+    <thead><tr><th>#</th><th>Horário</th><th>Caso</th><th>Ação</th><th>Resultado</th><th>Tempo</th><th>Print</th></tr></thead>
+    <tbody>
+    {% for a in acoes %}
+      <tr class="{{ 'falha-linha' if a.status != 'ok' else '' }}">
+        <td>{{ a.ordem }}</td><td>{{ a.horario }}</td><td>{{ a.caso_id }}</td>
+        <td>{{ a.descricao }}{% if a.detalhe %}<br><span class="sub">{{ a.detalhe }}</span>{% endif %}</td>
+        <td><span class="badge {{ a.status }}">{{ 'OK' if a.status == 'ok' else 'FALHA' }}</span></td>
+        <td>{{ a.duracao_ms }} ms</td>
+        <td>{% if a.print %}{{ evid(a.print, "Print do passo " ~ a.ordem) }}{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+
+</main>
+<footer>Gerado por Sentinela QA v{{ versao_robo }} · clique em um print para ampliar</footer>
+<div id="lupa" role="dialog" aria-label="Print ampliado"><img alt=""></div>
+<script>
+  // Clique em qualquer print para ver em tamanho grande
+  const lupa = document.getElementById('lupa');
+  document.querySelectorAll('img.mini').forEach(i => i.addEventListener('click', () => {
+    lupa.querySelector('img').src = i.src; lupa.querySelector('img').alt = i.alt; lupa.classList.add('on');
+  }));
+  lupa.addEventListener('click', () => lupa.classList.remove('on'));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') lupa.classList.remove('on'); });
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "requisicao": "GET https://viacep.com.br/ws/123/json/",
+  "status": 400,
+  "tempo_ms": 364,
+  "cabecalhos": {
+    "server": "nginx/1.22.0",
+    "date": "Fri, 20 Nov 2026 22:38:34 GMT",
+    "content-type": "text/html; charset=utf-8",
+    "content-length": "494",
+    "connection": "close",
+    "etag": "\"6242f812-1ee\"",
+    "strict-transport-security": "max-age=63072000"
+  },
+  "corpo": "<!DOCTYPE HTML>\n<html lang=\"pt-br\">\n\n<head>\n  <title>ViaCEP 400</title>\n  <meta charset=\"utf-8\" />\n  <style type=\"text/css\">\n      h1 {\n          color: #555;\n          text-align: center;\n          font-size: 4em;\n      }\n      h2, h3 {\n          color: #666;\n          text-align: center;\n          font-size: 3em;\n      }\n      h3 {\n          font-size: 1.5em;\n      }\n  </style>\n</head>\n\n<body>\n    <h1>Http 400</h1>\n    <h3>Verifique a URL</h3>\n    <h3>{Bad Request}</h3>\n</body>\n\n</html>\n"
+}

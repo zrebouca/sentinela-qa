@@ -1,0 +1,22 @@
+appId: com.android.chrome
+name: "CT05 - Cadastro com dados válidos (Faker pt_BR)"
+---
+- openLink: "http://10.0.2.2:8000/cadastro.html"
+- tapOn: "Nome completo"
+- eraseText
+- inputText: "Théo Cavalcante"
+- tapOn: "E-mail"
+- eraseText
+- inputText: "da-rochaana-clara@example.org"
+- tapOn: "CPF"
+- eraseText
+- inputText: "413.906.442-00"
+- tapOn: "CEP"
+- eraseText
+- inputText: "88243689"
+- tapOn: "Telefone"
+- eraseText
+- inputText: "+55 98 91397-4169"
+- tapOn: "Salvar cadastro"
+# TODO: 'verificar_url' não tem equivalente direto no Maestro
+- assertVisible: "Cadastro realizado com sucesso!"

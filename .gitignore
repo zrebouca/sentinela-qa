@@ -1,0 +1,53 @@
+# Segredos — nunca versionar
+.env
+
+# Ambiente e build
+.venv/
+__pycache__/
+*.pyc
+build/
+dist/
+*.spec
+.pytest_cache/
+
+# Saídas das execuções (os exemplos ficam em exemplos_de_relatorio/)
+relatorios/
+# Banco local do painel, roteiros cadastrados e relatórios gerados
+dados/
+.claude/
+
+# Arquivos pessoais que estão na mesma pasta (currículos, candidaturas) — não publicar
+Mateus_Reboucas_*
+Banner_*.png
+*.docx
+*.pdf
+*.xlsx
+Asaas_*.md
+Clynto_*.md
+Harza_*.md
+iFood_*.md
+LinkedIn_*.md
+Mensagens_*.md
+Omie_*.md
+Retention_*.md
+Vagas_*.md
+Veta_*.md
+
+# Executável do sistema desktop de treino (o Sentinela compila a partir do .cs)
+sistemas_treino/estoque_desktop/*.exe
+# Linhas de base da regressão visual (dependem da tela de cada máquina)
+**/linha_base/
+
+# Dependências e resultados das suítes de outros frameworks (Node, Playwright, Cypress, Maven)
+node_modules/
+**/resultados/
+test-results/
+playwright-report/
+target/
+package-lock.json
+
+# Kit do Instagram (gerado localmente, não faz parte do código)
+instagram/
+
+# Pacote local da atualização (redundante com o código já integrado)
+atualizacao_v1.1_seguranca/

@@ -1,0 +1,141 @@
+{
+  "info": {
+    "_postman_id": "898ac686-9f77-4a97-a5d3-44eb022aa745",
+    "name": "ViaCEP + JSONPlaceholder (APIs públicas)",
+    "description": "Exportado do Sentinela QA. Validar status HTTP, contrato do JSON, tempo de resposta e tratamento de entradas inválidas.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "CT01 — Consultar CEP existente (Praça da Sé, São Paulo)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/ws/01001000/json/",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Cabeçalho content-type\", () => pm.expect(pm.response.headers.get(\"content-type\").toLowerCase()).to.include(\"json\"));",
+              "pm.test(\"cep = 01001-000\", () => { const json = pm.response.json(); pm.expect(String(json.cep).toLowerCase()).to.eql(\"01001-000\"); });",
+              "pm.test(\"localidade = São Paulo\", () => { const json = pm.response.json(); pm.expect(String(json.localidade).toLowerCase()).to.eql(\"são paulo\"); });",
+              "pm.test(\"uf = SP\", () => { const json = pm.response.json(); pm.expect(String(json.uf).toLowerCase()).to.eql(\"sp\"); });",
+              "pm.test(\"logradouro contém Praça da Sé\", () => { const json = pm.response.json(); pm.expect(JSON.stringify(json.logradouro)).to.include(\"Praça da Sé\"); });",
+              "pm.test(\"Responde em até 5000 ms\", () => pm.expect(pm.response.responseTime).to.be.below(5001));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "CT02 — CEP com formato inválido (3 dígitos)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/ws/123/json/",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status 400\", () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "CT03 — CEP com formato válido mas inexistente",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/ws/99999999/json/",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"erro = True\", () => { const json = pm.response.json(); pm.expect(String(json.erro).toLowerCase()).to.eql(\"true\"); });",
+              "pm.test(\"logradouro ausente\", () => { const json = pm.response.json(); pm.expect(json.logradouro).to.be.undefined; });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "CT04 — Criar post (POST) e consultar um post existente",
+      "request": {
+        "method": "POST",
+        "url": "https://jsonplaceholder.typicode.com/posts",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Teste do Sentinela QA\",\n  \"body\": \"{faker.sentence}\",\n  \"userId\": 1\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
+              "pm.test(\"id existe\", () => { const json = pm.response.json(); pm.expect(json.id).to.not.be.undefined; });",
+              "pm.test(\"title = Teste do Sentinela QA\", () => { const json = pm.response.json(); pm.expect(String(json.title).toLowerCase()).to.eql(\"teste do sentinela qa\"); });",
+              "{ const json = pm.response.json(); pm.collectionVariables.set(\"usuario\", json.userId); }"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "CT04 — Criar post (POST) e consultar um post existente",
+      "request": {
+        "method": "GET",
+        "url": "https://jsonplaceholder.typicode.com/users/{{usuario}}",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status entre 200 e 299\", () => pm.expect(pm.response.code).to.be.within(200, 299));",
+              "pm.test(\"address.city existe\", () => { const json = pm.response.json(); pm.expect(json.address.city).to.not.be.undefined; });"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://viacep.com.br"
+    },
+    {
+      "key": "usuario",
+      "value": ""
+    }
+  ]
+}

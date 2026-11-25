@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sentinela QA — automação de testes web, desktop e API</title>
+<link rel="icon" href="imagens/logo.ico">
+<meta name="description" content="Projeto de portfólio de QA: automação de testes web (Playwright), desktop (pywinauto) e API, com exploração de validações, sugestões por IA e painel de defeitos.">
+<style>
+  :root { --azul: #2554d4; --azul2: #13348f; --texto: #172033; --suave: #5d6678; --fundo: #f3f5fa; --card: #fff; --linha: #e3e7f0; }
+  @media (prefers-color-scheme: dark) {
+    :root { --texto: #e6e9ef; --suave: #9aa3b5; --fundo: #11141a; --card: #1a1e26; --linha: #2b313c; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 16px/1.6 "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--texto); background: var(--fundo); }
+  a { color: var(--azul); }
+  .heroi { background: linear-gradient(130deg, var(--azul2), var(--azul) 60%, #3d6ef0); color: #fff; padding: 56px 16px 64px; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+  .heroi h1 { font-size: clamp(30px, 5vw, 46px); margin: 0 0 8px; }
+  .heroi p { font-size: 18px; color: #d6e1ff; max-width: 720px; margin: 0 0 22px; }
+  .botoes { display: flex; flex-wrap: wrap; gap: 10px; }
+  .btn { display: inline-block; padding: 11px 18px; border-radius: 10px; font-weight: 600; text-decoration: none; }
+  .btn.claro { background: #fff; color: var(--azul2); }
+  .btn.vidro { background: rgba(255,255,255,.14); color: #fff; border: 1px solid rgba(255,255,255,.3); }
+  .demo { margin: -40px auto 0; max-width: 1080px; padding: 0 16px; }
+  .demo img { width: 100%; border-radius: 14px; box-shadow: 0 12px 40px rgba(10, 30, 80, .25); display: block; background: #fff; }
+  section { padding: 44px 0 8px; }
+  h2 { font-size: 26px; margin: 0 0 6px; }
+  .sub { color: var(--suave); margin: 0 0 20px; }
+  .grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .card { background: var(--card); border: 1px solid var(--linha); border-radius: 14px; padding: 20px; }
+  .card h3 { margin: 6px 0 6px; font-size: 17px; }
+  .card p { margin: 0; color: var(--suave); font-size: 15px; }
+  .card .num { font-size: 13px; font-weight: 700; color: var(--azul); text-transform: uppercase; letter-spacing: .05em; }
+  .rel a.card { text-decoration: none; color: inherit; display: block; transition: transform .15s; }
+  .rel a.card:hover { transform: translateY(-3px); border-color: var(--azul); }
+  .selo { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 99px; margin-right: 4px; }
+  .ok { background: #e3f6ee; color: #0b7a52; } .bad { background: #fdecee; color: #b3261e; } .ia { background: #f1eafd; color: #6b3fc4; }
+  table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--linha); border-radius: 14px; overflow: hidden; }
+  td, th { padding: 12px 14px; border-bottom: 1px solid var(--linha); text-align: left; font-size: 15px; vertical-align: top; }
+  th { color: var(--suave); font-size: 13px; text-transform: uppercase; letter-spacing: .04em; }
+  code { background: rgba(37, 84, 212, .1); padding: 1px 6px; border-radius: 6px; font-size: 14px; }
+  footer { text-align: center; color: var(--suave); padding: 48px 16px; font-size: 14px; }
+  .tabela { overflow-x: auto; }
+</style>
+</head>
+<body>
+<header class="heroi">
+  <div class="wrap">
+    <h1 style="display:flex;align-items:center;gap:14px"><img src="imagens/logo.svg" alt="" width="64" height="64"> Sentinela QA</h1>
+    <p>Automação de testes <b>web</b> (Playwright), <b>desktop</b> (pywinauto) e <b>API</b>, guiada por roteiros em YAML ou Gherkin,
+      com exploração de validações, sugestões por IA e um painel para gerenciar os defeitos.<br>
+      <span style="opacity:.85">Test automation for web, Windows desktop and APIs — QA portfolio project.</span></p>
+    <div class="botoes">
+      <a class="btn claro" href="https://github.com/zrebouca/sentinela-qa">Ver o código no GitHub</a>
+      <a class="btn vidro" href="#relatorios">Relatórios ao vivo</a>
+      <a class="btn vidro" href="https://github.com/zrebouca/sentinela-qa/blob/main/README.en.md">English README</a>
+    </div>
+  </div>
+</header>
+
+<div class="demo"><img src="imagens/demo.gif" alt="Demonstração: painel, execução com log ao vivo e defeitos encontrados" loading="lazy"></div>
+
+<main class="wrap">
+  <section>
+    <h2>O que ele faz</h2>
+    <p class="sub">Da automação por coordenadas de tela para testes com seletores estáveis, asserções e evidências.</p>
+    <div class="grade">
+      <div class="card"><div class="num">Web · Desktop · API</div><h3>Testa três tipos de alvo</h3>
+        <p>Sites com Playwright, programas Windows com UI Automation e APIs REST/JSON sem navegador.</p></div>
+      <div class="card"><div class="num">YAML · Gherkin</div><h3>Roteiros legíveis</h3>
+        <p>Passos como <code>clicar: "Entrar"</code> ou “Quando eu clico em "Entrar"”. Feito para QA com pouca programação.</p></div>
+      <div class="card"><div class="num">Exploração</div><h3>Procura falhas de validação</h3>
+        <p>Campo vazio, CPF e e-mail inválidos, caracteres especiais e valores-limite com Faker pt_BR.</p></div>
+      <div class="card"><div class="num">IA opcional</div><h3>Sugestões de melhoria</h3>
+        <p>O Gemini analisa os prints e sugere melhorias de usabilidade, texto e acessibilidade.</p></div>
+      <div class="card"><div class="num">Evidências</div><h3>Relatório completo</h3>
+        <p>Casos com esperado × obtido, defeitos com severidade, passos para reproduzir e print de cada passo.</p></div>
+      <div class="card"><div class="num">Gestão</div><h3>Painel de defeitos</h3>
+        <p>Ciclo de vida do bug, exportação CSV e texto pronto para o Jira. CI no GitHub Actions.</p></div>
+      <div class="card"><div class="num">MySQL · XAMPP</div><h3>Auditor de banco de dados</h3>
+        <p>Lê a estrutura, aponta o que mudar, como, onde agir e os problemas futuros. Corrige com backup automático.</p></div>
+      <div class="card"><div class="num">axe · JSON Schema · carga</div><h3>Qualidade além do funcional</h3>
+        <p>Acessibilidade WCAG, contrato de API, regressão visual, desempenho, teste de carga, segurança e links.</p></div>
+      <div class="card"><div class="num">Estilo Postman</div><h3>Testar API</h3>
+        <p>Requisições com verificações, variáveis (token JWT), código gerado e importação de coleções do Postman.</p></div>
+      <div class="card"><div class="num">Pytest · Jest · Cypress · Newman · Selenium</div><h3>Ferramentas do mercado</h3>
+        <p>Roda suítes de outros frameworks (JUnit XML) e exporta roteiros para Playwright TS, Cypress, RestAssured, Appium e Maestro.</p></div>
+      <div class="card"><div class="num">PHP · C# · HTML</div><h3>Sistemas de treino</h3>
+        <p>Loja PHP + MySQL no XAMPP, Estoque Desktop em WinForms e site local — todos com bugs plantados.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Auditoria de banco de dados</h2>
+    <p class="sub">Nota de saúde, previsões e correções — a IA recebe só a estrutura, nunca os dados.</p>
+    <div class="grade">
+      <img src="imagens/08_auditoria_painel.png" alt="Tela de auditoria do banco" style="width:100%;border-radius:12px;border:1px solid var(--linha)">
+      <img src="imagens/11_diagrama.png" alt="Diagrama de relacionamentos com ligações sem chave estrangeira" style="width:100%;border-radius:12px;border:1px solid var(--linha);background:#fff">
+    </div>
+  </section>
+
+  <section id="relatorios" class="rel">
+    <h2>Relatórios ao vivo</h2>
+    <p class="sub">Relatórios reais gerados pelo Sentinela (sites e APIs de demonstração). Clique para abrir.</p>
+    <div class="grade">
+      <a class="card" href="relatorios/saucedemo.html"><div class="num">Web + exploração</div><h3>Sauce Demo</h3>
+        <p>Fluxo de compra completo e 5 falhas de validação encontradas (CEP com letras, nome só com espaços…).</p>
+        <p style="margin-top:10px"><span class="selo ok">6/6 aprovados</span><span class="selo bad">5 defeitos</span><span class="selo ia">IA</span></p></a>
+      <a class="card" href="relatorios/the_internet.html"><div class="num">Web · interações</div><h3>The Internet</h3>
+        <p>Hover, arrastar e soltar, upload, teclas, conteúdo dinâmico e um caso com falha proposital.</p>
+        <p style="margin-top:10px"><span class="selo ok">8 aprovados</span><span class="selo bad">1 reprovado</span><span class="selo ia">IA</span></p></a>
+      <a class="card" href="relatorios/site_treino.html"><div class="num">Site de treino local</div><h3>Loja Treino</h3>
+        <p>Login, busca e cadastro com CPF. A exploração encontra o bug plantado no telefone.</p>
+        <p style="margin-top:10px"><span class="selo ok">6/6 aprovados</span><span class="selo bad">1 defeito</span><span class="selo ia">IA</span></p></a>
+      <a class="card" href="relatorios/api_viacep.html"><div class="num">API REST</div><h3>ViaCEP + JSONPlaceholder</h3>
+        <p>Status HTTP, contrato do JSON, tempo de resposta, CEP inválido e POST encadeado.</p>
+        <p style="margin-top:10px"><span class="selo ok">4/4 aprovados</span><span class="selo ia">IA</span></p></a>
+      <a class="card" href="relatorios/loja_php.html"><div class="num">PHP + MySQL (XAMPP)</div><h3>Loja PHP</h3>
+        <p>Tela, API REST e conferência no banco. A exploração acha preço negativo aceito; o axe acha contraste ruim.</p>
+        <p style="margin-top:10px"><span class="selo ok">6 aprovados</span><span class="selo bad">1 reprovado · 5 defeitos</span><span class="selo ia">IA</span></p></a>
+      <a class="card" href="relatorios/estoque_desktop.html"><div class="num">Desktop · C# WinForms</div><h3>Estoque Desktop</h3>
+        <p>Login, cadastro, combo e busca num programa Windows de verdade — encontra a quantidade negativa aceita.</p>
+        <p style="margin-top:10px"><span class="selo ok">5 aprovados</span><span class="selo bad">1 bug plantado</span><span class="selo ia">IA</span></p></a>
+      <a class="card" href="relatorios/auditoria_banco.html"><div class="num">Auditoria de banco</div><h3>sentinela_loja (MariaDB)</h3>
+        <p>O que mudar, como, onde agir e problemas futuros — com SQL de correção, previsão e diagrama.</p>
+        <p style="margin-top:10px"><span class="selo bad">nota 35/100</span><span class="selo ia">análise da IA</span></p></a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Antes × depois</h2>
+    <p class="sub">A evolução de uma automação antiga com PyAutoGUI.</p>
+    <div class="tabela"><table>
+      <tr><th>Antes</th><th>Agora</th></tr>
+      <tr><td><code>pyautogui.click(512, 340)</code></td><td><code>clicar: "#login-button"</code> — seletor estável</td></tr>
+      <tr><td><code>time.sleep(3)</code></td><td>espera automática até o elemento estar pronto</td></tr>
+      <tr><td>sem verificação</td><td>asserções de texto, URL, mensagem, status HTTP e JSON</td></tr>
+      <tr><td>sem evidência</td><td>print de cada passo e caminho percorrido com horário</td></tr>
+      <tr><td>senha no script</td><td><code>{env.SENHA}</code> lido de um <code>.env</code> fora do Git</td></tr>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Experimente o site de treino</h2>
+    <p class="sub">A mesma lojinha usada nos testes automáticos (tem um bug plantado — consegue achar?).
+      <a href="site-treino/index.html">Abrir a Loja Treino</a> · usuário <code>qa</code>, senha <code>treino123</code> (fictícios).</p>
+  </section>
+</main>
+
+<footer>Feito por Mateus · projeto de portfólio de QA · <a href="https://github.com/zrebouca/sentinela-qa">github.com/zrebouca/sentinela-qa</a></footer>
+</body>
+</html>

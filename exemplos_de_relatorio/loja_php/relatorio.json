@@ -1,0 +1,1004 @@
+{
+  "versao_robo": "1.0.0",
+  "cabecalho": {
+    "Sistema": "Loja PHP (XAMPP)",
+    "Versão": "treino",
+    "Data": "20/11/2026 22:11",
+    "Responsável": "Mateus",
+    "Ambiente": "XAMPP local (Apache + PHP 8 + MariaDB) (Google Chrome 157.0.8103.80 · Windows 11)",
+    "Alvo": "http://localhost/sentinela-loja",
+    "Roteiro": "web_loja_php.yaml",
+    "Finalidade": "-",
+    "Duração": "14s"
+  },
+  "sistema": "Loja PHP (XAMPP)",
+  "objetivo": "Validar login, cadastro e busca de produtos, a API REST e se os dados são gravados corretamente no banco.",
+  "funcionalidades": [
+    {
+      "id": "F01",
+      "nome": "Autenticação",
+      "criterios": [
+        "Usuário válido entra na lista de produtos",
+        "Senha errada mostra mensagem e não entra"
+      ]
+    },
+    {
+      "id": "F02",
+      "nome": "Cadastro de produtos",
+      "criterios": [
+        "Produto válido é exibido na lista E gravado no banco com o preço correto",
+        "Nome curto é recusado com mensagem clara"
+      ]
+    },
+    {
+      "id": "F03",
+      "nome": "API REST",
+      "criterios": [
+        "GET lista os produtos no formato combinado (JSON Schema)",
+        "POST cria o produto (201) e ele aparece no banco"
+      ]
+    },
+    {
+      "id": "F04",
+      "nome": "Qualidade não funcional",
+      "criterios": [
+        "Tela de login sem violações graves de acessibilidade (WCAG)",
+        "API aguenta 30 requisições com p95 abaixo de 1,5 s"
+      ]
+    }
+  ],
+  "resumo": {
+    "total": 7,
+    "aprovados": 6,
+    "reprovados": 1,
+    "taxa": 86,
+    "defeitos": 5,
+    "defeitos_por_severidade": {
+      "Baixa": 1,
+      "Média": 4
+    },
+    "observacoes": 12,
+    "sugestoes": 6,
+    "acoes": 54,
+    "exploracao": true,
+    "ia": true
+  },
+  "casos": [
+    {
+      "id": "CT01",
+      "descricao": "Login com usuário válido",
+      "funcionalidade": "F01",
+      "passos": [
+        "Preparar o banco: DELETE FROM produtos WHERE nome LIKE 'TESTE %'",
+        "Abrir /index.php",
+        "Fazer login com o usuário '{dados.email}'",
+        "Verificar se a URL contém 'produtos.php'",
+        "Verificar se o texto 'Olá, QA Treino' aparece",
+        "Conferir no banco: SELECT COUNT(*) FROM log_acessos WHERE acao='login' AND quando >= NOW() - INTERVAL 1 MINUTE"
+      ],
+      "esperado": "Lista de produtos com \"Olá, QA Treino\"",
+      "obtido": "URL contém 'produtos.php' (http://localhost/sentinela-loja/produtos.php); Texto 'Olá, QA Treino' visível; Banco: registro encontrado",
+      "status": "APROVADO",
+      "print": "prints/006_CT01_verificar_banco.png",
+      "duracao_s": 1.0
+    },
+    {
+      "id": "CT02",
+      "descricao": "Login com senha errada",
+      "funcionalidade": "F01",
+      "passos": [
+        "Preparar o banco: DELETE FROM produtos WHERE nome LIKE 'TESTE %'",
+        "Abrir /index.php",
+        "Preencher 'rotulo=E-mail' com '{dados.email}'",
+        "Preencher 'rotulo=Senha' com 'errada'",
+        "Clicar em 'papel=button:Entrar'",
+        "Verificar mensagem de erro 'E-mail ou senha incorretos.'"
+      ],
+      "esperado": "Mensagem \"E-mail ou senha incorretos.\"",
+      "obtido": "Mensagem de erro exibida: 'E-mail ou senha incorretos.'",
+      "status": "APROVADO",
+      "print": "prints/012_CT02_verificar_mensagem.png",
+      "duracao_s": 0.7
+    },
+    {
+      "id": "CT03",
+      "descricao": "Cadastrar produto pela tela e conferir no banco",
+      "funcionalidade": "F02",
+      "passos": [
+        "Preparar o banco: DELETE FROM produtos WHERE nome LIKE 'TESTE %'",
+        "Abrir /index.php",
+        "Fazer login com o usuário '{dados.email}'",
+        "Clicar em 'Novo produto'",
+        "Preencher o formulário de cadastro e enviar em 'Salvar produto'",
+        "Verificar mensagem de sucesso 'Produto cadastrado com sucesso!'",
+        "Verificar se o texto '{dados.produto}' aparece em '#tabela-produtos'",
+        "Conferir no banco: SELECT COUNT(*) FROM produtos WHERE nome = '{dados.produto}'",
+        "Conferir no banco: SELECT ROUND(preco, 2) FROM produtos WHERE nome = '{dados.produto}'"
+      ],
+      "esperado": "Mensagem de sucesso, produto na lista e gravado com preço 19.90",
+      "obtido": "Mensagem de sucesso exibida: 'Produto cadastrado com sucesso!'; '#tabela-produtos' contém 'TESTE illum 446'; Banco: valor 1 (correto); Banco: valor 19.9 (correto)",
+      "status": "APROVADO",
+      "print": "prints/021_CT03_verificar_banco.png",
+      "duracao_s": 1.2
+    },
+    {
+      "id": "CT04",
+      "descricao": "Nome muito curto é recusado",
+      "funcionalidade": "F02",
+      "passos": [
+        "Preparar o banco: DELETE FROM produtos WHERE nome LIKE 'TESTE %'",
+        "Abrir /index.php",
+        "Fazer login com o usuário '{dados.email}'",
+        "Abrir /produto_novo.php",
+        "Preencher o formulário de cadastro e enviar em '#salvar'",
+        "Verificar se o texto 'mínimo 3 letras' aparece em '#erro-nome'",
+        "Conferir no banco: SELECT id FROM produtos WHERE nome = 'TE'"
+      ],
+      "esperado": "Mensagem de erro no campo nome e nada gravado",
+      "obtido": "'#erro-nome' contém 'mínimo 3 letras'; Banco: registro ausente (correto)",
+      "status": "APROVADO",
+      "print": "prints/028_CT04_verificar_banco.png",
+      "duracao_s": 1.0
+    },
+    {
+      "id": "CT05",
+      "descricao": "API — listar produtos no contrato combinado",
+      "funcionalidade": "F03",
+      "passos": [
+        "Preparar o banco: DELETE FROM produtos WHERE nome LIKE 'TESTE %'",
+        "Requisição GET /api/produtos.php",
+        "Verificar se o status HTTP é 200",
+        "Validar o JSON contra o esquema (JSON Schema)",
+        "Consultar o banco: SELECT COUNT(*) FROM produtos",
+        "Verificar o campo JSON 'total' = '{dados.total_banco}'",
+        "Verificar se respondeu em até 1500 ms"
+      ],
+      "esperado": "HTTP 200, JSON válido pelo esquema, total igual ao do banco",
+      "obtido": "Status HTTP 200; JSON dentro do contrato (JSON Schema); 'total' = 4; Respondeu em 89 ms (≤ 1500)",
+      "status": "APROVADO",
+      "print": "prints/035_CT05_verificar_tempo.png",
+      "duracao_s": 0.8
+    },
+    {
+      "id": "CT06",
+      "descricao": "API — criar produto (POST) e conferir no banco",
+      "funcionalidade": "F03",
+      "passos": [
+        "Preparar o banco: DELETE FROM produtos WHERE nome LIKE 'TESTE %'",
+        "Requisição POST /api/produtos.php",
+        "Verificar se o status HTTP é 201",
+        "Guardar 'id' como {dados.novo_id}",
+        "Conferir no banco: SELECT estoque FROM produtos WHERE id = {dados.novo_id}",
+        "Requisição GET /api/produtos.php?id={dados.novo_id}",
+        "Verificar o campo JSON 'nome' = '{dados.produto} API'"
+      ],
+      "esperado": "HTTP 201 com id; produto gravado com estoque 3",
+      "obtido": "Status HTTP 201; Banco: valor 3 (correto); 'nome' = 'TESTE illum 446 API'",
+      "status": "APROVADO",
+      "print": "prints/042_CT06_verificar_json.png",
+      "duracao_s": 0.6
+    },
+    {
+      "id": "CT07",
+      "descricao": "Qualidade da tela de login e da API",
+      "funcionalidade": "F04",
+      "passos": [
+        "Preparar o banco: DELETE FROM produtos WHERE nome LIKE 'TESTE %'",
+        "Abrir /index.php",
+        "Verificar desempenho de carregamento da página",
+        "Verificar cabeçalhos e cookies de segurança",
+        "Teste de carga: 30 requisições em /api/produtos.php",
+        "Verificar acessibilidade (axe-core / WCAG)"
+      ],
+      "esperado": "Sem violações graves de acessibilidade; API com p95 < 1,5 s",
+      "obtido": "Falhou no passo 6 (Verificar acessibilidade (axe-core / WCAG)): 1 violação(ões) de acessibilidade de impacto ≥ sério: color-contrast (1)",
+      "status": "REPROVADO",
+      "print": "prints/048_CT07_verificar_acessibilidade_FALHA.png",
+      "duracao_s": 1.1
+    }
+  ],
+  "defeitos": [
+    {
+      "id": "BUG-001",
+      "descricao": "CT07 — Qualidade da tela de login e da API: 1 violação(ões) de acessibilidade de impacto ≥ sério: color-contrast (1)",
+      "severidade": "Baixa",
+      "status": "Aberto",
+      "passos_reproducao": [
+        "Preparar o banco: DELETE FROM produtos WHERE nome LIKE 'TESTE %'",
+        "Abrir /index.php",
+        "Verificar desempenho de carregamento da página",
+        "Verificar cabeçalhos e cookies de segurança",
+        "Teste de carga: 30 requisições em /api/produtos.php",
+        "Verificar acessibilidade (axe-core / WCAG)"
+      ],
+      "esperado": "Sem violações graves de acessibilidade; API com p95 < 1,5 s",
+      "obtido": "Falhou no passo 6 (Verificar acessibilidade (axe-core / WCAG)): 1 violação(ões) de acessibilidade de impacto ≥ sério: color-contrast (1)",
+      "evidencia": "prints/048_CT07_verificar_acessibilidade_FALHA.png",
+      "origem": "Roteiro",
+      "caso_id": "CT07"
+    },
+    {
+      "id": "BUG-002",
+      "descricao": "O campo '#nome' aceita caracteres especiais/HTML ('<script>alert(1)</script>'\"%;') sem validação",
+      "severidade": "Média",
+      "status": "Aberto",
+      "passos_reproducao": [
+        "Abrir /index.php",
+        "Fazer login com o usuário '{dados.email}'",
+        "Abrir /produto_novo.php",
+        "Preencher '#nome' com '<script>alert(1)</script>'\"%;'",
+        "Preencher '#preco' com '519'",
+        "Preencher '#estoque' com '40'",
+        "Clicar em '#salvar'"
+      ],
+      "esperado": "O sistema deveria bloquear caracteres especiais/HTML e mostrar uma mensagem clara",
+      "obtido": "O formulário foi aceito e o fluxo seguiu para a próxima etapa",
+      "evidencia": "prints/050_EXP02_exploracao_especiais.png",
+      "origem": "Exploração",
+      "caso_id": "EXP02"
+    },
+    {
+      "id": "BUG-003",
+      "descricao": "O campo '#preco' aceita número negativo ('-1') sem validação",
+      "severidade": "Média",
+      "status": "Aberto",
+      "passos_reproducao": [
+        "Abrir /index.php",
+        "Fazer login com o usuário '{dados.email}'",
+        "Abrir /produto_novo.php",
+        "Preencher '#nome' com 'Renan'",
+        "Preencher '#preco' com '-1'",
+        "Preencher '#estoque' com '698'",
+        "Clicar em '#salvar'"
+      ],
+      "esperado": "O sistema deveria bloquear número negativo e mostrar uma mensagem clara",
+      "obtido": "O formulário foi aceito e o fluxo seguiu para a próxima etapa",
+      "evidencia": "prints/051_EXP03_exploracao_num_negativo.png",
+      "origem": "Exploração",
+      "caso_id": "EXP03"
+    },
+    {
+      "id": "BUG-004",
+      "descricao": "O campo '#estoque' aceita número negativo ('-1') sem validação",
+      "severidade": "Média",
+      "status": "Aberto",
+      "passos_reproducao": [
+        "Abrir /index.php",
+        "Fazer login com o usuário '{dados.email}'",
+        "Abrir /produto_novo.php",
+        "Preencher '#nome' com 'Bryan'",
+        "Preencher '#preco' com '490'",
+        "Preencher '#estoque' com '-1'",
+        "Clicar em '#salvar'"
+      ],
+      "esperado": "O sistema deveria bloquear número negativo e mostrar uma mensagem clara",
+      "obtido": "O formulário foi aceito e o fluxo seguiu para a próxima etapa",
+      "evidencia": "prints/053_EXP05_exploracao_num_negativo.png",
+      "origem": "Exploração",
+      "caso_id": "EXP05"
+    },
+    {
+      "id": "BUG-005",
+      "descricao": "O campo '#estoque' aceita letras em campo numérico ('abc') sem validação",
+      "severidade": "Média",
+      "status": "Aberto",
+      "passos_reproducao": [
+        "Abrir /index.php",
+        "Fazer login com o usuário '{dados.email}'",
+        "Abrir /produto_novo.php",
+        "Preencher '#nome' com 'Maitê'",
+        "Preencher '#preco' com '42'",
+        "Preencher '#estoque' com 'abc'",
+        "Clicar em '#salvar'"
+      ],
+      "esperado": "O sistema deveria bloquear letras em campo numérico e mostrar uma mensagem clara",
+      "obtido": "O formulário foi aceito e o fluxo seguiu para a próxima etapa",
+      "evidencia": "prints/054_EXP06_exploracao_num_letras.png",
+      "origem": "Exploração",
+      "caso_id": "EXP06"
+    }
+  ],
+  "observacoes": [
+    {
+      "categoria": "Desempenho",
+      "texto": "http://localhost/sentinela-loja/index.php: carregamento 36 ms · DOM 14 ms · TTFB 5 ms · LCP 68 ms · 2 recursos · 32 KB",
+      "print": null
+    },
+    {
+      "categoria": "Segurança",
+      "texto": "http://localhost/sentinela-loja/index.php: falta o cabeçalho Content-Security-Policy (protege contra XSS e injeção de scripts)",
+      "print": null
+    },
+    {
+      "categoria": "Segurança",
+      "texto": "http://localhost/sentinela-loja/index.php: falta o cabeçalho X-Content-Type-Options: nosniff (impede o navegador de 'adivinhar' o tipo do arquivo)",
+      "print": null
+    },
+    {
+      "categoria": "Segurança",
+      "texto": "http://localhost/sentinela-loja/index.php: falta o cabeçalho X-Frame-Options ou CSP frame-ancestors (protege contra clickjacking)",
+      "print": null
+    },
+    {
+      "categoria": "Segurança",
+      "texto": "http://localhost/sentinela-loja/index.php: falta o cabeçalho Referrer-Policy (evita vazar URLs internas para outros sites)",
+      "print": null
+    },
+    {
+      "categoria": "Segurança",
+      "texto": "http://localhost/sentinela-loja/index.php: o cabeçalho Server expõe a versão (Apache/2.4.58 (Win64) OpenSSL/3.1.3 PHP/8.2.12) — facilita ataques direcionados",
+      "print": null
+    },
+    {
+      "categoria": "Segurança",
+      "texto": "http://localhost/sentinela-loja/index.php: o cabeçalho X-Powered-By expõe a tecnologia (PHP/8.2.12)",
+      "print": null
+    },
+    {
+      "categoria": "Segurança",
+      "texto": "Cookie 'PHPSESSID' sem HttpOnly",
+      "print": null
+    },
+    {
+      "categoria": "Carga",
+      "texto": "http://localhost/sentinela-loja/api/produtos.php: 30 req · 6 simultâneas · 278.4 req/s · média 18 ms · p95 32 ms · máx 54 ms · erros 0",
+      "print": null
+    },
+    {
+      "categoria": "Acessibilidade (axe)",
+      "texto": "http://localhost/sentinela-loja/index.php: [sério] Elements must meet minimum color contrast ratio thresholds — 1 elemento(s). Regra: color-contrast",
+      "print": null
+    },
+    {
+      "categoria": "Exploração",
+      "texto": "'#nome' com campo vazio: bloqueado corretamente — mensagem exibida: \"Informe o nome do produto (mínimo 3 letras).\"",
+      "print": "prints/049_EXP01_exploracao_vazio.png"
+    },
+    {
+      "categoria": "Exploração",
+      "texto": "'#preco' com letras em campo numérico: bloqueado corretamente — mensagem exibida: \"Preço inválido.\"",
+      "print": "prints/052_EXP04_exploracao_num_letras.png"
+    }
+  ],
+  "sugestoes": [
+    {
+      "categoria": "Usabilidade",
+      "titulo": "Adicionar coluna de ações na tabela de produtos",
+      "descricao": "A listagem atual exibe apenas os dados do produto, sem opções diretas para editar ou excluir cada item. Incluir uma coluna de 'Ações' com botões para edição e exclusão agilizará a gestão dos produtos.",
+      "prioridade": "Alta",
+      "evidencia": "prints/017_CT03_cadastrar.png"
+    },
+    {
+      "categoria": "Funcionalidade",
+      "titulo": "Implementar controle de paginação na listagem",
+      "descricao": "A tabela exibe todos os produtos de forma contínua, o que pode causar problemas de usabilidade e performance à medida que o volume de dados aumentar. Adicionar paginação (ex: 10 itens por página).",
+      "prioridade": "Média",
+      "evidencia": "prints/051_EXP03_exploracao_num_negativo.png"
+    },
+    {
+      "categoria": "Funcionalidade",
+      "titulo": "Permitir ordenação ao clicar no cabeçalho das colunas",
+      "descricao": "Permitir que o usuário ordene os produtos de forma crescente/decrescente clicando nos cabeçalhos da tabela (ex: ordenar por Nome, Preço ou Estoque).",
+      "prioridade": "Média",
+      "evidencia": "prints/017_CT03_cadastrar.png"
+    },
+    {
+      "categoria": "Funcionalidade",
+      "titulo": "Adicionar filtro por Categoria na busca",
+      "descricao": "Atualmente existe apenas a busca por texto livre. Adicionar um campo de seleção (dropdown) para filtrar os produtos por categoria facilitaria a navegação do usuário.",
+      "prioridade": "Média",
+      "evidencia": "prints/017_CT03_cadastrar.png"
+    },
+    {
+      "categoria": "Acessibilidade",
+      "titulo": "Adicionar atributo 'aria-label' no campo e botão de busca",
+      "descricao": "O formulário de busca não possui um rótulo explicativo visível associado nem atributos ARIA adequados, dificultando a navegação por leitor de tela.",
+      "prioridade": "Média",
+      "evidencia": "prints/017_CT03_cadastrar.png"
+    },
+    {
+      "categoria": "Texto",
+      "titulo": "Aprimorar texto do contador do rodapé da tabela",
+      "descricao": "O texto '5 produto(s)' pode ser formatado de forma mais descritiva como 'Exibindo 5 de 5 produtos' para fornecer melhor contexto quando filtros forem aplicados.",
+      "prioridade": "Baixa",
+      "evidencia": "prints/050_EXP02_exploracao_especiais.png"
+    }
+  ],
+  "acoes": [
+    {
+      "ordem": 1,
+      "horario": "22:11:12",
+      "caso_id": "CT01",
+      "comando": "preparar_banco",
+      "descricao": "Preparar o banco: DELETE FROM produtos WHERE nome LIKE 'TESTE %'",
+      "status": "ok",
+      "print": "prints/001_CT01_preparar_banco.png",
+      "duracao_ms": 216,
+      "detalhe": "Banco preparado (0 linha(s) afetada(s))"
+    },
+    {
+      "ordem": 2,
+      "horario": "22:11:12",
+      "caso_id": "CT01",
+      "comando": "abrir",
+      "descricao": "Abrir /index.php",
+      "status": "ok",
+      "print": "prints/002_CT01_abrir.png",
+      "duracao_ms": 155,
+      "detalhe": "Página aberta: http://localhost/sentinela-loja/index.php (HTTP 200)"
+    },
+    {
+      "ordem": 3,
+      "horario": "22:11:12",
+      "caso_id": "CT01",
+      "comando": "logar",
+      "descricao": "Fazer login com o usuário '{dados.email}'",
+      "status": "ok",
+      "print": "prints/003_CT01_logar.png",
+      "duracao_ms": 259,
+      "detalhe": "Login enviado com o usuário 'qa@loja.test'"
+    },
+    {
+      "ordem": 4,
+      "horario": "22:11:12",
+      "caso_id": "CT01",
+      "comando": "verificar_url",
+      "descricao": "Verificar se a URL contém 'produtos.php'",
+      "status": "ok",
+      "print": "prints/004_CT01_verificar_url.png",
+      "duracao_ms": 62,
+      "detalhe": "URL contém 'produtos.php' (http://localhost/sentinela-loja/produtos.php)"
+    },
+    {
+      "ordem": 5,
+      "horario": "22:11:12",
+      "caso_id": "CT01",
+      "comando": "verificar_texto",
+      "descricao": "Verificar se o texto 'Olá, QA Treino' aparece",
+      "status": "ok",
+      "print": "prints/005_CT01_verificar_texto.png",
+      "duracao_ms": 62,
+      "detalhe": "Texto 'Olá, QA Treino' visível"
+    },
+    {
+      "ordem": 6,
+      "horario": "22:11:12",
+      "caso_id": "CT01",
+      "comando": "verificar_banco",
+      "descricao": "Conferir no banco: SELECT COUNT(*) FROM log_acessos WHERE acao='login' AND quando >= NOW() - INTERVAL 1 MINUTE",
+      "status": "ok",
+      "print": "prints/006_CT01_verificar_banco.png",
+      "duracao_ms": 45,
+      "detalhe": "Banco: registro encontrado"
+    },
+    {
+      "ordem": 7,
+      "horario": "22:11:13",
+      "caso_id": "CT02",
+      "comando": "preparar_banco",
+      "descricao": "Preparar o banco: DELETE FROM produtos WHERE nome LIKE 'TESTE %'",
+      "status": "ok",
+      "print": "prints/007_CT02_preparar_banco.png",
+      "duracao_ms": 47,
+      "detalhe": "Banco preparado (0 linha(s) afetada(s))"
+    },
+    {
+      "ordem": 8,
+      "horario": "22:11:13",
+      "caso_id": "CT02",
+      "comando": "abrir",
+      "descricao": "Abrir /index.php",
+      "status": "ok",
+      "print": "prints/008_CT02_abrir.png",
+      "duracao_ms": 119,
+      "detalhe": "Página aberta: http://localhost/sentinela-loja/index.php (HTTP 200)"
+    },
+    {
+      "ordem": 9,
+      "horario": "22:11:13",
+      "caso_id": "CT02",
+      "comando": "preencher",
+      "descricao": "Preencher 'rotulo=E-mail' com '{dados.email}'",
+      "status": "ok",
+      "print": "prints/009_CT02_preencher.png",
+      "duracao_ms": 89,
+      "detalhe": "'rotulo=E-mail' preenchido"
+    },
+    {
+      "ordem": 10,
+      "horario": "22:11:13",
+      "caso_id": "CT02",
+      "comando": "preencher",
+      "descricao": "Preencher 'rotulo=Senha' com 'errada'",
+      "status": "ok",
+      "print": "prints/010_CT02_preencher.png",
+      "duracao_ms": 62,
+      "detalhe": "'rotulo=Senha' preenchido"
+    },
+    {
+      "ordem": 11,
+      "horario": "22:11:13",
+      "caso_id": "CT02",
+      "comando": "clicar",
+      "descricao": "Clicar em 'papel=button:Entrar'",
+      "status": "ok",
+      "print": "prints/011_CT02_clicar.png",
+      "duracao_ms": 201,
+      "detalhe": "Clicou em 'papel=button:Entrar'"
+    },
+    {
+      "ordem": 12,
+      "horario": "22:11:13",
+      "caso_id": "CT02",
+      "comando": "verificar_mensagem",
+      "descricao": "Verificar mensagem de erro 'E-mail ou senha incorretos.'",
+      "status": "ok",
+      "print": "prints/012_CT02_verificar_mensagem.png",
+      "duracao_ms": 62,
+      "detalhe": "Mensagem de erro exibida: 'E-mail ou senha incorretos.'"
+    },
+    {
+      "ordem": 13,
+      "horario": "22:11:13",
+      "caso_id": "CT03",
+      "comando": "preparar_banco",
+      "descricao": "Preparar o banco: DELETE FROM produtos WHERE nome LIKE 'TESTE %'",
+      "status": "ok",
+      "print": "prints/013_CT03_preparar_banco.png",
+      "duracao_ms": 49,
+      "detalhe": "Banco preparado (0 linha(s) afetada(s))"
+    },
+    {
+      "ordem": 14,
+      "horario": "22:11:13",
+      "caso_id": "CT03",
+      "comando": "abrir",
+      "descricao": "Abrir /index.php",
+      "status": "ok",
+      "print": "prints/014_CT03_abrir.png",
+      "duracao_ms": 128,
+      "detalhe": "Página aberta: http://localhost/sentinela-loja/index.php (HTTP 200)"
+    },
+    {
+      "ordem": 15,
+      "horario": "22:11:14",
+      "caso_id": "CT03",
+      "comando": "logar",
+      "descricao": "Fazer login com o usuário '{dados.email}'",
+      "status": "ok",
+      "print": "prints/015_CT03_logar.png",
+      "duracao_ms": 278,
+      "detalhe": "Login enviado com o usuário 'qa@loja.test'"
+    },
+    {
+      "ordem": 16,
+      "horario": "22:11:14",
+      "caso_id": "CT03",
+      "comando": "clicar",
+      "descricao": "Clicar em 'Novo produto'",
+      "status": "ok",
+      "print": "prints/016_CT03_clicar.png",
+      "duracao_ms": 166,
+      "detalhe": "Clicou em 'Novo produto'"
+    },
+    {
+      "ordem": 17,
+      "horario": "22:11:14",
+      "caso_id": "CT03",
+      "comando": "cadastrar",
+      "descricao": "Preencher o formulário de cadastro e enviar em 'Salvar produto'",
+      "status": "ok",
+      "print": "prints/017_CT03_cadastrar.png",
+      "duracao_ms": 217,
+      "detalhe": "4 campo(s) preenchido(s)"
+    },
+    {
+      "ordem": 18,
+      "horario": "22:11:14",
+      "caso_id": "CT03",
+      "comando": "verificar_mensagem",
+      "descricao": "Verificar mensagem de sucesso 'Produto cadastrado com sucesso!'",
+      "status": "ok",
+      "print": "prints/018_CT03_verificar_mensagem.png",
+      "duracao_ms": 61,
+      "detalhe": "Mensagem de sucesso exibida: 'Produto cadastrado com sucesso!'"
+    },
+    {
+      "ordem": 19,
+      "horario": "22:11:14",
+      "caso_id": "CT03",
+      "comando": "verificar_texto",
+      "descricao": "Verificar se o texto '{dados.produto}' aparece em '#tabela-produtos'",
+      "status": "ok",
+      "print": "prints/019_CT03_verificar_texto.png",
+      "duracao_ms": 47,
+      "detalhe": "'#tabela-produtos' contém 'TESTE illum 446'"
+    },
+    {
+      "ordem": 20,
+      "horario": "22:11:14",
+      "caso_id": "CT03",
+      "comando": "verificar_banco",
+      "descricao": "Conferir no banco: SELECT COUNT(*) FROM produtos WHERE nome = '{dados.produto}'",
+      "status": "ok",
+      "print": "prints/020_CT03_verificar_banco.png",
+      "duracao_ms": 44,
+      "detalhe": "Banco: valor 1 (correto)"
+    },
+    {
+      "ordem": 21,
+      "horario": "22:11:14",
+      "caso_id": "CT03",
+      "comando": "verificar_banco",
+      "descricao": "Conferir no banco: SELECT ROUND(preco, 2) FROM produtos WHERE nome = '{dados.produto}'",
+      "status": "ok",
+      "print": "prints/021_CT03_verificar_banco.png",
+      "duracao_ms": 46,
+      "detalhe": "Banco: valor 19.9 (correto)"
+    },
+    {
+      "ordem": 22,
+      "horario": "22:11:15",
+      "caso_id": "CT04",
+      "comando": "preparar_banco",
+      "descricao": "Preparar o banco: DELETE FROM produtos WHERE nome LIKE 'TESTE %'",
+      "status": "ok",
+      "print": "prints/022_CT04_preparar_banco.png",
+      "duracao_ms": 50,
+      "detalhe": "Banco preparado (1 linha(s) afetada(s))"
+    },
+    {
+      "ordem": 23,
+      "horario": "22:11:15",
+      "caso_id": "CT04",
+      "comando": "abrir",
+      "descricao": "Abrir /index.php",
+      "status": "ok",
+      "print": "prints/023_CT04_abrir.png",
+      "duracao_ms": 124,
+      "detalhe": "Página aberta: http://localhost/sentinela-loja/index.php (HTTP 200)"
+    },
+    {
+      "ordem": 24,
+      "horario": "22:11:15",
+      "caso_id": "CT04",
+      "comando": "logar",
+      "descricao": "Fazer login com o usuário '{dados.email}'",
+      "status": "ok",
+      "print": "prints/024_CT04_logar.png",
+      "duracao_ms": 285,
+      "detalhe": "Login enviado com o usuário 'qa@loja.test'"
+    },
+    {
+      "ordem": 25,
+      "horario": "22:11:15",
+      "caso_id": "CT04",
+      "comando": "abrir",
+      "descricao": "Abrir /produto_novo.php",
+      "status": "ok",
+      "print": "prints/025_CT04_abrir.png",
+      "duracao_ms": 88,
+      "detalhe": "Página aberta: http://localhost/sentinela-loja/produto_novo.php (HTTP 200)"
+    },
+    {
+      "ordem": 26,
+      "horario": "22:11:15",
+      "caso_id": "CT04",
+      "comando": "cadastrar",
+      "descricao": "Preencher o formulário de cadastro e enviar em '#salvar'",
+      "status": "ok",
+      "print": "prints/026_CT04_cadastrar.png",
+      "duracao_ms": 186,
+      "detalhe": "3 campo(s) preenchido(s)"
+    },
+    {
+      "ordem": 27,
+      "horario": "22:11:15",
+      "caso_id": "CT04",
+      "comando": "verificar_texto",
+      "descricao": "Verificar se o texto 'mínimo 3 letras' aparece em '#erro-nome'",
+      "status": "ok",
+      "print": "prints/027_CT04_verificar_texto.png",
+      "duracao_ms": 58,
+      "detalhe": "'#erro-nome' contém 'mínimo 3 letras'"
+    },
+    {
+      "ordem": 28,
+      "horario": "22:11:15",
+      "caso_id": "CT04",
+      "comando": "verificar_banco",
+      "descricao": "Conferir no banco: SELECT id FROM produtos WHERE nome = 'TE'",
+      "status": "ok",
+      "print": "prints/028_CT04_verificar_banco.png",
+      "duracao_ms": 49,
+      "detalhe": "Banco: registro ausente (correto)"
+    },
+    {
+      "ordem": 29,
+      "horario": "22:11:16",
+      "caso_id": "CT05",
+      "comando": "preparar_banco",
+      "descricao": "Preparar o banco: DELETE FROM produtos WHERE nome LIKE 'TESTE %'",
+      "status": "ok",
+      "print": "prints/029_CT05_preparar_banco.png",
+      "duracao_ms": 58,
+      "detalhe": "Banco preparado (0 linha(s) afetada(s))"
+    },
+    {
+      "ordem": 30,
+      "horario": "22:11:16",
+      "caso_id": "CT05",
+      "comando": "requisitar",
+      "descricao": "Requisição GET /api/produtos.php",
+      "status": "ok",
+      "print": "prints/030_CT05_requisitar.png",
+      "duracao_ms": 149,
+      "detalhe": "GET http://localhost/sentinela-loja/api/produtos.php → HTTP 200 em 89 ms"
+    },
+    {
+      "ordem": 31,
+      "horario": "22:11:16",
+      "caso_id": "CT05",
+      "comando": "verificar_status",
+      "descricao": "Verificar se o status HTTP é 200",
+      "status": "ok",
+      "print": "prints/031_CT05_verificar_status.png",
+      "duracao_ms": 62,
+      "detalhe": "Status HTTP 200"
+    },
+    {
+      "ordem": 32,
+      "horario": "22:11:16",
+      "caso_id": "CT05",
+      "comando": "verificar_esquema",
+      "descricao": "Validar o JSON contra o esquema (JSON Schema)",
+      "status": "ok",
+      "print": "prints/032_CT05_verificar_esquema.png",
+      "duracao_ms": 202,
+      "detalhe": "JSON dentro do contrato (JSON Schema)"
+    },
+    {
+      "ordem": 33,
+      "horario": "22:11:16",
+      "caso_id": "CT05",
+      "comando": "consultar_banco",
+      "descricao": "Consultar o banco: SELECT COUNT(*) FROM produtos",
+      "status": "ok",
+      "print": "prints/033_CT05_consultar_banco.png",
+      "duracao_ms": 56,
+      "detalhe": "Guardado {dados.total_banco} = 4"
+    },
+    {
+      "ordem": 34,
+      "horario": "22:11:16",
+      "caso_id": "CT05",
+      "comando": "verificar_json",
+      "descricao": "Verificar o campo JSON 'total' = '{dados.total_banco}'",
+      "status": "ok",
+      "print": "prints/034_CT05_verificar_json.png",
+      "duracao_ms": 32,
+      "detalhe": "'total' = 4"
+    },
+    {
+      "ordem": 35,
+      "horario": "22:11:16",
+      "caso_id": "CT05",
+      "comando": "verificar_tempo",
+      "descricao": "Verificar se respondeu em até 1500 ms",
+      "status": "ok",
+      "print": "prints/035_CT05_verificar_tempo.png",
+      "duracao_ms": 30,
+      "detalhe": "Respondeu em 89 ms (≤ 1500)"
+    },
+    {
+      "ordem": 36,
+      "horario": "22:11:16",
+      "caso_id": "CT06",
+      "comando": "preparar_banco",
+      "descricao": "Preparar o banco: DELETE FROM produtos WHERE nome LIKE 'TESTE %'",
+      "status": "ok",
+      "print": "prints/036_CT06_preparar_banco.png",
+      "duracao_ms": 64,
+      "detalhe": "Banco preparado (0 linha(s) afetada(s))"
+    },
+    {
+      "ordem": 37,
+      "horario": "22:11:17",
+      "caso_id": "CT06",
+      "comando": "requisitar",
+      "descricao": "Requisição POST /api/produtos.php",
+      "status": "ok",
+      "print": "prints/037_CT06_requisitar.png",
+      "duracao_ms": 63,
+      "detalhe": "POST http://localhost/sentinela-loja/api/produtos.php → HTTP 201 em 13 ms"
+    },
+    {
+      "ordem": 38,
+      "horario": "22:11:17",
+      "caso_id": "CT06",
+      "comando": "verificar_status",
+      "descricao": "Verificar se o status HTTP é 201",
+      "status": "ok",
+      "print": "prints/038_CT06_verificar_status.png",
+      "duracao_ms": 42,
+      "detalhe": "Status HTTP 201"
+    },
+    {
+      "ordem": 39,
+      "horario": "22:11:17",
+      "caso_id": "CT06",
+      "comando": "guardar",
+      "descricao": "Guardar 'id' como {dados.novo_id}",
+      "status": "ok",
+      "print": "prints/039_CT06_guardar.png",
+      "duracao_ms": 45,
+      "detalhe": "Guardado {dados.novo_id} = 6"
+    },
+    {
+      "ordem": 40,
+      "horario": "22:11:17",
+      "caso_id": "CT06",
+      "comando": "verificar_banco",
+      "descricao": "Conferir no banco: SELECT estoque FROM produtos WHERE id = {dados.novo_id}",
+      "status": "ok",
+      "print": "prints/040_CT06_verificar_banco.png",
+      "duracao_ms": 43,
+      "detalhe": "Banco: valor 3 (correto)"
+    },
+    {
+      "ordem": 41,
+      "horario": "22:11:17",
+      "caso_id": "CT06",
+      "comando": "requisitar",
+      "descricao": "Requisição GET /api/produtos.php?id={dados.novo_id}",
+      "status": "ok",
+      "print": "prints/041_CT06_requisitar.png",
+      "duracao_ms": 62,
+      "detalhe": "GET http://localhost/sentinela-loja/api/produtos.php?id=6 → HTTP 200 em 18 ms"
+    },
+    {
+      "ordem": 42,
+      "horario": "22:11:17",
+      "caso_id": "CT06",
+      "comando": "verificar_json",
+      "descricao": "Verificar o campo JSON 'nome' = '{dados.produto} API'",
+      "status": "ok",
+      "print": "prints/042_CT06_verificar_json.png",
+      "duracao_ms": 45,
+      "detalhe": "'nome' = 'TESTE illum 446 API'"
+    },
+    {
+      "ordem": 43,
+      "horario": "22:11:17",
+      "caso_id": "CT07",
+      "comando": "preparar_banco",
+      "descricao": "Preparar o banco: DELETE FROM produtos WHERE nome LIKE 'TESTE %'",
+      "status": "ok",
+      "print": "prints/043_CT07_preparar_banco.png",
+      "duracao_ms": 47,
+      "detalhe": "Banco preparado (1 linha(s) afetada(s))"
+    },
+    {
+      "ordem": 44,
+      "horario": "22:11:17",
+      "caso_id": "CT07",
+      "comando": "abrir",
+      "descricao": "Abrir /index.php",
+      "status": "ok",
+      "print": "prints/044_CT07_abrir.png",
+      "duracao_ms": 121,
+      "detalhe": "Página aberta: http://localhost/sentinela-loja/index.php (HTTP 200)"
+    },
+    {
+      "ordem": 45,
+      "horario": "22:11:17",
+      "caso_id": "CT07",
+      "comando": "verificar_desempenho",
+      "descricao": "Verificar desempenho de carregamento da página",
+      "status": "ok",
+      "print": "prints/045_CT07_verificar_desempenho.png",
+      "duracao_ms": 339,
+      "detalhe": "Desempenho: carregamento 36 ms · DOM 14 ms · TTFB 5 ms · LCP 68 ms · 2 recursos · 32 KB"
+    },
+    {
+      "ordem": 46,
+      "horario": "22:11:17",
+      "caso_id": "CT07",
+      "comando": "verificar_seguranca",
+      "descricao": "Verificar cabeçalhos e cookies de segurança",
+      "status": "ok",
+      "print": "prints/046_CT07_verificar_seguranca.png",
+      "duracao_ms": 63,
+      "detalhe": "Segurança: 1 cabeçalho(s) presentes, 4 ausente(s) (ver observações)"
+    },
+    {
+      "ordem": 47,
+      "horario": "22:11:18",
+      "caso_id": "CT07",
+      "comando": "teste_carga",
+      "descricao": "Teste de carga: 30 requisições em /api/produtos.php",
+      "status": "ok",
+      "print": "prints/047_CT07_teste_carga.png",
+      "duracao_ms": 138,
+      "detalhe": "Carga OK: 30 req · 6 simultâneas · 278.4 req/s · média 18 ms · p95 32 ms · máx 54 ms · erros 0"
+    },
+    {
+      "ordem": 48,
+      "horario": "22:11:18",
+      "caso_id": "CT07",
+      "comando": "verificar_acessibilidade",
+      "descricao": "Verificar acessibilidade (axe-core / WCAG)",
+      "status": "falha",
+      "print": "prints/048_CT07_verificar_acessibilidade_FALHA.png",
+      "duracao_ms": 218,
+      "detalhe": "1 violação(ões) de acessibilidade de impacto ≥ sério: color-contrast (1)"
+    },
+    {
+      "ordem": 49,
+      "horario": "22:11:19",
+      "caso_id": "EXP01",
+      "comando": "explorar",
+      "descricao": "Exploração: '#nome' com campo vazio",
+      "status": "ok",
+      "print": "prints/049_EXP01_exploracao_vazio.png",
+      "duracao_ms": 637,
+      "detalhe": "mensagem exibida: \"Informe o nome do produto (mínimo 3 letras).\""
+    },
+    {
+      "ordem": 50,
+      "horario": "22:11:20",
+      "caso_id": "EXP02",
+      "comando": "explorar",
+      "descricao": "Exploração: '#nome' com caracteres especiais/HTML",
+      "status": "falha",
+      "print": "prints/050_EXP02_exploracao_especiais.png",
+      "duracao_ms": 1129,
+      "detalhe": "Sistema ACEITOU o valor inválido"
+    },
+    {
+      "ordem": 51,
+      "horario": "22:11:21",
+      "caso_id": "EXP03",
+      "comando": "explorar",
+      "descricao": "Exploração: '#preco' com número negativo",
+      "status": "falha",
+      "print": "prints/051_EXP03_exploracao_num_negativo.png",
+      "duracao_ms": 1146,
+      "detalhe": "Sistema ACEITOU o valor inválido"
+    },
+    {
+      "ordem": 52,
+      "horario": "22:11:21",
+      "caso_id": "EXP04",
+      "comando": "explorar",
+      "descricao": "Exploração: '#preco' com letras em campo numérico",
+      "status": "ok",
+      "print": "prints/052_EXP04_exploracao_num_letras.png",
+      "duracao_ms": 664,
+      "detalhe": "mensagem exibida: \"Preço inválido.\""
+    },
+    {
+      "ordem": 53,
+      "horario": "22:11:23",
+      "caso_id": "EXP05",
+      "comando": "explorar",
+      "descricao": "Exploração: '#estoque' com número negativo",
+      "status": "falha",
+      "print": "prints/053_EXP05_exploracao_num_negativo.png",
+      "duracao_ms": 1069,
+      "detalhe": "Sistema ACEITOU o valor inválido"
+    },
+    {
+      "ordem": 54,
+      "horario": "22:11:24",
+      "caso_id": "EXP06",
+      "comando": "explorar",
+      "descricao": "Exploração: '#estoque' com letras em campo numérico",
+      "status": "falha",
+      "print": "prints/054_EXP06_exploracao_num_letras.png",
+      "duracao_ms": 1080,
+      "detalhe": "Sistema ACEITOU o valor inválido"
+    }
+  ],
+  "avisos": []
+}

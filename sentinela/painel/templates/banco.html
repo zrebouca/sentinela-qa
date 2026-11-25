@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block titulo %}Banco de dados{% endblock %}
+{% block cabecalho %}Banco de dados{% endblock %}
+{% block subtitulo %}Auditoria de estrutura MySQL/MariaDB (XAMPP): o que mudar, como, onde agir e problemas futuros{% endblock %}
+{% block acoes %}{% endblock %}
+{% block conteudo %}
+<div class="grade g-1-2">
+  <form method="post" class="card">
+    <input type="hidden" name="acao" value="auditar">
+    <div class="cab"><div><h2>{{ icone('banco') }} Conexão</h2><div class="sub">Padrão do XAMPP: 127.0.0.1, porta 3306, usuário root</div></div>
+      <span class="dir selo {{ 'vermelho' if erro else 'verde' }}">{{ 'Sem conexão' if erro else 'Conectado' }}</span></div>
+    <div class="grade g2" style="gap:12px">
+      <label class="campo">Servidor<input type="text" name="host" value="{{ cred.host }}"></label>
+      <label class="campo">Porta<input type="text" name="porta" value="{{ cred.porta }}"></label>
+      <label class="campo">Usuário<input type="text" name="usuario" value="{{ cred.usuario }}" autocomplete="off"></label>
+      <label class="campo">Senha<input type="password" name="senha" autocomplete="off" placeholder="{{ 'em branco = sem senha' if not cred.senha else '••••••' }}"></label>
+    </div>
+    {% if erro %}<div class="aviso erro">{{ icone('alerta') }}<span>{{ erro }}</span></div>{% endif %}
+    <label class="campo">Banco para auditar
+      <select name="banco" {{ 'disabled' if not bancos }}>{% for b in bancos %}<option>{{ b }}</option>{% endfor %}</select>
+      <span class="dica">Bancos do sistema (mysql, information_schema...) não aparecem.</span></label>
+    <label class="interruptor {{ '' if ia.configurada else 'desligado' }}" style="margin-bottom:10px">
+      <input type="checkbox" name="usar_ia" value="1" {{ '' if ia.configurada else 'disabled' }}><span class="trilho"></span>
+      <span><b>{{ icone('ia', 15) }} Análise extra com IA</b><small>Envia só a estrutura (nomes e tipos), nunca os dados.</small></span></label>
+    <label class="flex pequeno" style="margin-bottom:14px"><input type="checkbox" name="lembrar" value="1"> Lembrar esta conexão no .env deste computador</label>
+    <div class="flex wrap">
+      <button class="btn prim" {{ 'disabled' if not bancos }}>{{ icone('lupa', 16) }} Auditar estrutura</button>
+      <button class="btn" formaction="{{ url_for('banco_dados') }}" name="acao" value="conectar">{{ icone('repetir', 16) }} Conectar / atualizar lista</button>
+    </div>
+  </form>
+  <section class="card">
+    <div class="cab"><div><h2>O que a auditoria verifica</h2><div class="sub">Somente leitura — nada é alterado sem você confirmar</div></div></div>
+    <div class="grade g2" style="gap:12px">
+      {% for ic, t, d in [
+        ('escudo', 'Segurança', 'usuários sem senha, acesso de qualquer host, senhas sem hash (sem ler as senhas)'),
+        ('camada', 'Estrutura', 'tabelas sem chave primária, MyISAM, falta de colunas de auditoria'),
+        ('check', 'Integridade', 'relacionamentos sem FK, registros órfãos, CPF/e-mail duplicados'),
+        ('grafico', 'Desempenho', 'colunas de relacionamento sem índice, índices redundantes, BLOBs'),
+        ('roteiros', 'Tipos de dados', 'dinheiro em FLOAT, datas em texto, charset sem utf8mb4'),
+        ('relogio', 'Futuro', 'AUTO_INCREMENT perto do limite, crescimento previsto em 12 meses'),
+      ] %}
+      <div class="flex" style="align-items:flex-start"><span class="avatar c-azul" style="width:34px;height:34px">{{ icone(ic, 16) }}</span>
+        <div><b>{{ t }}</b><div class="pequeno suave">{{ d }}</div></div></div>
+      {% endfor %}
+    </div>
+    <p class="pequeno suave mt">Cada item traz <b>por que importa</b>, o <b>problema futuro provável</b>, <b>onde agir</b>
+      (banco, código ou servidor) e o <b>SQL de correção</b>. Itens marcados como “corrigíveis” podem ser aplicados pelo Sentinela,
+      sempre com <b>backup automático antes</b> (mysqldump) e opção de restaurar.</p>
+  </section>
+</div>
+
+<section class="card mt">
+  <div class="cab"><div><h2>XAMPP e sistema de treino</h2>
+    <div class="sub">Loja PHP + MySQL com problemas plantados — ideal para praticar a auditoria e testes de tela/API/banco</div></div>
+    <div class="dir flex">
+      <span class="selo {{ 'verde' if xampp.mysql else 'vermelho' }}">MySQL {{ 'ligado' if xampp.mysql else 'parado' }}</span>
+      <span class="selo {{ 'verde' if xampp.apache else 'vermelho' }}">Apache {{ 'ligado' if xampp.apache else 'parado' }}</span>
+    </div></div>
+  {% if not xampp.instalado %}<div class="aviso amarelo">{{ icone('alerta') }}<span>{{ xampp.erro }}</span></div>{% else %}
+  <div class="flex wrap">
+    <form method="post" action="{{ url_for('xampp_acao', acao='iniciar') }}"><button class="btn">{{ icone('executar', 16) }} Ligar MySQL e Apache</button></form>
+    <form method="post" action="{{ url_for('xampp_acao', acao='instalar') }}" data-confirmar="Isso recria o banco sentinela_loja do zero e copia a Loja PHP para htdocs/sentinela-loja. Continuar?">
+      <button class="btn prim">{{ icone('upload', 16) }} {{ 'Reinstalar' if xampp.loja else 'Instalar' }} Loja PHP de treino</button></form>
+    {% if xampp.loja and xampp.apache %}<a class="btn" href="http://localhost/sentinela-loja/" target="_blank">{{ icone('abrir', 16) }} Abrir a Loja PHP</a>{% endif %}
+    <span class="pequeno suave">Pasta: {{ xampp.pasta }} · usuário da loja: <code>qa@loja.test</code> / <code>treino123</code> (fictícios)</span>
+  </div>{% endif %}
+</section>
+
+<section class="card mt">
+  <div class="cab"><div><h2>Auditorias realizadas</h2></div></div>
+  {% if historico %}
+  <div class="tabela"><table>
+    <thead><tr><th>#</th><th>Banco</th><th>Servidor</th><th>Nota</th><th>Achados</th><th>Críticos/Altos</th><th>Quando</th></tr></thead>
+    <tbody>{% for h in historico %}
+    <tr class="clicavel" data-href="{{ url_for('banco_auditoria', aid=h.id) }}">
+      <td><b>#{{ h.id }}</b></td><td><b>{{ h.banco }}</b>{% if h.usou_ia %} <span class="selo roxo">IA</span>{% endif %}</td><td class="pequeno">{{ h.host }}</td>
+      <td><span class="selo {{ 'verde' if h.nota >= 80 else ('laranja' if h.nota >= 50 else 'vermelho') }}">{{ h.nota }}/100</span></td>
+      <td>{{ h.achados }}</td><td>{{ h.criticos }}</td><td class="pequeno suave">{{ h.criado_em|relativo }}</td></tr>
+    {% endfor %}</tbody></table></div>
+  {% else %}<div class="vazio">Nenhuma auditoria ainda. Escolha um banco e clique em <b>Auditar estrutura</b>.</div>{% endif %}
+</section>
+{% endblock %}

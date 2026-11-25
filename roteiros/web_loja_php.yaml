@@ -1,0 +1,154 @@
+# Roteiro da LOJA PHP (sistema de treino em PHP + MySQL rodando no XAMPP).
+# Antes:  sentinela xampp instalar      (liga MySQL/Apache, cria o banco e copia o sistema para htdocs)
+# Mostra: login, cadastro pela tela + CONFERÊNCIA NO BANCO, busca, API REST (contrato JSON e banco),
+#         acessibilidade (axe-core), desempenho, segurança, teste de carga e exploração de validações.
+# A exploração encontra os bugs plantados: preço negativo e estoque com letras são aceitos.
+
+sistema: Loja PHP (XAMPP)
+versao: "treino"
+responsavel: Mateus
+ambiente: XAMPP local (Apache + PHP 8 + MariaDB)
+objetivo: Validar login, cadastro e busca de produtos, a API REST e se os dados são gravados corretamente no banco.
+alvo: http://localhost/sentinela-loja
+tempo_limite: 10
+
+banco:
+  host: 127.0.0.1
+  usuario: "{env.SENTINELA_DB_USUARIO|root}"
+  senha: "{env.SENTINELA_DB_SENHA|}"
+  nome: sentinela_loja
+
+dados:
+  email: qa@loja.test
+  senha: "{env.LOJA_SENHA_TREINO|treino123}"
+  produto: "TESTE {faker.word} {faker.random_int}"
+
+funcionalidades:
+  - id: F01
+    nome: Autenticação
+    criterios:
+      - Usuário válido entra na lista de produtos
+      - Senha errada mostra mensagem e não entra
+  - id: F02
+    nome: Cadastro de produtos
+    criterios:
+      - Produto válido é exibido na lista E gravado no banco com o preço correto
+      - Nome curto é recusado com mensagem clara
+  - id: F03
+    nome: API REST
+    criterios:
+      - GET lista os produtos no formato combinado (JSON Schema)
+      - POST cria o produto (201) e ele aparece no banco
+  - id: F04
+    nome: Qualidade não funcional
+    criterios:
+      - Tela de login sem violações graves de acessibilidade (WCAG)
+      - API aguenta 30 requisições com p95 abaixo de 1,5 s
+
+antes_de_cada:
+  - preparar_banco: "DELETE FROM produtos WHERE nome LIKE 'TESTE %'"
+
+casos:
+  - id: CT01
+    funcionalidade: F01
+    descricao: Login com usuário válido
+    esperado: Lista de produtos com "Olá, QA Treino"
+    severidade: Crítica
+    passos:
+      - abrir: /index.php
+      - logar: { usuario: "{dados.email}", senha: "{dados.senha}", campo_usuario: "rotulo=E-mail", campo_senha: "rotulo=Senha", botao: "papel=button:Entrar" }
+      - verificar_url: produtos.php
+      - verificar_texto: "Olá, QA Treino"
+      - verificar_banco: { sql: "SELECT COUNT(*) FROM log_acessos WHERE acao='login' AND quando >= NOW() - INTERVAL 1 MINUTE", existe: true }
+
+  - id: CT02
+    funcionalidade: F01
+    descricao: Login com senha errada
+    esperado: Mensagem "E-mail ou senha incorretos."
+    passos:
+      - abrir: /index.php
+      - preencher: { campo: "rotulo=E-mail", valor: "{dados.email}" }
+      - preencher: { campo: "rotulo=Senha", valor: "errada" }
+      - clicar: "papel=button:Entrar"
+      - verificar_mensagem: { tipo: erro, texto: "E-mail ou senha incorretos." }
+
+  - id: CT03
+    funcionalidade: F02
+    descricao: Cadastrar produto pela tela e conferir no banco
+    esperado: Mensagem de sucesso, produto na lista e gravado com preço 19.90
+    severidade: Alta
+    passos:
+      - abrir: /index.php
+      - logar: { usuario: "{dados.email}", senha: "{dados.senha}", campo_usuario: "#email", campo_senha: "#senha", botao: "papel=button:Entrar" }
+      - clicar: "Novo produto"
+      - cadastrar:
+          campos:
+            "rotulo=Nome do produto": "{dados.produto}"
+            "rotulo=Preço (R$)": "19,90"
+            "rotulo=Estoque": "7"
+            "rotulo=Categoria": "Papelaria"
+          enviar: "Salvar produto"
+      - verificar_mensagem: { tipo: sucesso, texto: "Produto cadastrado com sucesso!" }
+      - verificar_texto: { elemento: "#tabela-produtos", texto: "{dados.produto}" }
+      - verificar_banco: { sql: "SELECT COUNT(*) FROM produtos WHERE nome = '{dados.produto}'", valor: 1 }
+      - verificar_banco: { sql: "SELECT ROUND(preco, 2) FROM produtos WHERE nome = '{dados.produto}'", valor: "19.9" }
+
+  - id: CT04
+    funcionalidade: F02
+    descricao: Nome muito curto é recusado
+    esperado: Mensagem de erro no campo nome e nada gravado
+    passos:
+      - abrir: /index.php
+      - logar: { usuario: "{dados.email}", senha: "{dados.senha}", campo_usuario: "#email", campo_senha: "#senha", botao: "papel=button:Entrar" }
+      - abrir: /produto_novo.php
+      - cadastrar: { campos: { "#nome": "TE", "#preco": "10", "#estoque": "1" }, enviar: "#salvar" }
+      - verificar_texto: { elemento: "#erro-nome", texto: "mínimo 3 letras" }
+      - verificar_banco: { sql: "SELECT id FROM produtos WHERE nome = 'TE'", existe: false }
+
+  - id: CT05
+    funcionalidade: F03
+    descricao: API — listar produtos no contrato combinado
+    esperado: HTTP 200, JSON válido pelo esquema, total igual ao do banco
+    passos:
+      - requisitar: GET /api/produtos.php
+      - verificar_status: 200
+      - verificar_esquema: { arquivo: esquemas/loja_produtos.json }
+      - consultar_banco: { sql: "SELECT COUNT(*) FROM produtos", guardar_como: total_banco }
+      - verificar_json: { campo: total, valor: "{dados.total_banco}" }
+      - verificar_tempo: { maximo_ms: 1500 }
+
+  - id: CT06
+    funcionalidade: F03
+    descricao: API — criar produto (POST) e conferir no banco
+    esperado: HTTP 201 com id; produto gravado com estoque 3
+    passos:
+      - requisitar: { metodo: POST, url: /api/produtos.php, corpo: { nome: "{dados.produto} API", preco: 12.5, estoque: 3, categoria_id: 2 } }
+      - verificar_status: 201
+      - guardar: { campo: id, como: novo_id }
+      - verificar_banco: { sql: "SELECT estoque FROM produtos WHERE id = {dados.novo_id}", valor: 3 }
+      - requisitar: GET /api/produtos.php?id={dados.novo_id}
+      - verificar_json: { campo: nome, valor: "{dados.produto} API" }
+
+  - id: CT07
+    funcionalidade: F04
+    descricao: Qualidade da tela de login e da API
+    esperado: Sem violações graves de acessibilidade; API com p95 < 1,5 s
+    severidade: Baixa
+    passos:
+      - abrir: /index.php
+      - verificar_desempenho: { carregamento_ms: 4000 }
+      - verificar_seguranca
+      - teste_carga: { url: /api/produtos.php, requisicoes: 30, concorrencia: 6, p95_ms: 1500 }
+      - verificar_acessibilidade: { impacto_minimo: serious, max_violacoes: 0 }   # o axe acha um contraste insuficiente real
+
+exploracao:
+  preparar:
+    - abrir: /index.php
+    - logar: { usuario: "{dados.email}", senha: "{dados.senha}", campo_usuario: "#email", campo_senha: "#senha", botao: "papel=button:Entrar" }
+    - abrir: /produto_novo.php
+  campos:
+    "#nome":    { tipo: nome, testes: [vazio, especiais] }
+    "#preco":   { tipo: numero, testes: [num_negativo, num_letras] }
+    "#estoque": { tipo: numero, testes: [num_negativo, num_letras] }
+  enviar: "#salvar"
+  sucesso_se: { url_contem: "ok=1" }

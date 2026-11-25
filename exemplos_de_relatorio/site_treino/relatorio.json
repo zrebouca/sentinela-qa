@@ -1,0 +1,639 @@
+{
+  "versao_robo": "1.0.0",
+  "cabecalho": {
+    "Sistema": "Loja Treino (site local)",
+    "Versão": "1.0",
+    "Data": "20/11/2026 19:37",
+    "Responsável": "Mateus",
+    "Ambiente": "Local (Google Chrome 157.0.8103.80 · Windows 11)",
+    "Alvo": "http://127.0.0.1:8000",
+    "Roteiro": "web_site_treino.yaml",
+    "Finalidade": "-",
+    "Duração": "13s"
+  },
+  "sistema": "Loja Treino (site local)",
+  "objetivo": "Validar login, busca, conteúdo dinâmico e o cadastro de clientes com validação de CPF, e-mail e CEP.",
+  "funcionalidades": [
+    {
+      "id": "F01",
+      "nome": "Login",
+      "criterios": [
+        "Usuário e senha corretos levam ao painel com boas-vindas",
+        "Senha errada ou campos vazios mostram mensagem de erro"
+      ]
+    },
+    {
+      "id": "F02",
+      "nome": "Painel",
+      "criterios": [
+        "A busca filtra os produtos",
+        "As ofertas aparecem depois do carregamento"
+      ]
+    },
+    {
+      "id": "F03",
+      "nome": "Cadastro de cliente",
+      "criterios": [
+        "Dados válidos salvam o cadastro com mensagem de sucesso",
+        "CPF inválido é bloqueado com mensagem clara"
+      ]
+    }
+  ],
+  "resumo": {
+    "total": 6,
+    "aprovados": 6,
+    "reprovados": 0,
+    "taxa": 100,
+    "defeitos": 1,
+    "defeitos_por_severidade": {
+      "Baixa": 1
+    },
+    "observacoes": 6,
+    "sugestoes": 5,
+    "acoes": 35,
+    "exploracao": true,
+    "ia": true
+  },
+  "casos": [
+    {
+      "id": "CT01",
+      "descricao": "Login com usuário válido",
+      "funcionalidade": "F01",
+      "passos": [
+        "Abrir /index.html",
+        "Fazer login com o usuário 'qa'",
+        "Verificar se a URL contém 'painel.html'",
+        "Verificar se o texto 'Bem-vindo, qa!' aparece"
+      ],
+      "esperado": "Painel com \"Bem-vindo, qa!\"",
+      "obtido": "URL contém 'painel.html' (http://127.0.0.1:8000/painel.html); Texto 'Bem-vindo, qa!' visível",
+      "status": "APROVADO",
+      "print": "prints/004_CT01_verificar_texto.png",
+      "duracao_s": 0.9
+    },
+    {
+      "id": "CT02",
+      "descricao": "Login com senha errada",
+      "funcionalidade": "F01",
+      "passos": [
+        "Abrir /index.html",
+        "Preencher 'rotulo=Usuário' com 'qa'",
+        "Preencher 'rotulo=Senha' com 'errada'",
+        "Apertar a tecla Enter",
+        "Verificar mensagem de erro 'Usuário ou senha inválidos.'",
+        "Verificar se a URL contém 'index.html'"
+      ],
+      "esperado": "Mensagem \"Usuário ou senha inválidos.\"",
+      "obtido": "Mensagem de erro exibida: 'Usuário ou senha inválidos.'; URL contém 'index.html' (http://127.0.0.1:8000/index.html)",
+      "status": "APROVADO",
+      "print": "prints/010_CT02_verificar_url.png",
+      "duracao_s": 0.8
+    },
+    {
+      "id": "CT03",
+      "descricao": "Login com campos vazios",
+      "funcionalidade": "F01",
+      "passos": [
+        "Abrir /index.html",
+        "Clicar em 'Entrar'",
+        "Verificar mensagem de erro 'Preencha usuário e senha.'"
+      ],
+      "esperado": "Mensagem pedindo para preencher",
+      "obtido": "Mensagem de erro exibida: 'Preencha usuário e senha.'",
+      "status": "APROVADO",
+      "print": "prints/013_CT03_verificar_mensagem.png",
+      "duracao_s": 0.5
+    },
+    {
+      "id": "CT04",
+      "descricao": "Buscar produto e carregar ofertas",
+      "funcionalidade": "F02",
+      "passos": [
+        "Abrir /index.html",
+        "Fazer login com o usuário 'qa'",
+        "Buscar por 'mochila'",
+        "Verificar se o texto 'Mochila escolar' aparece",
+        "Verificar se o elemento '#lista li:visible' existe",
+        "Clicar em 'Carregar ofertas'",
+        "Esperar o texto '3 ofertas disponíveis hoje!' aparecer",
+        "Verificar se o texto 'Carregando...' NÃO aparece"
+      ],
+      "esperado": "Só a mochila aparece na busca; ofertas aparecem após o carregamento",
+      "obtido": "Texto 'Mochila escolar' visível; '#lista li:visible' aparece 1 vez(es); Texto 'Carregando...' não aparece (correto)",
+      "status": "APROVADO",
+      "print": "prints/021_CT04_verificar_sem_texto.png",
+      "duracao_s": 2.4
+    },
+    {
+      "id": "CT05",
+      "descricao": "Cadastro com dados válidos (Faker pt_BR)",
+      "funcionalidade": "F03",
+      "passos": [
+        "Abrir /cadastro.html",
+        "Preencher o formulário de cadastro e enviar em 'Salvar cadastro'",
+        "Verificar se a URL contém 'sucesso.html'",
+        "Verificar mensagem de sucesso 'Cadastro realizado com sucesso!'"
+      ],
+      "esperado": "Mensagem \"Cadastro realizado com sucesso!\"",
+      "obtido": "URL contém 'sucesso.html' (http://127.0.0.1:8000/sucesso.html); Mensagem de sucesso exibida: 'Cadastro realizado com sucesso!'",
+      "status": "APROVADO",
+      "print": "prints/025_CT05_verificar_mensagem.png",
+      "duracao_s": 1.0
+    },
+    {
+      "id": "CT06",
+      "descricao": "Cadastro com CPF inválido",
+      "funcionalidade": "F03",
+      "passos": [
+        "Abrir /cadastro.html",
+        "Preencher o formulário de cadastro e enviar em '#salvar'",
+        "Verificar se o texto 'CPF inválido.' aparece em '#erro-cpf'",
+        "Verificar se a URL contém 'cadastro.html'"
+      ],
+      "esperado": "Mensagem \"CPF inválido.\" e o cadastro não é salvo",
+      "obtido": "'#erro-cpf' contém 'CPF inválido.'; URL contém 'cadastro.html' (http://127.0.0.1:8000/cadastro.html)",
+      "status": "APROVADO",
+      "print": "prints/029_CT06_verificar_url.png",
+      "duracao_s": 0.8
+    }
+  ],
+  "defeitos": [
+    {
+      "id": "BUG-001",
+      "descricao": "O campo '#telefone' aceita telefone com letras ('(11) abcde-fghi') sem validação",
+      "severidade": "Baixa",
+      "status": "Aberto",
+      "passos_reproducao": [
+        "Abrir /cadastro.html",
+        "Preencher '#nome' com 'Dom'",
+        "Preencher '#email' com 'mendoncajuliana@example.com'",
+        "Preencher '#cpf' com '133.431.558-29'",
+        "Preencher '#cep' com '12966796'",
+        "Preencher '#telefone' com '(11) abcde-fghi'",
+        "Clicar em '#salvar'"
+      ],
+      "esperado": "O sistema deveria bloquear telefone com letras e mostrar uma mensagem clara",
+      "obtido": "O formulário foi aceito e o fluxo seguiu para a próxima etapa",
+      "evidencia": "prints/035_EXP06_exploracao_tel_letras.png",
+      "origem": "Exploração",
+      "caso_id": "EXP06"
+    }
+  ],
+  "observacoes": [
+    {
+      "categoria": "Console",
+      "texto": "Erro no console do navegador: Failed to load resource: the server responded with a status of 404 (File not found)",
+      "print": null
+    },
+    {
+      "categoria": "Exploração",
+      "texto": "'#nome' com campo vazio: bloqueado corretamente — mensagem exibida: \"Informe o nome completo (só letras).\"",
+      "print": "prints/030_EXP01_exploracao_vazio.png"
+    },
+    {
+      "categoria": "Exploração",
+      "texto": "'#nome' com nome só com números: bloqueado corretamente — mensagem exibida: \"Informe o nome completo (só letras).\"",
+      "print": "prints/031_EXP02_exploracao_nome_numeros.png"
+    },
+    {
+      "categoria": "Exploração",
+      "texto": "'#email' com e-mail sem @: bloqueado corretamente — mensagem exibida: \"E-mail inválido.\"",
+      "print": "prints/032_EXP03_exploracao_email_sem_arroba.png"
+    },
+    {
+      "categoria": "Exploração",
+      "texto": "'#cpf' com CPF com dígito verificador errado: bloqueado corretamente — mensagem exibida: \"CPF inválido.\"",
+      "print": "prints/033_EXP04_exploracao_cpf_digito.png"
+    },
+    {
+      "categoria": "Exploração",
+      "texto": "'#cep' com CEP com letras: bloqueado corretamente — mensagem exibida: \"CEP deve ter 8 números.\"",
+      "print": "prints/034_EXP05_exploracao_cep_letras.png"
+    }
+  ],
+  "sugestoes": [
+    {
+      "categoria": "Acessibilidade",
+      "titulo": "Melhorar contraste do texto na mensagem de sucesso",
+      "descricao": "O texto verde 'Cadastro realizado com sucesso!' sobre fundo verde claro apresenta baixo contraste visual, o que pode dificultar a leitura segundo as diretrizes da WCAG.",
+      "prioridade": "Média",
+      "evidencia": "prints/025_CT05_verificar_mensagem.png"
+    },
+    {
+      "categoria": "Usabilidade",
+      "titulo": "Adicionar indicador visual de carregamento e desabilitar botão",
+      "descricao": "Ao clicar em 'Carregar ofertas', a mensagem 'Carregando...' aparece como texto simples. O ideal é exibir um spinner visual e desabilitar o botão durante a requisição para evitar múltiplos cliques.",
+      "prioridade": "Média",
+      "evidencia": "prints/019_CT04_clicar.png"
+    },
+    {
+      "categoria": "Funcionalidade",
+      "titulo": "Implementar funcionalidade de alternar visibilidade da senha",
+      "descricao": "Incluir um botão/ícone no campo de senha para permitir que o usuário exiba ou oculte o texto digitado antes do envio.",
+      "prioridade": "Baixa",
+      "evidencia": "prints/007_CT02_preencher.png"
+    },
+    {
+      "categoria": "Texto",
+      "titulo": "Especificar mensagem de erro para campos individuais no login",
+      "descricao": "A mensagem 'Preencha usuário e senha.' é exibida de forma genérica. Se apenas um campo ficar em branco, a mensagem deve apontar especificamente qual campo precisa ser preenchido.",
+      "prioridade": "Baixa",
+      "evidencia": "prints/013_CT03_verificar_mensagem.png"
+    },
+    {
+      "categoria": "Usabilidade",
+      "titulo": "Aprimorar visual e opções de ação na tela de sucesso",
+      "descricao": "A tela de confirmação do cadastro apresenta elementos pequenos centralizados em uma área com muito espaço em branco. Adicionar botões destacados de ações principais tornaria o fluxo mais fluido.",
+      "prioridade": "Baixa",
+      "evidencia": "prints/025_CT05_verificar_mensagem.png"
+    }
+  ],
+  "acoes": [
+    {
+      "ordem": 1,
+      "horario": "19:37:49",
+      "caso_id": "CT01",
+      "comando": "abrir",
+      "descricao": "Abrir /index.html",
+      "status": "ok",
+      "print": "prints/001_CT01_abrir.png",
+      "duracao_ms": 264,
+      "detalhe": "Página aberta: http://127.0.0.1:8000/index.html (HTTP 200)"
+    },
+    {
+      "ordem": 2,
+      "horario": "19:37:49",
+      "caso_id": "CT01",
+      "comando": "logar",
+      "descricao": "Fazer login com o usuário 'qa'",
+      "status": "ok",
+      "print": "prints/002_CT01_logar.png",
+      "duracao_ms": 185,
+      "detalhe": "Login enviado com o usuário 'qa'"
+    },
+    {
+      "ordem": 3,
+      "horario": "19:37:49",
+      "caso_id": "CT01",
+      "comando": "verificar_url",
+      "descricao": "Verificar se a URL contém 'painel.html'",
+      "status": "ok",
+      "print": "prints/003_CT01_verificar_url.png",
+      "duracao_ms": 79,
+      "detalhe": "URL contém 'painel.html' (http://127.0.0.1:8000/painel.html)"
+    },
+    {
+      "ordem": 4,
+      "horario": "19:37:49",
+      "caso_id": "CT01",
+      "comando": "verificar_texto",
+      "descricao": "Verificar se o texto 'Bem-vindo, qa!' aparece",
+      "status": "ok",
+      "print": "prints/004_CT01_verificar_texto.png",
+      "duracao_ms": 49,
+      "detalhe": "Texto 'Bem-vindo, qa!' visível"
+    },
+    {
+      "ordem": 5,
+      "horario": "19:37:50",
+      "caso_id": "CT02",
+      "comando": "abrir",
+      "descricao": "Abrir /index.html",
+      "status": "ok",
+      "print": "prints/005_CT02_abrir.png",
+      "duracao_ms": 175,
+      "detalhe": "Página aberta: http://127.0.0.1:8000/index.html (HTTP 200)"
+    },
+    {
+      "ordem": 6,
+      "horario": "19:37:50",
+      "caso_id": "CT02",
+      "comando": "preencher",
+      "descricao": "Preencher 'rotulo=Usuário' com 'qa'",
+      "status": "ok",
+      "print": "prints/006_CT02_preencher.png",
+      "duracao_ms": 116,
+      "detalhe": "'rotulo=Usuário' preenchido"
+    },
+    {
+      "ordem": 7,
+      "horario": "19:37:50",
+      "caso_id": "CT02",
+      "comando": "preencher",
+      "descricao": "Preencher 'rotulo=Senha' com 'errada'",
+      "status": "ok",
+      "print": "prints/007_CT02_preencher.png",
+      "duracao_ms": 78,
+      "detalhe": "'rotulo=Senha' preenchido"
+    },
+    {
+      "ordem": 8,
+      "horario": "19:37:50",
+      "caso_id": "CT02",
+      "comando": "apertar_tecla",
+      "descricao": "Apertar a tecla Enter",
+      "status": "ok",
+      "print": "prints/008_CT02_apertar_tecla.png",
+      "duracao_ms": 84,
+      "detalhe": "Tecla Enter pressionada"
+    },
+    {
+      "ordem": 9,
+      "horario": "19:37:50",
+      "caso_id": "CT02",
+      "comando": "verificar_mensagem",
+      "descricao": "Verificar mensagem de erro 'Usuário ou senha inválidos.'",
+      "status": "ok",
+      "print": "prints/009_CT02_verificar_mensagem.png",
+      "duracao_ms": 60,
+      "detalhe": "Mensagem de erro exibida: 'Usuário ou senha inválidos.'"
+    },
+    {
+      "ordem": 10,
+      "horario": "19:37:50",
+      "caso_id": "CT02",
+      "comando": "verificar_url",
+      "descricao": "Verificar se a URL contém 'index.html'",
+      "status": "ok",
+      "print": "prints/010_CT02_verificar_url.png",
+      "duracao_ms": 59,
+      "detalhe": "URL contém 'index.html' (http://127.0.0.1:8000/index.html)"
+    },
+    {
+      "ordem": 11,
+      "horario": "19:37:51",
+      "caso_id": "CT03",
+      "comando": "abrir",
+      "descricao": "Abrir /index.html",
+      "status": "ok",
+      "print": "prints/011_CT03_abrir.png",
+      "duracao_ms": 136,
+      "detalhe": "Página aberta: http://127.0.0.1:8000/index.html (HTTP 200)"
+    },
+    {
+      "ordem": 12,
+      "horario": "19:37:51",
+      "caso_id": "CT03",
+      "comando": "clicar",
+      "descricao": "Clicar em 'Entrar'",
+      "status": "ok",
+      "print": "prints/012_CT03_clicar.png",
+      "duracao_ms": 119,
+      "detalhe": "Clicou em 'Entrar'"
+    },
+    {
+      "ordem": 13,
+      "horario": "19:37:51",
+      "caso_id": "CT03",
+      "comando": "verificar_mensagem",
+      "descricao": "Verificar mensagem de erro 'Preencha usuário e senha.'",
+      "status": "ok",
+      "print": "prints/013_CT03_verificar_mensagem.png",
+      "duracao_ms": 63,
+      "detalhe": "Mensagem de erro exibida: 'Preencha usuário e senha.'"
+    },
+    {
+      "ordem": 14,
+      "horario": "19:37:51",
+      "caso_id": "CT04",
+      "comando": "abrir",
+      "descricao": "Abrir /index.html",
+      "status": "ok",
+      "print": "prints/014_CT04_abrir.png",
+      "duracao_ms": 155,
+      "detalhe": "Página aberta: http://127.0.0.1:8000/index.html (HTTP 200)"
+    },
+    {
+      "ordem": 15,
+      "horario": "19:37:51",
+      "caso_id": "CT04",
+      "comando": "logar",
+      "descricao": "Fazer login com o usuário 'qa'",
+      "status": "ok",
+      "print": "prints/015_CT04_logar.png",
+      "duracao_ms": 212,
+      "detalhe": "Login enviado com o usuário 'qa'"
+    },
+    {
+      "ordem": 16,
+      "horario": "19:37:51",
+      "caso_id": "CT04",
+      "comando": "buscar",
+      "descricao": "Buscar por 'mochila'",
+      "status": "ok",
+      "print": "prints/016_CT04_buscar.png",
+      "duracao_ms": 114,
+      "detalhe": "Busca por 'mochila' enviada"
+    },
+    {
+      "ordem": 17,
+      "horario": "19:37:52",
+      "caso_id": "CT04",
+      "comando": "verificar_texto",
+      "descricao": "Verificar se o texto 'Mochila escolar' aparece",
+      "status": "ok",
+      "print": "prints/017_CT04_verificar_texto.png",
+      "duracao_ms": 60,
+      "detalhe": "Texto 'Mochila escolar' visível"
+    },
+    {
+      "ordem": 18,
+      "horario": "19:37:52",
+      "caso_id": "CT04",
+      "comando": "verificar_elemento",
+      "descricao": "Verificar se o elemento '#lista li:visible' existe",
+      "status": "ok",
+      "print": "prints/018_CT04_verificar_elemento.png",
+      "duracao_ms": 72,
+      "detalhe": "'#lista li:visible' aparece 1 vez(es)"
+    },
+    {
+      "ordem": 19,
+      "horario": "19:37:52",
+      "caso_id": "CT04",
+      "comando": "clicar",
+      "descricao": "Clicar em 'Carregar ofertas'",
+      "status": "ok",
+      "print": "prints/019_CT04_clicar.png",
+      "duracao_ms": 113,
+      "detalhe": "Clicou em 'Carregar ofertas'"
+    },
+    {
+      "ordem": 20,
+      "horario": "19:37:53",
+      "caso_id": "CT04",
+      "comando": "esperar",
+      "descricao": "Esperar o texto '3 ofertas disponíveis hoje!' aparecer",
+      "status": "ok",
+      "print": "prints/020_CT04_esperar.png",
+      "duracao_ms": 1395,
+      "detalhe": "Texto '3 ofertas disponíveis hoje!' apareceu"
+    },
+    {
+      "ordem": 21,
+      "horario": "19:37:53",
+      "caso_id": "CT04",
+      "comando": "verificar_sem_texto",
+      "descricao": "Verificar se o texto 'Carregando...' NÃO aparece",
+      "status": "ok",
+      "print": "prints/021_CT04_verificar_sem_texto.png",
+      "duracao_ms": 73,
+      "detalhe": "Texto 'Carregando...' não aparece (correto)"
+    },
+    {
+      "ordem": 22,
+      "horario": "19:37:54",
+      "caso_id": "CT05",
+      "comando": "abrir",
+      "descricao": "Abrir /cadastro.html",
+      "status": "ok",
+      "print": "prints/022_CT05_abrir.png",
+      "duracao_ms": 157,
+      "detalhe": "Página aberta: http://127.0.0.1:8000/cadastro.html (HTTP 200)"
+    },
+    {
+      "ordem": 23,
+      "horario": "19:37:54",
+      "caso_id": "CT05",
+      "comando": "cadastrar",
+      "descricao": "Preencher o formulário de cadastro e enviar em 'Salvar cadastro'",
+      "status": "ok",
+      "print": "prints/023_CT05_cadastrar.png",
+      "duracao_ms": 460,
+      "detalhe": "5 campo(s) preenchido(s)"
+    },
+    {
+      "ordem": 24,
+      "horario": "19:37:54",
+      "caso_id": "CT05",
+      "comando": "verificar_url",
+      "descricao": "Verificar se a URL contém 'sucesso.html'",
+      "status": "ok",
+      "print": "prints/024_CT05_verificar_url.png",
+      "duracao_ms": 86,
+      "detalhe": "URL contém 'sucesso.html' (http://127.0.0.1:8000/sucesso.html)"
+    },
+    {
+      "ordem": 25,
+      "horario": "19:37:54",
+      "caso_id": "CT05",
+      "comando": "verificar_mensagem",
+      "descricao": "Verificar mensagem de sucesso 'Cadastro realizado com sucesso!'",
+      "status": "ok",
+      "print": "prints/025_CT05_verificar_mensagem.png",
+      "duracao_ms": 82,
+      "detalhe": "Mensagem de sucesso exibida: 'Cadastro realizado com sucesso!'"
+    },
+    {
+      "ordem": 26,
+      "horario": "19:37:55",
+      "caso_id": "CT06",
+      "comando": "abrir",
+      "descricao": "Abrir /cadastro.html",
+      "status": "ok",
+      "print": "prints/026_CT06_abrir.png",
+      "duracao_ms": 174,
+      "detalhe": "Página aberta: http://127.0.0.1:8000/cadastro.html (HTTP 200)"
+    },
+    {
+      "ordem": 27,
+      "horario": "19:37:55",
+      "caso_id": "CT06",
+      "comando": "cadastrar",
+      "descricao": "Preencher o formulário de cadastro e enviar em '#salvar'",
+      "status": "ok",
+      "print": "prints/027_CT06_cadastrar.png",
+      "duracao_ms": 241,
+      "detalhe": "4 campo(s) preenchido(s)"
+    },
+    {
+      "ordem": 28,
+      "horario": "19:37:55",
+      "caso_id": "CT06",
+      "comando": "verificar_texto",
+      "descricao": "Verificar se o texto 'CPF inválido.' aparece em '#erro-cpf'",
+      "status": "ok",
+      "print": "prints/028_CT06_verificar_texto.png",
+      "duracao_ms": 61,
+      "detalhe": "'#erro-cpf' contém 'CPF inválido.'"
+    },
+    {
+      "ordem": 29,
+      "horario": "19:37:55",
+      "caso_id": "CT06",
+      "comando": "verificar_url",
+      "descricao": "Verificar se a URL contém 'cadastro.html'",
+      "status": "ok",
+      "print": "prints/029_CT06_verificar_url.png",
+      "duracao_ms": 47,
+      "detalhe": "URL contém 'cadastro.html' (http://127.0.0.1:8000/cadastro.html)"
+    },
+    {
+      "ordem": 30,
+      "horario": "19:37:55",
+      "caso_id": "EXP01",
+      "comando": "explorar",
+      "descricao": "Exploração: '#nome' com campo vazio",
+      "status": "ok",
+      "print": "prints/030_EXP01_exploracao_vazio.png",
+      "duracao_ms": 497,
+      "detalhe": "mensagem exibida: \"Informe o nome completo (só letras).\""
+    },
+    {
+      "ordem": 31,
+      "horario": "19:37:56",
+      "caso_id": "EXP02",
+      "comando": "explorar",
+      "descricao": "Exploração: '#nome' com nome só com números",
+      "status": "ok",
+      "print": "prints/031_EXP02_exploracao_nome_numeros.png",
+      "duracao_ms": 540,
+      "detalhe": "mensagem exibida: \"Informe o nome completo (só letras).\""
+    },
+    {
+      "ordem": 32,
+      "horario": "19:37:57",
+      "caso_id": "EXP03",
+      "comando": "explorar",
+      "descricao": "Exploração: '#email' com e-mail sem @",
+      "status": "ok",
+      "print": "prints/032_EXP03_exploracao_email_sem_arroba.png",
+      "duracao_ms": 606,
+      "detalhe": "mensagem exibida: \"E-mail inválido.\""
+    },
+    {
+      "ordem": 33,
+      "horario": "19:37:58",
+      "caso_id": "EXP04",
+      "comando": "explorar",
+      "descricao": "Exploração: '#cpf' com CPF com dígito verificador errado",
+      "status": "ok",
+      "print": "prints/033_EXP04_exploracao_cpf_digito.png",
+      "duracao_ms": 838,
+      "detalhe": "mensagem exibida: \"CPF inválido.\""
+    },
+    {
+      "ordem": 34,
+      "horario": "19:37:58",
+      "caso_id": "EXP05",
+      "comando": "explorar",
+      "descricao": "Exploração: '#cep' com CEP com letras",
+      "status": "ok",
+      "print": "prints/034_EXP05_exploracao_cep_letras.png",
+      "duracao_ms": 814,
+      "detalhe": "mensagem exibida: \"CEP deve ter 8 números.\""
+    },
+    {
+      "ordem": 35,
+      "horario": "19:38:00",
+      "caso_id": "EXP06",
+      "comando": "explorar",
+      "descricao": "Exploração: '#telefone' com telefone com letras",
+      "status": "falha",
+      "print": "prints/035_EXP06_exploracao_tel_letras.png",
+      "duracao_ms": 1202,
+      "detalhe": "Sistema ACEITOU o valor inválido"
+    }
+  ],
+  "avisos": []
+}

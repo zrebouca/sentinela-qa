@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block titulo %}Ops{% endblock %}
+{% block cabecalho %}Ops!{% endblock %}
+{% block conteudo %}
+<div class="card vazio"><div class="ic c-laranja">{{ icone('alerta', 28) }}</div><b>{{ msg }}</b>
+  <div class="mt"><a class="btn prim" href="{{ url_for('painel') }}">Voltar ao painel</a></div></div>
+{% endblock %}

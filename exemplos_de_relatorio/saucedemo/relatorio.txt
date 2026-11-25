@@ -1,0 +1,261 @@
+========================================================================
+RELATÓRIO DE TESTES — Sauce Demo (loja de demonstração)
+========================================================================
+Sistema:      Sauce Demo (loja de demonstração)
+Versão:       web
+Data:         20/11/2026 17:20
+Responsável:  Mateus
+Ambiente:     Demonstração pública (Google Chrome 157.0.8103.80 · Windows 11)
+Alvo:         https://www.saucedemo.com
+Roteiro:      web_saucedemo.yaml
+Finalidade:   -
+Duração:      26s
+
+RESUMO
+  Casos: 6 | Aprovados: 6 | Reprovados: 0 | Taxa: 100%
+  Defeitos: 5 | Observações: 3 | Sugestões da IA: 6
+  AVISO: Modelo 'gemini-3.5-flash' indisponível para esta chave; usado 'gemini-3.6-flash'. Para fixar, defina SENTINELA_MODELO_IA=gemini-3.6-flash no .env.
+
+OBJETIVO
+  Validar login, catálogo, carrinho e finalização de compra da loja de demonstração, e explorar as validações do formulário de entrega.
+
+
+FUNCIONALIDADES E CRITÉRIOS DE ACEITAÇÃO
+  F01 - Login
+     • Usuário válido acessa a página de produtos
+     • Usuário bloqueado vê mensagem explicando o bloqueio
+     • Senha errada mostra mensagem de erro e não entra
+  F02 - Catálogo e carrinho
+     • Ordenar por preço (menor para maior) coloca o produto mais barato primeiro
+     • Adicionar produto atualiza o contador do carrinho
+  F03 - Checkout
+     • Com dados de entrega válidos, a compra é concluída com mensagem de agradecimento
+     • Sem o primeiro nome, o sistema mostra erro e não avança
+
+CASOS DE TESTE
+  [APROVADO] CT01 — Login com usuário válido
+     Passos:
+       1. Abrir /
+       2. Fazer login com o usuário '{dados.usuario}'
+       3. Verificar se a URL contém 'inventory.html'
+       4. Verificar se o texto 'Products' aparece
+     Esperado: A página de produtos (Products) é exibida
+     Obtido:   URL contém 'inventory.html' (https://www.saucedemo.com/inventory.html); Texto 'Products' visível
+     Evidência: prints/004_CT01_verificar_texto.png
+
+  [APROVADO] CT02 — Login com usuário bloqueado
+     Passos:
+       1. Abrir /
+       2. Preencher '#user-name' com 'locked_out_user'
+       3. Preencher '#password' com '{dados.senha}'
+       4. Clicar em '#login-button'
+       5. Verificar mensagem de erro 'Sorry, this user has been locked out'
+       6. Verificar se a URL é 'https://www.saucedemo.com/'
+     Esperado: Mensagem informando que o usuário está bloqueado
+     Obtido:   Mensagem de erro exibida: 'Sorry, this user has been locked out'; URL é https://www.saucedemo.com/
+     Evidência: prints/010_CT02_verificar_url.png
+
+  [APROVADO] CT03 — Login com senha errada
+     Passos:
+       1. Abrir /
+       2. Preencher '#user-name' com '{dados.usuario}'
+       3. Preencher '#password' com 'senha_errada_123'
+       4. Apertar a tecla Enter
+       5. Verificar se o elemento 'testid=error' existe
+       6. Verificar se o texto 'Username and password do not match' aparece
+     Esperado: Mensagem de usuário/senha incorretos
+     Obtido:   Elemento 'testid=error' visível; Texto 'Username and password do not match' visível
+     Evidência: prints/016_CT03_verificar_texto.png
+
+  [APROVADO] CT04 — Ordenar produtos por menor preço e adicionar ao carrinho
+     Passos:
+       1. Abrir /
+       2. Fazer login com o usuário '{dados.usuario}'
+       3. Selecionar 'Price (low to high)' em 'testid=product-sort-container'
+       4. Verificar se o texto 'Sauce Labs Onesie' aparece em '.inventory_item_name'
+       5. Passar o mouse sobre '.inventory_item_name'
+       6. Clicar em 'testid=add-to-cart-sauce-labs-onesie'
+       7. Verificar se o texto '1' aparece em '.shopping_cart_badge'
+       8. Rolar a página para fim
+     Esperado: Produto mais barato aparece primeiro e o carrinho mostra 1 item
+     Obtido:   '.inventory_item_name' contém 'Sauce Labs Onesie'; '.shopping_cart_badge' contém '1'
+     Evidência: prints/024_CT04_rolar.png
+
+  [APROVADO] CT05 — Compra completa com dados de entrega válidos (Faker pt_BR)
+     Passos:
+       1. Abrir /
+       2. Fazer login com o usuário '{dados.usuario}'
+       3. Clicar em 'testid=add-to-cart-sauce-labs-backpack'
+       4. Clicar em '.shopping_cart_link'
+       5. Clicar em 'Checkout'
+       6. Preencher o formulário de cadastro e enviar em '#continue'
+       7. Verificar se a URL contém 'checkout-step-two'
+       8. Clicar em 'Finish'
+       9. Verificar mensagem de sucesso 'Thank you for your order!'
+     Esperado: Mensagem "Thank you for your order!"
+     Obtido:   URL contém 'checkout-step-two' (https://www.saucedemo.com/checkout-step-two.html); Mensagem de sucesso exibida: 'Thank you for your order!'
+     Evidência: prints/033_CT05_verificar_mensagem.png
+
+  [APROVADO] CT06 — Checkout sem o primeiro nome
+     Passos:
+       1. Abrir /
+       2. Fazer login com o usuário '{dados.usuario}'
+       3. Clicar em '.shopping_cart_link'
+       4. Clicar em '#checkout'
+       5. Preencher '#last-name' com '{dados.sobrenome}'
+       6. Preencher '#postal-code' com '{dados.cep}'
+       7. Clicar em '#continue'
+       8. Verificar se o texto 'First Name is required' aparece
+       9. Verificar se a URL contém 'checkout-step-one'
+     Esperado: Erro "First Name is required" e o fluxo não avança
+     Obtido:   Texto 'First Name is required' visível; URL contém 'checkout-step-one' (https://www.saucedemo.com/checkout-step-one.html)
+     Evidência: prints/042_CT06_verificar_url.png
+
+DEFEITOS
+  BUG-001 | Média | Aberto | origem: Exploração
+     O campo '#first-name' aceita apenas espaços ('     ') sem validação
+     Passos para reproduzir:
+       1. Abrir /
+       2. Fazer login com o usuário '{dados.usuario}'
+       3. Clicar em '.shopping_cart_link'
+       4. Clicar em '#checkout'
+       5. Preencher '#first-name' com '     '
+       6. Preencher '#last-name' com 'Sampaio'
+       7. Preencher '#postal-code' com '29975727'
+       8. Clicar em '#continue'
+     Esperado: O sistema deveria bloquear apenas espaços e mostrar uma mensagem clara
+     Obtido:   O formulário foi aceito e o fluxo seguiu para a próxima etapa
+     Evidência: prints/044_EXP02_exploracao_espacos.png
+
+  BUG-002 | Média | Aberto | origem: Exploração
+     O campo '#first-name' aceita caracteres especiais/HTML ('<script>alert(1)</script>'"%;') sem validação
+     Passos para reproduzir:
+       1. Abrir /
+       2. Fazer login com o usuário '{dados.usuario}'
+       3. Clicar em '.shopping_cart_link'
+       4. Clicar em '#checkout'
+       5. Preencher '#first-name' com '<script>alert(1)</script>'"%;'
+       6. Preencher '#last-name' com 'da Conceição'
+       7. Preencher '#postal-code' com '57146210'
+       8. Clicar em '#continue'
+     Esperado: O sistema deveria bloquear caracteres especiais/HTML e mostrar uma mensagem clara
+     Obtido:   O formulário foi aceito e o fluxo seguiu para a próxima etapa
+     Evidência: prints/045_EXP03_exploracao_especiais.png
+
+  BUG-003 | Baixa | Aberto | origem: Exploração
+     O campo '#first-name' aceita nome só com números ('12345') sem validação
+     Passos para reproduzir:
+       1. Abrir /
+       2. Fazer login com o usuário '{dados.usuario}'
+       3. Clicar em '.shopping_cart_link'
+       4. Clicar em '#checkout'
+       5. Preencher '#first-name' com '12345'
+       6. Preencher '#last-name' com 'Vargas'
+       7. Preencher '#postal-code' com '50805622'
+       8. Clicar em '#continue'
+     Esperado: O sistema deveria bloquear nome só com números e mostrar uma mensagem clara
+     Obtido:   O formulário foi aceito e o fluxo seguiu para a próxima etapa
+     Evidência: prints/046_EXP04_exploracao_nome_numeros.png
+
+  BUG-004 | Baixa | Aberto | origem: Exploração
+     O campo '#postal-code' aceita CEP com letras ('ABCDE-FGH') sem validação
+     Passos para reproduzir:
+       1. Abrir /
+       2. Fazer login com o usuário '{dados.usuario}'
+       3. Clicar em '.shopping_cart_link'
+       4. Clicar em '#checkout'
+       5. Preencher '#first-name' com 'Dante'
+       6. Preencher '#last-name' com 'Borges'
+       7. Preencher '#postal-code' com 'ABCDE-FGH'
+       8. Clicar em '#continue'
+     Esperado: O sistema deveria bloquear CEP com letras e mostrar uma mensagem clara
+     Obtido:   O formulário foi aceito e o fluxo seguiu para a próxima etapa
+     Evidência: prints/049_EXP07_exploracao_cep_letras.png
+
+  BUG-005 | Baixa | Aberto | origem: Exploração
+     O campo '#postal-code' aceita CEP curto demais ('123') sem validação
+     Passos para reproduzir:
+       1. Abrir /
+       2. Fazer login com o usuário '{dados.usuario}'
+       3. Clicar em '.shopping_cart_link'
+       4. Clicar em '#checkout'
+       5. Preencher '#first-name' com 'Liam'
+       6. Preencher '#last-name' com 'Melo'
+       7. Preencher '#postal-code' com '123'
+       8. Clicar em '#continue'
+     Esperado: O sistema deveria bloquear CEP curto demais e mostrar uma mensagem clara
+     Obtido:   O formulário foi aceito e o fluxo seguiu para a próxima etapa
+     Evidência: prints/050_EXP08_exploracao_cep_curto.png
+
+O QUE FOI ENCONTRADO (OBSERVAÇÕES)
+  [Exploração] '#first-name' com campo vazio: bloqueado corretamente — o formulário não avançou (sem mensagem visível — avaliar se o usuário entende o motivo)
+  [Exploração] '#last-name' com campo vazio: bloqueado corretamente — o formulário não avançou (sem mensagem visível — avaliar se o usuário entende o motivo)
+  [Exploração] '#postal-code' com campo vazio: bloqueado corretamente — o formulário não avançou (sem mensagem visível — avaliar se o usuário entende o motivo)
+
+MELHORIAS E IDEIAS (SUGESTÕES DA IA — avaliar antes de aplicar)
+  [Acessibilidade | prioridade Alta] Melhorar contraste nos botões de ação principal
+     Os botões principais como 'Login' e 'Finish' usam texto verde-escuro sobre fundo verde-claro. Isso apresenta baixo contraste de cores, violando diretrizes da WCAG e dificultando a leitura para pessoas com baixa visão.
+  [Texto | prioridade Baixa] Remover prefixo informal das mensagens de erro
+     A mensagem de erro de login exibe a expressão 'Epic sadface:', que possui tom excessivamente informal e pouco profissional para uma experiência de checkout padrão. Recomenda-se manter apenas o texto explicativo do erro.
+  [Funcionalidade | prioridade Alta] Impedir avanço no checkout com carrinho vazio
+     O sistema permite avançar para a etapa de 'Checkout: Overview' e exibir totais zerados ($0.00) sem nenhum item listado no resumo de compra. Deve-se redirecionar o usuário ou bloquear o fluxo de checkout caso o carrinho não possua itens.
+  [Usabilidade | prioridade Média] Destaque visual direto nos campos com erro de validação
+     Ao submeter o formulário de entrega com inconsistências ou campos vazios, a indicação de erro ocorre por mensagem genérica no topo, mas falta um destaque individual de borda ou ícone de alerta diretamente nos inputs afetados para orientar o foco do usuário.
+  [Funcionalidade | prioridade Média] Permitir seleção de forma de pagamento e frete
+     Na etapa de resumo do pedido ('Checkout: Overview'), as informações de pagamento (SauceCard #31337) e frete (Free Pony Express Delivery!) aparecem de forma fixa. Adicionar opções para alteração desses dados tornaria o fluxo de e-commerce mais realista e completo.
+  [Acessibilidade | prioridade Baixa] Adicionar rótulos acessíveis aos links sociais no rodapé
+     Os ícones das redes sociais no rodapé utilizam apenas elementos visuais SVG sem textos alternativos ou atributos 'aria-label', o que impede que leitores de tela anunciem o destino dos links para usuários com deficiência visual.
+
+CAMINHO PERCORRIDO
+    1. 17:20:48 [CT01] Abrir / -> OK (766 ms) prints/001_CT01_abrir.png
+    2. 17:20:48 [CT01] Fazer login com o usuário '{dados.usuario}' -> OK (198 ms) prints/002_CT01_logar.png
+    3. 17:20:48 [CT01] Verificar se a URL contém 'inventory.html' -> OK (59 ms) prints/003_CT01_verificar_url.png
+    4. 17:20:48 [CT01] Verificar se o texto 'Products' aparece -> OK (72 ms) prints/004_CT01_verificar_texto.png
+    5. 17:20:49 [CT02] Abrir / -> OK (655 ms) prints/005_CT02_abrir.png
+    6. 17:20:49 [CT02] Preencher '#user-name' com 'locked_out_user' -> OK (59 ms) prints/006_CT02_preencher.png
+    7. 17:20:49 [CT02] Preencher '#password' com '{dados.senha}' -> OK (31 ms) prints/007_CT02_preencher.png
+    8. 17:20:49 [CT02] Clicar em '#login-button' -> OK (89 ms) prints/008_CT02_clicar.png
+    9. 17:20:49 [CT02] Verificar mensagem de erro 'Sorry, this user has been locked out' -> OK (50 ms) prints/009_CT02_verificar_mensagem.png
+   10. 17:20:49 [CT02] Verificar se a URL é 'https://www.saucedemo.com/' -> OK (46 ms) prints/010_CT02_verificar_url.png
+   11. 17:20:50 [CT03] Abrir / -> OK (669 ms) prints/011_CT03_abrir.png
+   12. 17:20:50 [CT03] Preencher '#user-name' com '{dados.usuario}' -> OK (80 ms) prints/012_CT03_preencher.png
+   13. 17:20:50 [CT03] Preencher '#password' com 'senha_errada_123' -> OK (44 ms) prints/013_CT03_preencher.png
+   14. 17:20:50 [CT03] Apertar a tecla Enter -> OK (82 ms) prints/014_CT03_apertar_tecla.png
+   15. 17:20:50 [CT03] Verificar se o elemento 'testid=error' existe -> OK (87 ms) prints/015_CT03_verificar_elemento.png
+   16. 17:20:50 [CT03] Verificar se o texto 'Username and password do not match' aparece -> OK (49 ms) prints/016_CT03_verificar_texto.png
+   17. 17:20:51 [CT04] Abrir / -> OK (685 ms) prints/017_CT04_abrir.png
+   18. 17:20:51 [CT04] Fazer login com o usuário '{dados.usuario}' -> OK (228 ms) prints/018_CT04_logar.png
+   19. 17:20:51 [CT04] Selecionar 'Price (low to high)' em 'testid=product-sort-container' -> OK (103 ms) prints/019_CT04_selecionar.png
+   20. 17:20:51 [CT04] Verificar se o texto 'Sauce Labs Onesie' aparece em '.inventory_item_name' -> OK (103 ms) prints/020_CT04_verificar_texto.png
+   21. 17:20:51 [CT04] Passar o mouse sobre '.inventory_item_name' -> OK (96 ms) prints/021_CT04_passar_mouse.png
+   22. 17:20:52 [CT04] Clicar em 'testid=add-to-cart-sauce-labs-onesie' -> OK (142 ms) prints/022_CT04_clicar.png
+   23. 17:20:52 [CT04] Verificar se o texto '1' aparece em '.shopping_cart_badge' -> OK (95 ms) prints/023_CT04_verificar_texto.png
+   24. 17:20:52 [CT04] Rolar a página para fim -> OK (92 ms) prints/024_CT04_rolar.png
+   25. 17:20:53 [CT05] Abrir / -> OK (712 ms) prints/025_CT05_abrir.png
+   26. 17:20:53 [CT05] Fazer login com o usuário '{dados.usuario}' -> OK (132 ms) prints/026_CT05_logar.png
+   27. 17:20:53 [CT05] Clicar em 'testid=add-to-cart-sauce-labs-backpack' -> OK (101 ms) prints/027_CT05_clicar.png
+   28. 17:20:53 [CT05] Clicar em '.shopping_cart_link' -> OK (99 ms) prints/028_CT05_clicar.png
+   29. 17:20:53 [CT05] Clicar em 'Checkout' -> OK (118 ms) prints/029_CT05_clicar.png
+   30. 17:20:53 [CT05] Preencher o formulário de cadastro e enviar em '#continue' -> OK (187 ms) prints/030_CT05_cadastrar.png
+   31. 17:20:53 [CT05] Verificar se a URL contém 'checkout-step-two' -> OK (64 ms) prints/031_CT05_verificar_url.png
+   32. 17:20:53 [CT05] Clicar em 'Finish' -> OK (108 ms) prints/032_CT05_clicar.png
+   33. 17:20:53 [CT05] Verificar mensagem de sucesso 'Thank you for your order!' -> OK (46 ms) prints/033_CT05_verificar_mensagem.png
+   34. 17:20:54 [CT06] Abrir / -> OK (692 ms) prints/034_CT06_abrir.png
+   35. 17:20:54 [CT06] Fazer login com o usuário '{dados.usuario}' -> OK (146 ms) prints/035_CT06_logar.png
+   36. 17:20:55 [CT06] Clicar em '.shopping_cart_link' -> OK (128 ms) prints/036_CT06_clicar.png
+   37. 17:20:55 [CT06] Clicar em '#checkout' -> OK (59 ms) prints/037_CT06_clicar.png
+   38. 17:20:55 [CT06] Preencher '#last-name' com '{dados.sobrenome}' -> OK (67 ms) prints/038_CT06_preencher.png
+   39. 17:20:55 [CT06] Preencher '#postal-code' com '{dados.cep}' -> OK (62 ms) prints/039_CT06_preencher.png
+   40. 17:20:55 [CT06] Clicar em '#continue' -> OK (77 ms) prints/040_CT06_clicar.png
+   41. 17:20:55 [CT06] Verificar se o texto 'First Name is required' aparece -> OK (48 ms) prints/041_CT06_verificar_texto.png
+   42. 17:20:55 [CT06] Verificar se a URL contém 'checkout-step-one' -> OK (62 ms) prints/042_CT06_verificar_url.png
+   43. 17:20:59 [EXP01] Exploração: '#first-name' com campo vazio -> OK (4165 ms) prints/043_EXP01_exploracao_vazio.png
+   44. 17:21:00 [EXP02] Exploração: '#first-name' com apenas espaços -> FALHA (917 ms) prints/044_EXP02_exploracao_espacos.png
+   45. 17:21:01 [EXP03] Exploração: '#first-name' com caracteres especiais/HTML -> FALHA (954 ms) prints/045_EXP03_exploracao_especiais.png
+   46. 17:21:02 [EXP04] Exploração: '#first-name' com nome só com números -> FALHA (924 ms) prints/046_EXP04_exploracao_nome_numeros.png
+   47. 17:21:06 [EXP05] Exploração: '#last-name' com campo vazio -> OK (3928 ms) prints/047_EXP05_exploracao_vazio.png
+   48. 17:21:10 [EXP06] Exploração: '#postal-code' com campo vazio -> OK (4133 ms) prints/048_EXP06_exploracao_vazio.png
+   49. 17:21:11 [EXP07] Exploração: '#postal-code' com CEP com letras -> FALHA (907 ms) prints/049_EXP07_exploracao_cep_letras.png
+   50. 17:21:12 [EXP08] Exploração: '#postal-code' com CEP curto demais -> FALHA (917 ms) prints/050_EXP08_exploracao_cep_curto.png
+
+Gerado por Sentinela QA v1.0.0

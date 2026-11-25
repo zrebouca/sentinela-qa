@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Auditoria do banco {{ a.banco }} — Sentinela QA</title>
+<style>
+  :root { --bg:#f5f6f8; --card:#fff; --text:#1d2330; --muted:#5d6678; --line:#e3e6ec; --accent:#2554d4;
+          --ok:#15803d; --ok-bg:#e7f6ec; --bad:#c62828; --bad-bg:#fdecec; --warn:#a15c00; --warn-bg:#fff4e0;
+          --info:#2d5fa8; --info-bg:#e9f0fb; --ia:#6b3fc4; --ia-bg:#f1ebfd; --code:#0f1729; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#12151b; --card:#1b1f27; --text:#e6e9ef; --muted:#9aa3b5; --line:#2c323d; --accent:#7b9cff;
+            --ok:#5fd08a; --ok-bg:#173323; --bad:#ff7b7b; --bad-bg:#3a1c1f; --warn:#ffb74d; --warn-bg:#3a2c14;
+            --info:#8fb6ff; --info-bg:#1c2a40; --ia:#b99bff; --ia-bg:#2a2142; }
+  }
+  * { box-sizing:border-box; } body { margin:0; background:var(--bg); color:var(--text); font:15px/1.55 "Segoe UI",system-ui,sans-serif; }
+  .wrap { max-width:1180px; margin:0 auto; padding:0 16px; }
+  header.topo { background:var(--card); border-bottom:1px solid var(--line); padding:22px 0; }
+  h1 { margin:0; font-size:25px; } h2 { font-size:19px; margin:0 0 14px; } h3 { font-size:15.5px; margin:0 0 4px; }
+  .sub { color:var(--muted); margin:0; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; margin:18px 0; overflow:hidden; }
+  .tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
+  .tile { border:1px solid var(--line); border-radius:10px; padding:12px 14px; } .tile .v { font-size:27px; font-weight:700; }
+  .tile .l { color:var(--muted); font-size:13px; }
+  .nota { display:flex; align-items:center; gap:22px; flex-wrap:wrap; }
+  .anel { width:120px; height:120px; border-radius:50%; display:grid; place-items:center; flex:none;
+          background:conic-gradient(var(--cor) calc(var(--p)*1%), var(--line) 0); }
+  .anel span { width:92px; height:92px; border-radius:50%; background:var(--card); display:grid; place-items:center; font-size:30px; font-weight:800; }
+  .badge { display:inline-block; font-size:12px; font-weight:700; padding:2px 9px; border-radius:999px; white-space:nowrap; margin-right:4px; }
+  .s-Crítica, .s-Alta { background:var(--bad-bg); color:var(--bad); } .s-Média { background:var(--warn-bg); color:var(--warn); }
+  .s-Baixa, .s-Info { background:var(--info-bg); color:var(--info); } .cat { background:var(--info-bg); color:var(--info); }
+  .auto { background:var(--ok-bg); color:var(--ok); } .ia { background:var(--ia-bg); color:var(--ia); }
+  .achado { border:1px solid var(--line); border-left:4px solid var(--info); border-radius:10px; padding:14px 16px; margin:10px 0; }
+  .achado.b-Crítica, .achado.b-Alta { border-left-color:var(--bad); } .achado.b-Média { border-left-color:var(--warn); }
+  .grade2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:10px 18px; margin-top:8px; font-size:14px; }
+  .k { color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+  pre { background:var(--code); color:#d5def5; padding:12px 14px; border-radius:10px; overflow-x:auto; font:12.5px/1.55 Consolas,monospace; margin:8px 0 0; }
+  table { width:100%; border-collapse:collapse; min-width:620px; } .tabela { overflow-x:auto; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); font-size:14px; vertical-align:top; }
+  th { color:var(--muted); font-size:12px; text-transform:uppercase; }
+  .tabs { display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:12px; }
+  .tab { border:1px solid var(--line); border-radius:10px; overflow:hidden; } .tab h3 { background:var(--info-bg); color:var(--info); padding:8px 12px; margin:0; }
+  .tab ul { list-style:none; margin:0; padding:6px 12px 10px; font-size:13px; } .tab li { padding:2px 0; display:flex; justify-content:space-between; gap:8px; }
+  .tab li span { color:var(--muted); font-family:Consolas,monospace; font-size:12px; }
+  .filtros { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
+  .filtros button { border:1px solid var(--line); background:var(--card); color:var(--text); border-radius:99px; padding:4px 12px; cursor:pointer; font:inherit; font-size:13px; }
+  .filtros button.on { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .aviso { background:var(--warn-bg); color:var(--warn); border-radius:8px; padding:8px 12px; margin:8px 0 0; }
+  footer { color:var(--muted); text-align:center; font-size:13px; padding:10px 0 40px; }
+  .mermaid { background:#fff; border-radius:10px; padding:10px; overflow-x:auto; }
+</style>
+</head>
+<body>
+<header class="topo"><div class="wrap">
+  <div style="display:flex;align-items:center;gap:14px">
+    <svg viewBox="0 0 128 128" width="46" height="46" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3d6ef0"/><stop offset="1" stop-color="#13348f"/></linearGradient></defs><path d="M64 6 L112 22 V60 C112 90 92 110 64 122 C36 110 16 90 16 60 V22 Z" fill="url(#g)"/><path d="M30 64 C40 48 52 41 64 41 C76 41 88 48 98 64 C88 80 76 87 64 87 C52 87 40 80 30 64 Z" fill="none" stroke="#fff" stroke-width="6"/><circle cx="64" cy="64" r="15" fill="#fff"/><path d="M57 64.5 L62 69.5 L72 58.5" fill="none" stroke="#1d4bd0" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div><h1>Auditoria do banco de dados — {{ a.banco }}</h1>
+      <p class="sub">Servidor {{ a.host }} · {{ a.versao }} · {{ a.quando }} · Sentinela QA v{{ versao_robo }}</p></div>
+  </div>
+</div></header>
+
+<main class="wrap">
+<section>
+  <h2>Resumo</h2>
+  {% set n = a.resumo.nota %}
+  <div class="nota">
+    <div class="anel" style="--p:{{ n }};--cor:{{ '#15803d' if n >= 80 else ('#e07a10' if n >= 50 else '#c62828') }}"><span>{{ n }}</span></div>
+    <div style="flex:1;min-width:260px">
+      <p style="margin:0 0 10px"><b>Nota de saúde {{ n }}/100.</b>
+        {% if n >= 80 %}Estrutura em bom estado — veja os ajustes finos abaixo.
+        {% elif n >= 50 %}Há problemas que vão causar dor de cabeça com o crescimento do sistema.
+        {% else %}Há riscos sérios de segurança, integridade ou desempenho. Priorize os itens Críticos e Altos.{% endif %}</p>
+      <div class="tiles">
+        <div class="tile"><div class="v">{{ a.resumo.tabelas }}</div><div class="l">tabelas</div></div>
+        <div class="tile"><div class="v">{{ '{:,}'.format(a.resumo.linhas).replace(',', '.') }}</div><div class="l">linhas (aprox.)</div></div>
+        <div class="tile"><div class="v">{{ a.resumo.tamanho_mb }} MB</div><div class="l">tamanho</div></div>
+        <div class="tile"><div class="v">{{ a.resumo.achados }}</div><div class="l">achados</div></div>
+        <div class="tile"><div class="v">{{ a.resumo.aplicaveis }}</div><div class="l">corrigíveis pelo Sentinela</div></div>
+      </div>
+      <p style="margin:10px 0 0">{% for s in ['Crítica','Alta','Média','Baixa','Info'] %}{% if a.resumo.por_severidade.get(s) %}<span class="badge s-{{ s }}">{{ s }}: {{ a.resumo.por_severidade[s] }}</span>{% endif %}{% endfor %}</p>
+    </div>
+  </div>
+  {% for av in a.avisos %}<p class="aviso">⚠ {{ av }}</p>{% endfor %}
+  <p class="sub" style="margin-top:12px">A auditoria lê só a estrutura (information_schema) e faz contagens; nenhum dado das tabelas é exibido.</p>
+</section>
+
+<section>
+  <h2>O que mudar, como mudar e onde agir</h2>
+  <div class="filtros" id="filtros">
+    <button class="on" data-f="">Todos</button>
+    {% for c in a.achados|map(attribute='categoria')|unique %}<button data-f="{{ c }}">{{ c }}</button>{% endfor %}
+  </div>
+  {# ordena por gravidade: Crítica primeiro #}
+  {% for sev in ['Crítica','Alta','Média','Baixa','Info'] %}{% for x in a.achados if x.severidade == sev %}
+  <div class="achado b-{{ x.severidade }}" data-cat="{{ x.categoria }}">
+    <div><span class="badge s-{{ x.severidade }}">{{ x.severidade }}</span><span class="badge cat">{{ x.categoria }}</span>
+      {% if x.aplicavel %}<span class="badge auto">corrigível pelo Sentinela</span>{% endif %}
+      <span class="sub" style="font-size:13px">{{ x.id }} · <code>{{ x.objeto }}</code></span></div>
+    <h3 style="margin-top:8px">{{ x.problema }}</h3>
+    <div class="grade2">
+      <div><div class="k">Por que importa</div>{{ x.impacto }}</div>
+      <div><div class="k">🔮 Problema futuro provável</div>{{ x.previsao }}</div>
+      <div><div class="k">Onde agir</div>{{ x.onde_agir }}</div>
+      <div><div class="k">Como corrigir</div>{{ x.como_corrigir }}</div>
+    </div>
+    {% if x.sql %}<pre>{{ x.sql }}</pre>{% endif %}
+  </div>
+  {% endfor %}{% endfor %}
+  {% if not a.achados %}<p class="sub">Nenhum problema encontrado. 🎉</p>{% endif %}
+</section>
+
+{% if a.previsoes %}
+<section>
+  <h2>🔮 Previsão de crescimento (próximos 12 meses)</h2>
+  <p class="sub">Estimativa pelo ritmo de cadastro desde a criação de cada tabela — use como alerta, não como certeza.</p>
+  <div class="tabela"><table>
+    <thead><tr><th>Tabela</th><th>Linhas hoje</th><th>Linhas/dia</th><th>Linhas em 1 ano</th><th>Tamanho hoje</th><th>Tamanho em 1 ano</th></tr></thead>
+    <tbody>{% for p in a.previsoes %}<tr><td><b>{{ p.tabela }}</b></td><td>{{ p.linhas }}</td><td>{{ p.linhas_por_dia }}</td>
+      <td>{{ p.linhas_em_1_ano }}</td><td>{{ p.tamanho_mb }} MB</td><td>{{ p.mb_em_1_ano }} MB</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+{% endif %}
+
+{% if a.sugestoes_ia %}
+<section>
+  <h2>Análise da IA sobre a estrutura</h2>
+  <p class="sub">Sugestões geradas a partir da estrutura (sem dados). Avalie antes de aplicar.</p>
+  {% for s in a.sugestoes_ia %}
+  <div class="achado"><span class="badge ia">Sugestão da IA</span><span class="badge s-{{ s.prioridade }}">Prioridade {{ s.prioridade }}</span>
+    <span class="badge cat">{{ s.onde_agir }}</span><h3 style="margin-top:8px">{{ s.titulo }}</h3><div>{{ s.descricao }}</div></div>
+  {% endfor %}
+</section>
+{% endif %}
+
+<section>
+  <h2>Estrutura atual</h2>
+  <div class="tabs">
+    {% for t in a.tabelas %}
+    <div class="tab"><h3>{{ t.nome }} <span style="font-weight:400;font-size:12px">· {{ t.engine }} · {{ t.linhas }} linhas · {{ t.tamanho_kb }} KB</span></h3>
+      <ul>{% for c in t.colunas %}<li><b>{{ '🔑 ' if c.chave == 'PRI' }}{{ c.nome }}</b><span>{{ c.tipo }}{{ ' null' if c.nulo }}</span></li>{% endfor %}</ul></div>
+    {% endfor %}
+  </div>
+  <h3 style="margin-top:18px">Diagrama de relacionamentos</h3>
+  <p class="sub">{% if a.relacoes %}{{ a.relacoes|length }} chave(s) estrangeira(s) declarada(s).{% else %}Nenhuma chave estrangeira declarada — os relacionamentos existem só no código.{% endif %}</p>
+  <div class="mermaid">{{ mermaid }}</div>
+</section>
+
+<section>
+  <h2>Script de correções</h2>
+  <p class="sub">Comandos comentados (com --) precisam de revisão manual antes. Faça backup antes de rodar.</p>
+  <details><summary>Ver correcoes_sugeridas.sql</summary><pre>{{ sql }}</pre></details>
+</section>
+</main>
+<footer>Gerado pelo Sentinela QA · auditoria somente de estrutura</footer>
+<script type="module">
+  // Filtro por categoria
+  document.querySelectorAll('#filtros button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#filtros button').forEach(x => x.classList.toggle('on', x === b));
+    document.querySelectorAll('.achado[data-cat]').forEach(d => d.style.display = (!b.dataset.f || d.dataset.cat === b.dataset.f) ? '' : 'none');
+  }));
+  // Diagrama (precisa de internet; sem internet aparece o texto do diagrama)
+  try {
+    const { default: mermaid } = await import('https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs');
+    mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'strict' });
+    await mermaid.run();
+  } catch (e) { }
+</script>
+</body>
+</html>

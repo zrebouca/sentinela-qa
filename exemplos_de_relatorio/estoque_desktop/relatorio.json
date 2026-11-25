@@ -1,0 +1,563 @@
+{
+  "versao_robo": "1.0.0",
+  "cabecalho": {
+    "Sistema": "Estoque Desktop (WinForms)",
+    "Versão": "treino",
+    "Data": "20/11/2026 22:11",
+    "Responsável": "Mateus",
+    "Ambiente": "Desktop Windows (.NET Framework) (Windows UI Automation (pywinauto) · Windows 11)",
+    "Alvo": "sistemas_treino/estoque_desktop/EstoqueDesktop.exe",
+    "Roteiro": "desktop_estoque.yaml",
+    "Finalidade": "-",
+    "Duração": "71s"
+  },
+  "sistema": "Estoque Desktop (WinForms)",
+  "objetivo": "Validar login, cadastro com validações, busca e exclusão de produtos num sistema desktop real.",
+  "funcionalidades": [
+    {
+      "id": "F01",
+      "nome": "Login",
+      "criterios": [
+        "Senha errada mostra mensagem e não entra",
+        "Usuário válido abre o cadastro"
+      ]
+    },
+    {
+      "id": "F02",
+      "nome": "Cadastro de produtos",
+      "criterios": [
+        "Produto válido entra na lista e atualiza o total",
+        "Preço zero/negativo e quantidade negativa são recusados"
+      ]
+    }
+  ],
+  "resumo": {
+    "total": 6,
+    "aprovados": 5,
+    "reprovados": 1,
+    "taxa": 83,
+    "defeitos": 1,
+    "defeitos_por_severidade": {
+      "Alta": 1
+    },
+    "observacoes": 0,
+    "sugestoes": 6,
+    "acoes": 31,
+    "exploracao": false,
+    "ia": true
+  },
+  "casos": [
+    {
+      "id": "CT01",
+      "descricao": "Login com senha errada",
+      "funcionalidade": "F01",
+      "passos": [
+        "Preencher 'id=txtUsuario' com 'qa'",
+        "Preencher 'id=txtSenha' com 'errada'",
+        "Clicar em 'id=btnEntrar'",
+        "Verificar se o texto 'Usuário ou senha inválidos.' aparece em 'id=lblMensagemLogin'"
+      ],
+      "esperado": "Mensagem \"Usuário ou senha inválidos.\"",
+      "obtido": "'id=lblMensagemLogin' contém 'Usuário ou senha inválidos.' (exibido: 'Usuário ou senha inválidos.')",
+      "status": "APROVADO",
+      "print": "prints/004_CT01_verificar_texto.png",
+      "duracao_s": 9.5
+    },
+    {
+      "id": "CT02",
+      "descricao": "Login com usuário válido",
+      "funcionalidade": "F01",
+      "passos": [
+        "Preencher 'id=txtSenha' com '{env.ESTOQUE_SENHA|treino123}'",
+        "Clicar em 'id=btnEntrar'",
+        "Verificar se o elemento 'id=txtNome' existe",
+        "Verificar se o título contém 'qa'"
+      ],
+      "esperado": "Tela de cadastro aberta com o título \"Estoque Desktop — qa\"",
+      "obtido": "Elemento 'id=txtNome' existe; Título contém 'qa'",
+      "status": "APROVADO",
+      "print": "prints/008_CT02_verificar_titulo.png",
+      "duracao_s": 6.6
+    },
+    {
+      "id": "CT03",
+      "descricao": "Adicionar produto válido",
+      "funcionalidade": "F02",
+      "passos": [
+        "Preencher 'id=txtNome' com 'Teclado mecânico'",
+        "Preencher 'id=txtPreco' com '249,90'",
+        "Preencher 'id=txtQuantidade' com '5'",
+        "Selecionar 'Informática' em 'id=cmbCategoria'",
+        "Clicar em 'id=btnAdicionar'",
+        "Verificar se o texto 'Produto adicionado com sucesso!' aparece em 'id=lblStatus'",
+        "Verificar se o texto 'Teclado mecânico' aparece",
+        "Verificar se o texto '4 produto(s)' aparece em 'id=lblTotal'"
+      ],
+      "esperado": "Mensagem de sucesso, item na lista e total com 4 produtos",
+      "obtido": "'id=lblStatus' contém 'Produto adicionado com sucesso!' (exibido: 'Produto adicionado com sucesso!'); Texto 'Teclado mecânico' visível; 'id=lblTotal' contém '4 produto(s)' (exibido: '4 produto(s) · 90 unidade(s) · Valor em estoque: R$ 4.891,00')",
+      "status": "APROVADO",
+      "print": "prints/016_CT03_verificar_texto.png",
+      "duracao_s": 15.3
+    },
+    {
+      "id": "CT04",
+      "descricao": "Preço zero é recusado",
+      "funcionalidade": "F02",
+      "passos": [
+        "Preencher 'id=txtNome' com 'Produto grátis'",
+        "Preencher 'id=txtPreco' com '0'",
+        "Preencher 'id=txtQuantidade' com '1'",
+        "Clicar em 'id=btnAdicionar'",
+        "Verificar se o texto 'Preço inválido' aparece em 'id=lblStatus'",
+        "Verificar se o texto 'Produto grátis' NÃO aparece"
+      ],
+      "esperado": "Mensagem de preço inválido e nada adicionado",
+      "obtido": "'id=lblStatus' contém 'Preço inválido' (exibido: 'Preço inválido: use um valor maior que zero (ex.: 19,90).'); Texto 'Produto grátis' não aparece (correto)",
+      "status": "APROVADO",
+      "print": "prints/022_CT04_verificar_sem_texto.png",
+      "duracao_s": 11.0
+    },
+    {
+      "id": "CT05",
+      "descricao": "Quantidade negativa deve ser recusada",
+      "funcionalidade": "F02",
+      "passos": [
+        "Preencher 'id=txtNome' com 'Estoque negativo'",
+        "Preencher 'id=txtPreco' com '10'",
+        "Preencher 'id=txtQuantidade' com '-3'",
+        "Clicar em 'id=btnAdicionar'",
+        "Verificar se o texto 'Quantidade inválida' aparece em 'id=lblStatus'"
+      ],
+      "esperado": "Mensagem \"Quantidade inválida\" e o produto NÃO entra na lista",
+      "obtido": "Falhou no passo 5 (Verificar se o texto 'Quantidade inválida' aparece em 'id=lblStatus'): Texto 'Quantidade inválida' não encontrado em 'id=lblStatus' (exibido: 'Produto adicionado com sucesso!')",
+      "status": "REPROVADO",
+      "print": "prints/027_CT05_verificar_texto_FALHA.png",
+      "duracao_s": 17.2
+    },
+    {
+      "id": "CT06",
+      "descricao": "Buscar produto",
+      "funcionalidade": "F02",
+      "passos": [
+        "Preencher 'id=txtBusca' com 'mouse'",
+        "Clicar em 'id=btnBuscar'",
+        "Verificar se o texto '1 produto(s) encontrado(s)' aparece em 'id=lblStatus'",
+        "Clicar em 'id=btnLimparBusca'"
+      ],
+      "esperado": "Mensagem com 1 produto encontrado para \"mouse\"",
+      "obtido": "'id=lblStatus' contém '1 produto(s) encontrado(s)' (exibido: '1 produto(s) encontrado(s) para \"mouse\".')",
+      "status": "APROVADO",
+      "print": "prints/031_CT06_clicar.png",
+      "duracao_s": 7.2
+    }
+  ],
+  "defeitos": [
+    {
+      "id": "BUG-001",
+      "descricao": "CT05 — Quantidade negativa deve ser recusada: Texto 'Quantidade inválida' não encontrado em 'id=lblStatus' (exibido: 'Produto adicionado com sucesso!')",
+      "severidade": "Alta",
+      "status": "Aberto",
+      "passos_reproducao": [
+        "Preencher 'id=txtNome' com 'Estoque negativo'",
+        "Preencher 'id=txtPreco' com '10'",
+        "Preencher 'id=txtQuantidade' com '-3'",
+        "Clicar em 'id=btnAdicionar'",
+        "Verificar se o texto 'Quantidade inválida' aparece em 'id=lblStatus'"
+      ],
+      "esperado": "Mensagem \"Quantidade inválida\" e o produto NÃO entra na lista",
+      "obtido": "Falhou no passo 5 (Verificar se o texto 'Quantidade inválida' aparece em 'id=lblStatus'): Texto 'Quantidade inválida' não encontrado em 'id=lblStatus' (exibido: 'Produto adicionado com sucesso!')",
+      "evidencia": "prints/027_CT05_verificar_texto_FALHA.png",
+      "origem": "Roteiro",
+      "caso_id": "CT05"
+    }
+  ],
+  "observacoes": [],
+  "sugestoes": [
+    {
+      "categoria": "Usabilidade",
+      "titulo": "Limpar mensagens de status ao iniciar novo preenchimento",
+      "descricao": "As mensagens de status (sucesso ou erro) permanecem visíveis na tela enquanto o usuário digita novos dados nos campos, causando confusão visual. O ideal é que a mensagem do 'lblStatus' seja limpa assim que qualquer campo de entrada for modificado.",
+      "prioridade": "Média",
+      "evidencia": "prints/025_CT05_preencher.png"
+    },
+    {
+      "categoria": "Usabilidade",
+      "titulo": "Solicitar confirmação antes de excluir um produto",
+      "descricao": "O botão 'Excluir selecionado' pode levar à perda acidental de dados se clicado por engano. Recomenda-se exibir uma caixa de diálogo de confirmação (modal) antes de efetivar a remoção do item selecionado.",
+      "prioridade": "Alta",
+      "evidencia": "prints/027_CT05_verificar_texto_FALHA.png"
+    },
+    {
+      "categoria": "Funcionalidade",
+      "titulo": "Adicionar recurso de edição para produtos cadastrados",
+      "descricao": "A interface permite apenas adicionar e excluir itens na tabela. Incluir um botão ou ação para 'Editar' permitiria atualizar preço, quantidade ou categoria sem a necessidade de excluir e recadastrar o produto.",
+      "prioridade": "Média",
+      "evidencia": "prints/007_CT02_verificar_elemento.png"
+    },
+    {
+      "categoria": "Texto",
+      "titulo": "Melhorar a mensagem de estado inicial no cadastro",
+      "descricao": "Ao abrir a tela de cadastro, o rótulo de status exibe apenas o texto 'Pronto.', o que traz pouca clareza. Sugere-se deixar o texto vazio ou substituir por uma mensagem orientativa como 'Preencha os dados e clique em Adicionar'.",
+      "prioridade": "Baixa",
+      "evidencia": "prints/007_CT02_verificar_elemento.png"
+    },
+    {
+      "categoria": "Acessibilidade",
+      "titulo": "Aumentar o contraste do texto de resumo no rodapé",
+      "descricao": "A barra de status inferior que exibe a contagem total e valor em estoque utiliza fonte pequena e tom cinza que pode ter contraste insuficiente segundo as diretrizes da WCAG, dificultando a leitura para usuários com baixa visão.",
+      "prioridade": "Média",
+      "evidencia": "prints/027_CT05_verificar_texto_FALHA.png"
+    },
+    {
+      "categoria": "Usabilidade",
+      "titulo": "Ocultar dicas de credenciais em builds que não sejam de teste",
+      "descricao": "O texto explicativo exibindo usuário e senha fixos na tela de login ('qa · senha: treino123') deve ser condicional ao ambiente de desenvolvimento/treino, garantindo que não seja exibido em versões finais do sistema.",
+      "prioridade": "Média",
+      "evidencia": "prints/001_CT01_preencher.png"
+    }
+  ],
+  "acoes": [
+    {
+      "ordem": 1,
+      "horario": "22:11:51",
+      "caso_id": "CT01",
+      "comando": "preencher",
+      "descricao": "Preencher 'id=txtUsuario' com 'qa'",
+      "status": "ok",
+      "print": "prints/001_CT01_preencher.png",
+      "duracao_ms": 2915,
+      "detalhe": "'id=txtUsuario' preenchido"
+    },
+    {
+      "ordem": 2,
+      "horario": "22:11:54",
+      "caso_id": "CT01",
+      "comando": "preencher",
+      "descricao": "Preencher 'id=txtSenha' com 'errada'",
+      "status": "ok",
+      "print": "prints/002_CT01_preencher.png",
+      "duracao_ms": 2389,
+      "detalhe": "'id=txtSenha' preenchido (campo de senha, digitado pelo teclado)"
+    },
+    {
+      "ordem": 3,
+      "horario": "22:11:56",
+      "caso_id": "CT01",
+      "comando": "clicar",
+      "descricao": "Clicar em 'id=btnEntrar'",
+      "status": "ok",
+      "print": "prints/003_CT01_clicar.png",
+      "duracao_ms": 2125,
+      "detalhe": "Clicou em 'id=btnEntrar'"
+    },
+    {
+      "ordem": 4,
+      "horario": "22:11:58",
+      "caso_id": "CT01",
+      "comando": "verificar_texto",
+      "descricao": "Verificar se o texto 'Usuário ou senha inválidos.' aparece em 'id=lblMensagemLogin'",
+      "status": "ok",
+      "print": "prints/004_CT01_verificar_texto.png",
+      "duracao_ms": 2076,
+      "detalhe": "'id=lblMensagemLogin' contém 'Usuário ou senha inválidos.' (exibido: 'Usuário ou senha inválidos.')"
+    },
+    {
+      "ordem": 5,
+      "horario": "22:12:00",
+      "caso_id": "CT02",
+      "comando": "preencher",
+      "descricao": "Preencher 'id=txtSenha' com '{env.ESTOQUE_SENHA|treino123}'",
+      "status": "ok",
+      "print": "prints/005_CT02_preencher.png",
+      "duracao_ms": 1913,
+      "detalhe": "'id=txtSenha' preenchido (campo de senha, digitado pelo teclado)"
+    },
+    {
+      "ordem": 6,
+      "horario": "22:12:01",
+      "caso_id": "CT02",
+      "comando": "clicar",
+      "descricao": "Clicar em 'id=btnEntrar'",
+      "status": "ok",
+      "print": "prints/006_CT02_clicar.png",
+      "duracao_ms": 1754,
+      "detalhe": "Clicou em 'id=btnEntrar'"
+    },
+    {
+      "ordem": 7,
+      "horario": "22:12:03",
+      "caso_id": "CT02",
+      "comando": "verificar_elemento",
+      "descricao": "Verificar se o elemento 'id=txtNome' existe",
+      "status": "ok",
+      "print": "prints/007_CT02_verificar_elemento.png",
+      "duracao_ms": 1785,
+      "detalhe": "Elemento 'id=txtNome' existe"
+    },
+    {
+      "ordem": 8,
+      "horario": "22:12:04",
+      "caso_id": "CT02",
+      "comando": "verificar_titulo",
+      "descricao": "Verificar se o título contém 'qa'",
+      "status": "ok",
+      "print": "prints/008_CT02_verificar_titulo.png",
+      "duracao_ms": 1117,
+      "detalhe": "Título contém 'qa'"
+    },
+    {
+      "ordem": 9,
+      "horario": "22:12:06",
+      "caso_id": "CT03",
+      "comando": "preencher",
+      "descricao": "Preencher 'id=txtNome' com 'Teclado mecânico'",
+      "status": "ok",
+      "print": "prints/009_CT03_preencher.png",
+      "duracao_ms": 1800,
+      "detalhe": "'id=txtNome' preenchido"
+    },
+    {
+      "ordem": 10,
+      "horario": "22:12:08",
+      "caso_id": "CT03",
+      "comando": "preencher",
+      "descricao": "Preencher 'id=txtPreco' com '249,90'",
+      "status": "ok",
+      "print": "prints/010_CT03_preencher.png",
+      "duracao_ms": 1844,
+      "detalhe": "'id=txtPreco' preenchido"
+    },
+    {
+      "ordem": 11,
+      "horario": "22:12:10",
+      "caso_id": "CT03",
+      "comando": "preencher",
+      "descricao": "Preencher 'id=txtQuantidade' com '5'",
+      "status": "ok",
+      "print": "prints/011_CT03_preencher.png",
+      "duracao_ms": 1672,
+      "detalhe": "'id=txtQuantidade' preenchido"
+    },
+    {
+      "ordem": 12,
+      "horario": "22:12:12",
+      "caso_id": "CT03",
+      "comando": "selecionar",
+      "descricao": "Selecionar 'Informática' em 'id=cmbCategoria'",
+      "status": "ok",
+      "print": "prints/012_CT03_selecionar.png",
+      "duracao_ms": 1867,
+      "detalhe": "Opção 'Informática' selecionada (pelo teclado)"
+    },
+    {
+      "ordem": 13,
+      "horario": "22:12:14",
+      "caso_id": "CT03",
+      "comando": "clicar",
+      "descricao": "Clicar em 'id=btnAdicionar'",
+      "status": "ok",
+      "print": "prints/013_CT03_clicar.png",
+      "duracao_ms": 2811,
+      "detalhe": "Clicou em 'id=btnAdicionar'"
+    },
+    {
+      "ordem": 14,
+      "horario": "22:12:16",
+      "caso_id": "CT03",
+      "comando": "verificar_texto",
+      "descricao": "Verificar se o texto 'Produto adicionado com sucesso!' aparece em 'id=lblStatus'",
+      "status": "ok",
+      "print": "prints/014_CT03_verificar_texto.png",
+      "duracao_ms": 1765,
+      "detalhe": "'id=lblStatus' contém 'Produto adicionado com sucesso!' (exibido: 'Produto adicionado com sucesso!')"
+    },
+    {
+      "ordem": 15,
+      "horario": "22:12:18",
+      "caso_id": "CT03",
+      "comando": "verificar_texto",
+      "descricao": "Verificar se o texto 'Teclado mecânico' aparece",
+      "status": "ok",
+      "print": "prints/015_CT03_verificar_texto.png",
+      "duracao_ms": 1684,
+      "detalhe": "Texto 'Teclado mecânico' visível"
+    },
+    {
+      "ordem": 16,
+      "horario": "22:12:20",
+      "caso_id": "CT03",
+      "comando": "verificar_texto",
+      "descricao": "Verificar se o texto '4 produto(s)' aparece em 'id=lblTotal'",
+      "status": "ok",
+      "print": "prints/016_CT03_verificar_texto.png",
+      "duracao_ms": 1867,
+      "detalhe": "'id=lblTotal' contém '4 produto(s)' (exibido: '4 produto(s) · 90 unidade(s) · Valor em estoque: R$ 4.891,00')"
+    },
+    {
+      "ordem": 17,
+      "horario": "22:12:22",
+      "caso_id": "CT04",
+      "comando": "preencher",
+      "descricao": "Preencher 'id=txtNome' com 'Produto grátis'",
+      "status": "ok",
+      "print": "prints/017_CT04_preencher.png",
+      "duracao_ms": 1865,
+      "detalhe": "'id=txtNome' preenchido"
+    },
+    {
+      "ordem": 18,
+      "horario": "22:12:24",
+      "caso_id": "CT04",
+      "comando": "preencher",
+      "descricao": "Preencher 'id=txtPreco' com '0'",
+      "status": "ok",
+      "print": "prints/018_CT04_preencher.png",
+      "duracao_ms": 2100,
+      "detalhe": "'id=txtPreco' preenchido"
+    },
+    {
+      "ordem": 19,
+      "horario": "22:12:26",
+      "caso_id": "CT04",
+      "comando": "preencher",
+      "descricao": "Preencher 'id=txtQuantidade' com '1'",
+      "status": "ok",
+      "print": "prints/019_CT04_preencher.png",
+      "duracao_ms": 2100,
+      "detalhe": "'id=txtQuantidade' preenchido"
+    },
+    {
+      "ordem": 20,
+      "horario": "22:12:28",
+      "caso_id": "CT04",
+      "comando": "clicar",
+      "descricao": "Clicar em 'id=btnAdicionar'",
+      "status": "ok",
+      "print": "prints/020_CT04_clicar.png",
+      "duracao_ms": 1866,
+      "detalhe": "Clicou em 'id=btnAdicionar'"
+    },
+    {
+      "ordem": 21,
+      "horario": "22:12:29",
+      "caso_id": "CT04",
+      "comando": "verificar_texto",
+      "descricao": "Verificar se o texto 'Preço inválido' aparece em 'id=lblStatus'",
+      "status": "ok",
+      "print": "prints/021_CT04_verificar_texto.png",
+      "duracao_ms": 1752,
+      "detalhe": "'id=lblStatus' contém 'Preço inválido' (exibido: 'Preço inválido: use um valor maior que zero (ex.: 19,90).')"
+    },
+    {
+      "ordem": 22,
+      "horario": "22:12:31",
+      "caso_id": "CT04",
+      "comando": "verificar_sem_texto",
+      "descricao": "Verificar se o texto 'Produto grátis' NÃO aparece",
+      "status": "ok",
+      "print": "prints/022_CT04_verificar_sem_texto.png",
+      "duracao_ms": 1348,
+      "detalhe": "Texto 'Produto grátis' não aparece (correto)"
+    },
+    {
+      "ordem": 23,
+      "horario": "22:12:32",
+      "caso_id": "CT05",
+      "comando": "preencher",
+      "descricao": "Preencher 'id=txtNome' com 'Estoque negativo'",
+      "status": "ok",
+      "print": "prints/023_CT05_preencher.png",
+      "duracao_ms": 1686,
+      "detalhe": "'id=txtNome' preenchido"
+    },
+    {
+      "ordem": 24,
+      "horario": "22:12:34",
+      "caso_id": "CT05",
+      "comando": "preencher",
+      "descricao": "Preencher 'id=txtPreco' com '10'",
+      "status": "ok",
+      "print": "prints/024_CT05_preencher.png",
+      "duracao_ms": 1847,
+      "detalhe": "'id=txtPreco' preenchido"
+    },
+    {
+      "ordem": 25,
+      "horario": "22:12:36",
+      "caso_id": "CT05",
+      "comando": "preencher",
+      "descricao": "Preencher 'id=txtQuantidade' com '-3'",
+      "status": "ok",
+      "print": "prints/025_CT05_preencher.png",
+      "duracao_ms": 1849,
+      "detalhe": "'id=txtQuantidade' preenchido"
+    },
+    {
+      "ordem": 26,
+      "horario": "22:12:38",
+      "caso_id": "CT05",
+      "comando": "clicar",
+      "descricao": "Clicar em 'id=btnAdicionar'",
+      "status": "ok",
+      "print": "prints/026_CT05_clicar.png",
+      "duracao_ms": 1667,
+      "detalhe": "Clicou em 'id=btnAdicionar'"
+    },
+    {
+      "ordem": 27,
+      "horario": "22:12:48",
+      "caso_id": "CT05",
+      "comando": "verificar_texto",
+      "descricao": "Verificar se o texto 'Quantidade inválida' aparece em 'id=lblStatus'",
+      "status": "falha",
+      "print": "prints/027_CT05_verificar_texto_FALHA.png",
+      "duracao_ms": 10186,
+      "detalhe": "Texto 'Quantidade inválida' não encontrado em 'id=lblStatus' (exibido: 'Produto adicionado com sucesso!')"
+    },
+    {
+      "ordem": 28,
+      "horario": "22:12:50",
+      "caso_id": "CT06",
+      "comando": "preencher",
+      "descricao": "Preencher 'id=txtBusca' com 'mouse'",
+      "status": "ok",
+      "print": "prints/028_CT06_preencher.png",
+      "duracao_ms": 1830,
+      "detalhe": "'id=txtBusca' preenchido"
+    },
+    {
+      "ordem": 29,
+      "horario": "22:12:52",
+      "caso_id": "CT06",
+      "comando": "clicar",
+      "descricao": "Clicar em 'id=btnBuscar'",
+      "status": "ok",
+      "print": "prints/029_CT06_clicar.png",
+      "duracao_ms": 1983,
+      "detalhe": "Clicou em 'id=btnBuscar'"
+    },
+    {
+      "ordem": 30,
+      "horario": "22:12:53",
+      "caso_id": "CT06",
+      "comando": "verificar_texto",
+      "descricao": "Verificar se o texto '1 produto(s) encontrado(s)' aparece em 'id=lblStatus'",
+      "status": "ok",
+      "print": "prints/030_CT06_verificar_texto.png",
+      "duracao_ms": 1699,
+      "detalhe": "'id=lblStatus' contém '1 produto(s) encontrado(s)' (exibido: '1 produto(s) encontrado(s) para \"mouse\".')"
+    },
+    {
+      "ordem": 31,
+      "horario": "22:12:55",
+      "caso_id": "CT06",
+      "comando": "clicar",
+      "descricao": "Clicar em 'id=btnLimparBusca'",
+      "status": "ok",
+      "print": "prints/031_CT06_clicar.png",
+      "duracao_ms": 1684,
+      "detalhe": "Clicou em 'id=btnLimparBusca'"
+    }
+  ],
+  "avisos": []
+}

@@ -1,0 +1,21 @@
+{
+  "requisicao": "GET https://viacep.com.br/ws/99999999/json/",
+  "status": 200,
+  "tempo_ms": 365,
+  "cabecalhos": {
+    "server": "nginx/1.22.0",
+    "date": "Fri, 20 Nov 2026 22:38:34 GMT",
+    "content-type": "application/json; charset=utf-8",
+    "transfer-encoding": "chunked",
+    "connection": "close",
+    "access-control-allow-origin": "*",
+    "access-control-allow-methods": "GET",
+    "access-control-allow-headers": "Content-Type, X-Request-With, X-Requested-By",
+    "access-control-allow-credentials": "true",
+    "access-control-max-age": "86400",
+    "strict-transport-security": "max-age=63072000"
+  },
+  "corpo": {
+    "erro": "true"
+  }
+}

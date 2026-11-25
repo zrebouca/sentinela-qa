@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block titulo %}Painel{% endblock %}
+{% block cabecalho %}Painel{% endblock %}
+{% block subtitulo %}Visão geral da qualidade dos seus sistemas{% endblock %}
+{% block conteudo %}
+<section class="heroi">
+  <div class="flex entre wrap" style="position:relative;z-index:1">
+    <div>
+      <div class="flex wrap"><h2>Olá{% if ind.responsavel %}, {{ ind.responsavel }}{% endif %}!</h2>
+        <span class="data">{{ hoje.strftime('%d/%m/%Y') }}</span></div>
+      <p>Aqui está o resumo dos testes automatizados e dos defeitos em aberto.</p>
+    </div>
+    <div class="flex">
+      <a class="btn" href="{{ url_for('execucoes') }}">{{ icone('execucoes', 16) }} Histórico</a>
+      <a class="btn" href="{{ url_for('painel') }}" title="Atualizar">{{ icone('repetir', 16) }}</a>
+    </div>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><div class="rot"><span class="ic">{{ icone('executar', 16) }}</span> Execuções hoje</div>
+      <div class="v">{{ ind.execucoes_hoje }}</div><small>{{ ind.execucoes }} no total</small></div>
+    <div class="kpi"><div class="rot"><span class="ic">{{ icone('check', 16) }}</span> Taxa de aprovação</div>
+      <div class="v">{{ ind.taxa }}%</div><small>{{ ind.casos }} casos executados</small></div>
+    <div class="kpi"><div class="rot"><span class="ic">{{ icone('defeitos', 16) }}</span> Defeitos em aberto</div>
+      <div class="v">{{ ind.abertos }}</div><small>{{ ind.corrigidos }} corrigidos/fechados</small></div>
+    <div class="kpi"><div class="rot"><span class="ic">{{ icone('ia', 16) }}</span> Sugestões da IA</div>
+      <div class="v">{{ ind.sugestoes }}</div><small>{{ 'IA conectada' if ia.configurada else 'IA desligada' }}</small></div>
+  </div>
+</section>
+
+<div class="grade g4 mt">
+  {% set m = [
+    ('projetos', 'Projetos', 'sistemas cadastrados', ind.projetos, 'c-azul', '#2554d4', url_for('projetos')),
+    ('roteiros', 'Roteiros', 'prontos para executar', ind.roteiros, 'c-verde', '#0f9d6b', url_for('roteiros')),
+    ('alerta', 'Críticos/Altos', 'defeitos graves abertos', ind.sev.get('Crítica', 0) + ind.sev.get('Alta', 0), 'c-vermelho', '#d63a4a', url_for('defeitos', status='pendentes')),
+    ('grafico', 'Aprovação', 'média de todas as execuções', ind.taxa ~ '%', 'c-roxo', '#7b45d6', url_for('execucoes')),
+  ] %}
+  {% for ic, rot, sub, v, cls, cor, link in m %}
+  <a class="card metrica" href="{{ link }}" style="color:inherit;text-decoration:none">
+    <div class="topo-m"><span class="ic {{ cls }}">{{ icone(ic, 20) }}</span>{{ icone('seta', 16, 'suave') }}</div>
+    <div class="v">{{ v }}</div>
+    <div class="l">{{ rot }}</div><div class="s">{{ sub }}</div>
+    {% if ic == 'grafico' %}<div class="barra"><i style="width:{{ ind.taxa }}%;background:{{ cor }}"></i></div>{% endif %}
+  </a>
+  {% endfor %}
+</div>
+
+<div class="grade g-2-1 mt">
+  <section class="card">
+    <div class="cab"><div><h2>Resultados dos últimos 14 dias</h2><div class="sub">Casos aprovados e reprovados por dia</div></div>
+      <div class="dir legenda"><span style="--c:#0f9d6b">Aprovados</span><span style="--c:#d63a4a">Reprovados</span></div></div>
+    <div class="grafico" role="img" aria-label="Gráfico de casos aprovados e reprovados por dia">
+      {% for d in dias %}
+      <div class="col" title="{{ d.rotulo }}: {{ d.a }} aprovado(s), {{ d.r }} reprovado(s)">
+        <div class="pilha">
+          <i style="height:{{ (100 * d.a / maximo)|round(1) }}%;background:#0f9d6b"></i>
+          <i style="height:{{ (100 * d.r / maximo)|round(1) }}%;background:#d63a4a"></i>
+        </div>
+        <span class="rot">{{ d.rotulo }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  <section class="card">
+    <div class="cab"><div><h2>Atividade recente</h2><div class="sub">Tudo o que foi registrado</div></div></div>
+    <ul class="atividade">
+      {% set cores = {'projeto': 'c-azul', 'roteiro': 'c-verde', 'execucao': 'c-roxo', 'defeito': 'c-vermelho', 'config': 'c-laranja', 'banco': 'c-azul'} %}
+      {% set icones = {'projeto': 'projetos', 'roteiro': 'roteiros', 'execucao': 'executar', 'defeito': 'defeitos', 'config': 'config', 'banco': 'banco'} %}
+      {% for a in atividades %}
+      <li><span class="ic {{ cores.get(a.tipo, 'c-azul') }}">{{ icone(icones.get(a.tipo, 'alvo'), 16) }}</span>
+        <div>{% if a.link %}<a href="{{ a.link }}" style="color:inherit">{{ a.texto }}</a>{% else %}{{ a.texto }}{% endif %}
+          <div class="quando">{{ a.quando|relativo }}</div></div></li>
+      {% else %}<li class="suave">Nada registrado ainda.</li>{% endfor %}
+    </ul>
+  </section>
+</div>
+
+<div class="grade g-1-2 mt">
+  <section class="card">
+    <div class="cab"><div><h2>Ações rápidas</h2><div class="sub">Tarefas mais usadas</div></div></div>
+    <div class="rapidas">
+      <a class="rapida r-azul" href="{{ url_for('executar') }}">{{ icone('executar', 22) }}<div><b>Executar testes</b><small>Escolher roteiro e opções</small></div></a>
+      <a class="rapida r-verde" href="{{ url_for('projeto_form') }}">{{ icone('mais', 22) }}<div><b>Novo projeto</b><small>Cadastrar sistema</small></div></a>
+      <a class="rapida r-laranja" href="{{ url_for('roteiro_editor') }}">{{ icone('roteiros', 22) }}<div><b>Novo roteiro</b><small>Escrever casos de teste</small></div></a>
+      <a class="rapida r-roxo" href="{{ url_for('configuracoes') }}">{{ icone('ia', 22) }}<div><b>Configurar IA</b><small>Chave e modelo</small></div></a>
+    </div>
+  </section>
+  <section class="card">
+    <div class="cab"><div><h2>Saúde por projeto</h2><div class="sub">Aprovação acumulada e defeitos em aberto</div></div>
+      <a class="dir pequeno" href="{{ url_for('projetos') }}">Ver todos</a></div>
+    {% for p in por_projeto %}
+    {% set taxa = (100 * p.a / p.t)|round|int if p.t else 0 %}
+    <a class="proj-linha" href="{{ url_for('projeto_detalhe', pid=p.id) }}" style="color:inherit;text-decoration:none">
+      <span class="avatar" style="background:{{ p.cor }}">{{ icone(ICONE_TIPO[p.tipo], 18) }}</span>
+      <div style="flex:1;min-width:0">
+        <div class="flex entre"><b>{{ p.nome }}</b><span class="pequeno suave">{{ p.execs }} execução(ões){% if p.ultima %} · {{ p.ultima|relativo }}{% endif %}</span></div>
+        <div class="barra" style="margin-top:8px"><i style="width:{{ taxa }}%;background:{{ '#0f9d6b' if taxa >= 90 else ('#e07a10' if taxa >= 60 else '#d63a4a') }}"></i></div>
+      </div>
+      <div style="text-align:right;min-width:90px"><b>{{ taxa }}%</b><br>
+        {% if p.abertos %}<span class="selo vermelho">{{ p.abertos }} aberto(s)</span>{% else %}<span class="selo verde">sem pendências</span>{% endif %}</div>
+    </a>
+    {% endfor %}
+  </section>
+</div>
+
+<section class="card mt">
+  <div class="cab"><div><h2>Pendências</h2><div class="sub">O que precisa da sua atenção</div></div></div>
+  <div class="grade g3">
+    <div class="pend p-vermelho"><span class="num">{{ pendencias.criticos }}</span><span class="ic">{{ icone('alerta', 20) }}</span>
+      <h3>Defeitos críticos e altos</h3><p>Bugs graves abertos aguardando análise do time.</p>
+      <a class="btn" href="{{ url_for('defeitos', status='Aberto') }}">Revisar agora {{ icone('seta', 15) }}</a></div>
+    <div class="pend p-laranja"><span class="num">{{ pendencias.em_analise }}</span><span class="ic">{{ icone('lupa', 20) }}</span>
+      <h3>Em análise</h3><p>Defeitos que alguém está investigando ou corrigindo.</p>
+      <a class="btn" href="{{ url_for('defeitos', status='Em análise') }}">Acompanhar {{ icone('seta', 15) }}</a></div>
+    <div class="pend p-azul"><span class="num">{{ pendencias.sem_execucao }}</span><span class="ic">{{ icone('roteiros', 20) }}</span>
+      <h3>Roteiros nunca executados</h3><p>Roteiros cadastrados que ainda não rodaram.</p>
+      <a class="btn" href="{{ url_for('roteiros') }}">Ver roteiros {{ icone('seta', 15) }}</a></div>
+  </div>
+</section>
+
+<section class="card mt">
+  <div class="cab"><div><h2>Últimas execuções</h2></div><a class="dir pequeno" href="{{ url_for('execucoes') }}">Ver histórico</a></div>
+  {% include "_tabela_execucoes.html" %}
+</section>
+{% endblock %}
+{% block scripts %}
+{% if menu_rodando %}<script>setTimeout(() => location.reload(), 8000);</script>{% endif %}
+{% endblock %}

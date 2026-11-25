@@ -1,0 +1,146 @@
+# Roteiro de exemplo — loja de demonstração Sauce Demo (site público para treino de QA).
+# Credenciais abaixo são as de TESTE publicadas na própria página do site.
+# A senha vem do .env (SAUCE_SENHA) e, se não existir, usa a senha pública de demonstração.
+
+sistema: Sauce Demo (loja de demonstração)
+versao: "web"
+responsavel: Mateus
+ambiente: Demonstração pública
+objetivo: >
+  Validar login, catálogo, carrinho e finalização de compra da loja de demonstração,
+  e explorar as validações do formulário de entrega.
+alvo: https://www.saucedemo.com
+tempo_limite: 10
+atributo_testid: data-test        # o site usa data-test="..." em vez de data-testid
+
+dados:
+  usuario: standard_user
+  senha: "{env.SAUCE_SENHA|secret_sauce}"
+  nome: "{faker.first_name}"
+  sobrenome: "{faker.last_name}"
+  cep: "{faker.postcode}"
+
+funcionalidades:
+  - id: F01
+    nome: Login
+    criterios:
+      - Usuário válido acessa a página de produtos
+      - Usuário bloqueado vê mensagem explicando o bloqueio
+      - Senha errada mostra mensagem de erro e não entra
+  - id: F02
+    nome: Catálogo e carrinho
+    criterios:
+      - Ordenar por preço (menor para maior) coloca o produto mais barato primeiro
+      - Adicionar produto atualiza o contador do carrinho
+  - id: F03
+    nome: Checkout
+    criterios:
+      - Com dados de entrega válidos, a compra é concluída com mensagem de agradecimento
+      - Sem o primeiro nome, o sistema mostra erro e não avança
+
+casos:
+  - id: CT01
+    funcionalidade: F01
+    descricao: Login com usuário válido
+    esperado: A página de produtos (Products) é exibida
+    severidade: Crítica
+    passos:
+      - abrir: /
+      - logar: { usuario: "{dados.usuario}", senha: "{dados.senha}",
+                 campo_usuario: "#user-name", campo_senha: "#password", botao: "#login-button" }
+      - verificar_url: inventory.html
+      - verificar_texto: Products
+
+  - id: CT02
+    funcionalidade: F01
+    descricao: Login com usuário bloqueado
+    esperado: Mensagem informando que o usuário está bloqueado
+    severidade: Alta
+    passos:
+      - abrir: /
+      - preencher: { campo: "#user-name", valor: locked_out_user }
+      - preencher: { campo: "#password", valor: "{dados.senha}" }
+      - clicar: "#login-button"
+      - verificar_mensagem: { tipo: erro, texto: "Sorry, this user has been locked out" }
+      - verificar_url: { igual: "https://www.saucedemo.com/" }
+
+  - id: CT03
+    funcionalidade: F01
+    descricao: Login com senha errada
+    esperado: Mensagem de usuário/senha incorretos
+    severidade: Alta
+    passos:
+      - abrir: /
+      - preencher: { campo: "#user-name", valor: "{dados.usuario}" }
+      - preencher: { campo: "#password", valor: "senha_errada_123" }
+      - apertar_tecla: { tecla: Enter, campo: "#password" }
+      - verificar_elemento: "testid=error"
+      - verificar_texto: "Username and password do not match"
+
+  - id: CT04
+    funcionalidade: F02
+    descricao: Ordenar produtos por menor preço e adicionar ao carrinho
+    esperado: Produto mais barato aparece primeiro e o carrinho mostra 1 item
+    passos:
+      - abrir: /
+      - logar: { usuario: "{dados.usuario}", senha: "{dados.senha}",
+                 campo_usuario: "#user-name", campo_senha: "#password", botao: "#login-button" }
+      - selecionar: { campo: "testid=product-sort-container", opcao: "Price (low to high)" }
+      - verificar_texto: { elemento: ".inventory_item_name", texto: "Sauce Labs Onesie" }
+      - passar_mouse: ".inventory_item_name"
+      - clicar: "testid=add-to-cart-sauce-labs-onesie"
+      - verificar_texto: { elemento: ".shopping_cart_badge", texto: "1" }
+      - rolar: fim
+
+  - id: CT05
+    funcionalidade: F03
+    descricao: Compra completa com dados de entrega válidos (Faker pt_BR)
+    esperado: Mensagem "Thank you for your order!"
+    severidade: Crítica
+    passos:
+      - abrir: /
+      - logar: { usuario: "{dados.usuario}", senha: "{dados.senha}",
+                 campo_usuario: "#user-name", campo_senha: "#password", botao: "#login-button" }
+      - clicar: "testid=add-to-cart-sauce-labs-backpack"
+      - clicar: ".shopping_cart_link"
+      - clicar: "Checkout"
+      - cadastrar:
+          campos:
+            "#first-name": "{dados.nome}"
+            "#last-name": "{dados.sobrenome}"
+            "#postal-code": "{dados.cep}"
+          enviar: "#continue"
+      - verificar_url: checkout-step-two
+      - clicar: "Finish"
+      - verificar_mensagem: { tipo: sucesso, texto: "Thank you for your order!" }
+
+  - id: CT06
+    funcionalidade: F03
+    descricao: Checkout sem o primeiro nome
+    esperado: Erro "First Name is required" e o fluxo não avança
+    passos:
+      - abrir: /
+      - logar: { usuario: "{dados.usuario}", senha: "{dados.senha}",
+                 campo_usuario: "#user-name", campo_senha: "#password", botao: "#login-button" }
+      - clicar: ".shopping_cart_link"
+      - clicar: "#checkout"
+      - preencher: { campo: "#last-name", valor: "{dados.sobrenome}" }
+      - preencher: { campo: "#postal-code", valor: "{dados.cep}" }
+      - clicar: "#continue"
+      - verificar_texto: "First Name is required"
+      - verificar_url: checkout-step-one
+
+# Exploração leve (rode com --explorar): tenta dados inválidos no formulário de entrega.
+exploracao:
+  preparar:
+    - abrir: /
+    - logar: { usuario: "{dados.usuario}", senha: "{dados.senha}",
+               campo_usuario: "#user-name", campo_senha: "#password", botao: "#login-button" }
+    - clicar: ".shopping_cart_link"
+    - clicar: "#checkout"
+  campos:
+    "#first-name":  { tipo: nome, testes: [vazio, espacos, especiais, nome_numeros] }
+    "#last-name":   { tipo: sobrenome, testes: [vazio] }
+    "#postal-code": { tipo: cep, testes: [vazio, cep_letras, cep_curto] }
+  enviar: "#continue"
+  sucesso_se: { url_contem: checkout-step-two }

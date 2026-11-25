@@ -1,0 +1,462 @@
+
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relatório de Testes — ViaCEP + JSONPlaceholder (APIs públicas)</title>
+<style>
+  :root {
+    --bg: #f5f6f8; --card: #ffffff; --text: #1d2330; --muted: #5d6678; --line: #e3e6ec;
+    --accent: #3157d5; --ok: #15803d; --ok-bg: #e7f6ec; --bad: #c62828; --bad-bg: #fdecec;
+    --warn: #a15c00; --warn-bg: #fff4e0; --info: #2d5fa8; --info-bg: #e9f0fb; --ia: #6b3fc4; --ia-bg: #f1ebfd;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12151b; --card: #1b1f27; --text: #e6e9ef; --muted: #9aa3b5; --line: #2c323d;
+      --accent: #7b9cff; --ok: #5fd08a; --ok-bg: #173323; --bad: #ff7b7b; --bad-bg: #3a1c1f;
+      --warn: #ffb74d; --warn-bg: #3a2c14; --info: #8fb6ff; --info-bg: #1c2a40; --ia: #b99bff; --ia-bg: #2a2142;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.5 "Segoe UI", system-ui, -apple-system, sans-serif; }
+  header.topo { background: var(--card); border-bottom: 1px solid var(--line); padding: 24px 16px; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
+  h1 { margin: 0 0 4px; font-size: 26px; }
+  h2 { font-size: 19px; margin: 0 0 14px; display: flex; align-items: center; gap: 10px; }
+  h2 .n { background: var(--accent); color: #fff; border-radius: 6px; font-size: 13px; padding: 1px 8px; }
+  .sub { color: var(--muted); margin: 0; }
+  nav { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  nav a { color: var(--accent); text-decoration: none; font-size: 13px; padding: 4px 10px;
+          border: 1px solid var(--line); border-radius: 999px; }
+  nav a:hover { background: var(--info-bg); }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+            padding: 20px; margin: 18px 0; overflow: hidden; }
+  .cab { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px 20px; margin-top: 16px; }
+  .cab div span { display: block; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  .cab div b { font-weight: 600; word-break: break-word; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+  .tile { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .tile .v { font-size: 28px; font-weight: 700; line-height: 1.1; }
+  .tile .l { color: var(--muted); font-size: 13px; }
+  .tile.ok .v { color: var(--ok); } .tile.bad .v { color: var(--bad); } .tile.ia .v { color: var(--ia); }
+  .barra { height: 12px; border-radius: 99px; background: var(--bad-bg); overflow: hidden; margin: 16px 0 6px; }
+  .barra i { display: block; height: 100%; background: var(--ok); }
+  .veredito { font-weight: 600; margin: 10px 0 0; }
+  .aviso { background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: 8px 12px; margin: 10px 0 0; font-size: 14px; }
+  .tabela { width: 100%; overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 760px; }
+  th, td { text-align: left; vertical-align: top; padding: 9px 10px; border-bottom: 1px solid var(--line); font-size: 14px; }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  td ol { margin: 0; padding-left: 18px; }
+  .badge { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+  .APROVADO, .ok { background: var(--ok-bg); color: var(--ok); }
+  .REPROVADO, .falha { background: var(--bad-bg); color: var(--bad); }
+  .sev-Crítica, .sev-Alta { background: var(--bad-bg); color: var(--bad); }
+  .sev-Média { background: var(--warn-bg); color: var(--warn); }
+  .sev-Baixa { background: var(--info-bg); color: var(--info); }
+  .cat { background: var(--info-bg); color: var(--info); }
+  .sug { background: var(--ia-bg); color: var(--ia); }
+  td img.mini { min-width: 120px; }
+  a.arq { font-size: 13px; white-space: nowrap; }
+  img.mini { width: 150px; max-width: 100%; border: 1px solid var(--line); border-radius: 6px; cursor: zoom-in; display: block; }
+  .defeito { border: 1px solid var(--line); border-left: 4px solid var(--bad); border-radius: 10px; padding: 14px 16px; margin: 12px 0;
+             display: grid; grid-template-columns: 1fr 260px; gap: 16px; }
+  .defeito.sevb-Média { border-left-color: var(--warn); } .defeito.sevb-Baixa { border-left-color: var(--info); }
+  .defeito img.mini { width: 100%; }
+  .defeito h3 { margin: 0 0 6px; font-size: 16px; }
+  .meta { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .k { color: var(--muted); font-size: 13px; font-weight: 600; margin: 8px 0 2px; }
+  ul.obs { list-style: none; padding: 0; margin: 0; }
+  ul.obs li { padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; gap: 10px; align-items: baseline; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+  .card-sug { border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+  .card-sug h3 { font-size: 15px; margin: 8px 0 4px; }
+  .card-sug p { margin: 0; color: var(--muted); font-size: 14px; }
+  .vazio { color: var(--muted); font-style: italic; }
+  .func { margin: 0 0 10px; } .func ul { margin: 4px 0 0; }
+  tr.falha-linha td { background: color-mix(in srgb, var(--bad-bg) 55%, transparent); }
+  footer { color: var(--muted); text-align: center; font-size: 13px; padding: 10px 0 40px; }
+  #lupa { position: fixed; inset: 0; background: rgba(0,0,0,.82); display: none; align-items: center; justify-content: center; z-index: 9; cursor: zoom-out; padding: 16px; }
+  #lupa img { max-width: 100%; max-height: 92vh; border-radius: 8px; }
+  #lupa.on { display: flex; }
+  @media (max-width: 720px) { .defeito { grid-template-columns: 1fr; } h1 { font-size: 21px; } section { padding: 16px; } }
+  @media print { nav, #lupa { display: none !important; } section { break-inside: avoid; } }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="wrap">
+    <h1>Relatório de Testes — ViaCEP + JSONPlaceholder (APIs públicas)</h1>
+    <p class="sub">Execução automatizada pelo Sentinela QA</p>
+    <div class="cab">
+      <div><span>Sistema</span><b>ViaCEP + JSONPlaceholder (APIs públicas)</b></div><div><span>Versão</span><b>API REST</b></div><div><span>Data</span><b>20/11/2026 19:38</b></div><div><span>Responsável</span><b>Mateus</b></div><div><span>Ambiente</span><b>APIs públicas de teste (HTTP (urllib) · Windows 11)</b></div><div><span>Alvo</span><b>https://viacep.com.br</b></div><div><span>Roteiro</span><b>api_viacep.yaml</b></div><div><span>Finalidade</span><b>-</b></div><div><span>Duração</span><b>2s</b></div>
+    </div>
+    <nav>
+      <a href="#resumo">Resumo</a><a href="#objetivo">Objetivo</a><a href="#testes">Testes realizados</a>
+      <a href="#bugs">Erros e bugs</a><a href="#encontrado">O que foi encontrado</a>
+      <a href="#melhorias">Melhorias e ideias</a><a href="#caminho">Caminho percorrido</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+<section id="resumo">
+  <h2>Resumo</h2>
+  <div class="tiles">
+    <div class="tile"><div class="v">4</div><div class="l">casos executados</div></div>
+    <div class="tile ok"><div class="v">4</div><div class="l">aprovados</div></div>
+    <div class="tile bad"><div class="v">0</div><div class="l">reprovados</div></div>
+    <div class="tile bad"><div class="v">0</div><div class="l">defeitos registrados</div></div>
+    <div class="tile"><div class="v">0</div><div class="l">observações</div></div>
+    <div class="tile ia"><div class="v">6</div><div class="l">sugestões da IA</div></div>
+  </div>
+  <div class="barra" title="100% aprovado"><i style="width: 100%"></i></div>
+  <p class="sub">100% dos casos aprovados · 22 ações registradas</p>
+  <p class="veredito">
+    ✅ Todos os casos passaram e nenhum defeito foi encontrado.
+    
+  </p>
+  
+</section>
+
+<section id="objetivo">
+  <h2>Objetivo</h2>
+  <p>Validar status HTTP, contrato do JSON, tempo de resposta e tratamento de entradas inválidas.</p>
+  
+  <div class="k">Funcionalidades e critérios de aceitação</div>
+  
+    <div class="func"><b>F01 — Consulta de CEP</b>
+      <ul><li>CEP existente retorna 200 com logradouro, cidade e UF</li><li>CEP com formato inválido retorna 400</li><li>CEP inexistente retorna o campo &#34;erro&#34;</li></ul>
+    </div>
+  
+    <div class="func"><b>F02 — Criação de recurso (POST)</b>
+      <ul><li>POST com JSON válido retorna 201 e o id criado</li></ul>
+    </div>
+  
+  
+</section>
+
+<section id="testes">
+  <h2>Testes realizados <span class="n">4</span></h2>
+  <div class="tabela"><table>
+    <thead><tr><th>ID</th><th>Descrição</th><th>Passos</th><th>Esperado</th><th>Obtido</th><th>Status</th><th>Evidência</th></tr></thead>
+    <tbody>
+    
+      <tr>
+        <td><b>CT01</b><br><span class="sub">F01</span></td>
+        <td>Consultar CEP existente (Praça da Sé, São Paulo)<br><span class="sub">0.4s</span></td>
+        <td><ol><li>Requisição GET /ws/01001000/json/</li><li>Verificar se o status HTTP é 200</li><li>Verificar o cabeçalho &#39;content-type&#39;</li><li>Verificar o campo JSON &#39;cep&#39; = &#39;01001-000&#39;</li><li>Verificar o campo JSON &#39;localidade&#39; = &#39;São Paulo&#39;</li><li>Verificar o campo JSON &#39;uf&#39; = &#39;SP&#39;</li><li>Verificar o campo JSON &#39;logradouro&#39;</li><li>Verificar se respondeu em até 5000 ms</li></ol></td>
+        <td>HTTP 200, localidade São Paulo, UF SP</td>
+        <td>Status HTTP 200; Cabeçalho &#39;content-type&#39;: application/json; charset=utf-8; &#39;cep&#39; = &#39;01001-000&#39;; &#39;localidade&#39; = &#39;São Paulo&#39;; &#39;uf&#39; = &#39;SP&#39;; &#39;logradouro&#39; contém &#39;Praça da Sé&#39;; Respondeu em 395 ms (≤ 5000)</td>
+        <td><span class="badge APROVADO">APROVADO</span></td>
+        <td><a class="arq" href="data:application/json;base64,ew0KICAicmVxdWlzaWNhbyI6ICJHRVQgaHR0cHM6Ly92aWFjZXAuY29tLmJyL3dzLzAxMDAxMDAwL2pzb24vIiwNCiAgInN0YXR1cyI6IDIwMCwNCiAgInRlbXBvX21zIjogMzk1LA0KICAiY2FiZWNhbGhvcyI6IHsNCiAgICAic2VydmVyIjogIm5naW54LzEuMjIuMCIsDQogICAgImRhdGUiOiAiRnJpLCAyMCBOb3YgMjAyNiAyMjozODozMyBHTVQiLA0KICAgICJjb250ZW50LXR5cGUiOiAiYXBwbGljYXRpb24vanNvbjsgY2hhcnNldD11dGYtOCIsDQogICAgInRyYW5zZmVyLWVuY29kaW5nIjogImNodW5rZWQiLA0KICAgICJjb25uZWN0aW9uIjogImNsb3NlIiwNCiAgICAiZXhwaXJlcyI6ICJGcmksIDIwIE5vdiAyMDI2IDIzOjM4OjMzIEdNVCIsDQogICAgImNhY2hlLWNvbnRyb2wiOiAibWF4LWFnZT0zNjAwIiwNCiAgICAicHJhZ21hIjogInB1YmxpYyIsDQogICAgImFjY2Vzcy1jb250cm9sLWFsbG93LW9yaWdpbiI6ICIqIiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtYWxsb3ctbWV0aG9kcyI6ICJHRVQiLA0KICAgICJhY2Nlc3MtY29udHJvbC1hbGxvdy1oZWFkZXJzIjogIkNvbnRlbnQtVHlwZSwgWC1SZXF1ZXN0LVdpdGgsIFgtUmVxdWVzdGVkLUJ5IiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtYWxsb3ctY3JlZGVudGlhbHMiOiAidHJ1ZSIsDQogICAgImFjY2Vzcy1jb250cm9sLW1heC1hZ2UiOiAiODY0MDAiDQogIH0sDQogICJjb3JwbyI6IHsNCiAgICAiY2VwIjogIjAxMDAxLTAwMCIsDQogICAgImxvZ3JhZG91cm8iOiAiUHJhw6dhIGRhIFPDqSIsDQogICAgImNvbXBsZW1lbnRvIjogImxhZG8gw61tcGFyIiwNCiAgICAidW5pZGFkZSI6ICIiLA0KICAgICJiYWlycm8iOiAiU8OpIiwNCiAgICAibG9jYWxpZGFkZSI6ICJTw6NvIFBhdWxvIiwNCiAgICAidWYiOiAiU1AiLA0KICAgICJlc3RhZG8iOiAiU8OjbyBQYXVsbyIsDQogICAgInJlZ2lhbyI6ICJTdWRlc3RlIiwNCiAgICAiaWJnZSI6ICIzNTUwMzA4IiwNCiAgICAiZ2lhIjogIjEwMDQiLA0KICAgICJkZGQiOiAiMTEiLA0KICAgICJzaWFmaSI6ICI3MTA3Ig0KICB9DQp9" target="_blank" download="001_CT01_resposta.json">📄 resposta da API</a></td>
+      </tr>
+    
+      <tr>
+        <td><b>CT02</b><br><span class="sub">F01</span></td>
+        <td>CEP com formato inválido (3 dígitos)<br><span class="sub">0.4s</span></td>
+        <td><ol><li>Requisição GET /ws/123/json/</li><li>Verificar se o status HTTP é 400</li></ol></td>
+        <td>HTTP 400 (requisição inválida)</td>
+        <td>Status HTTP 400</td>
+        <td><span class="badge APROVADO">APROVADO</span></td>
+        <td><a class="arq" href="data:application/json;base64,ew0KICAicmVxdWlzaWNhbyI6ICJHRVQgaHR0cHM6Ly92aWFjZXAuY29tLmJyL3dzLzEyMy9qc29uLyIsDQogICJzdGF0dXMiOiA0MDAsDQogICJ0ZW1wb19tcyI6IDM2NCwNCiAgImNhYmVjYWxob3MiOiB7DQogICAgInNlcnZlciI6ICJuZ2lueC8xLjIyLjAiLA0KICAgICJkYXRlIjogIkZyaSwgMjAgTm92IDIwMjYgMjI6Mzg6MzQgR01UIiwNCiAgICAiY29udGVudC10eXBlIjogInRleHQvaHRtbDsgY2hhcnNldD11dGYtOCIsDQogICAgImNvbnRlbnQtbGVuZ3RoIjogIjQ5NCIsDQogICAgImNvbm5lY3Rpb24iOiAiY2xvc2UiLA0KICAgICJldGFnIjogIlwiNjI0MmY4MTItMWVlXCIiLA0KICAgICJzdHJpY3QtdHJhbnNwb3J0LXNlY3VyaXR5IjogIm1heC1hZ2U9NjMwNzIwMDAiDQogIH0sDQogICJjb3JwbyI6ICI8IURPQ1RZUEUgSFRNTD5cbjxodG1sIGxhbmc9XCJwdC1iclwiPlxuXG48aGVhZD5cbiAgPHRpdGxlPlZpYUNFUCA0MDA8L3RpdGxlPlxuICA8bWV0YSBjaGFyc2V0PVwidXRmLThcIiAvPlxuICA8c3R5bGUgdHlwZT1cInRleHQvY3NzXCI+XG4gICAgICBoMSB7XG4gICAgICAgICAgY29sb3I6ICM1NTU7XG4gICAgICAgICAgdGV4dC1hbGlnbjogY2VudGVyO1xuICAgICAgICAgIGZvbnQtc2l6ZTogNGVtO1xuICAgICAgfVxuICAgICAgaDIsIGgzIHtcbiAgICAgICAgICBjb2xvcjogIzY2NjtcbiAgICAgICAgICB0ZXh0LWFsaWduOiBjZW50ZXI7XG4gICAgICAgICAgZm9udC1zaXplOiAzZW07XG4gICAgICB9XG4gICAgICBoMyB7XG4gICAgICAgICAgZm9udC1zaXplOiAxLjVlbTtcbiAgICAgIH1cbiAgPC9zdHlsZT5cbjwvaGVhZD5cblxuPGJvZHk+XG4gICAgPGgxPkh0dHAgNDAwPC9oMT5cbiAgICA8aDM+VmVyaWZpcXVlIGEgVVJMPC9oMz5cbiAgICA8aDM+e0JhZCBSZXF1ZXN0fTwvaDM+XG48L2JvZHk+XG5cbjwvaHRtbD5cbiINCn0=" target="_blank" download="009_CT02_resposta.json">📄 resposta da API</a></td>
+      </tr>
+    
+      <tr>
+        <td><b>CT03</b><br><span class="sub">F01</span></td>
+        <td>CEP com formato válido mas inexistente<br><span class="sub">0.4s</span></td>
+        <td><ol><li>Requisição GET /ws/99999999/json/</li><li>Verificar se o status HTTP é 200</li><li>Verificar o campo JSON &#39;erro&#39; = &#39;True&#39;</li><li>Verificar o campo JSON &#39;logradouro&#39;</li></ol></td>
+        <td>HTTP 200 com o campo &#34;erro&#34;</td>
+        <td>Status HTTP 200; &#39;erro&#39; = &#39;true&#39;; Campo &#39;logradouro&#39; ausente (correto)</td>
+        <td><span class="badge APROVADO">APROVADO</span></td>
+        <td><a class="arq" href="data:application/json;base64,ew0KICAicmVxdWlzaWNhbyI6ICJHRVQgaHR0cHM6Ly92aWFjZXAuY29tLmJyL3dzLzk5OTk5OTk5L2pzb24vIiwNCiAgInN0YXR1cyI6IDIwMCwNCiAgInRlbXBvX21zIjogMzY1LA0KICAiY2FiZWNhbGhvcyI6IHsNCiAgICAic2VydmVyIjogIm5naW54LzEuMjIuMCIsDQogICAgImRhdGUiOiAiRnJpLCAyMCBOb3YgMjAyNiAyMjozODozNCBHTVQiLA0KICAgICJjb250ZW50LXR5cGUiOiAiYXBwbGljYXRpb24vanNvbjsgY2hhcnNldD11dGYtOCIsDQogICAgInRyYW5zZmVyLWVuY29kaW5nIjogImNodW5rZWQiLA0KICAgICJjb25uZWN0aW9uIjogImNsb3NlIiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtYWxsb3ctb3JpZ2luIjogIioiLA0KICAgICJhY2Nlc3MtY29udHJvbC1hbGxvdy1tZXRob2RzIjogIkdFVCIsDQogICAgImFjY2Vzcy1jb250cm9sLWFsbG93LWhlYWRlcnMiOiAiQ29udGVudC1UeXBlLCBYLVJlcXVlc3QtV2l0aCwgWC1SZXF1ZXN0ZWQtQnkiLA0KICAgICJhY2Nlc3MtY29udHJvbC1hbGxvdy1jcmVkZW50aWFscyI6ICJ0cnVlIiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtbWF4LWFnZSI6ICI4NjQwMCIsDQogICAgInN0cmljdC10cmFuc3BvcnQtc2VjdXJpdHkiOiAibWF4LWFnZT02MzA3MjAwMCINCiAgfSwNCiAgImNvcnBvIjogew0KICAgICJlcnJvIjogInRydWUiDQogIH0NCn0=" target="_blank" download="011_CT03_resposta.json">📄 resposta da API</a></td>
+      </tr>
+    
+      <tr>
+        <td><b>CT04</b><br><span class="sub">F02</span></td>
+        <td>Criar post (POST) e consultar um post existente<br><span class="sub">0.5s</span></td>
+        <td><ol><li>Requisição POST https://jsonplaceholder.typicode.com/posts</li><li>Verificar se o status HTTP é 201</li><li>Verificar o campo JSON &#39;id&#39;</li><li>Verificar o campo JSON &#39;title&#39; = &#39;Teste do Sentinela QA&#39;</li><li>Guardar &#39;userId&#39; como {dados.usuario}</li><li>Requisição GET https://jsonplaceholder.typicode.com/users/{dados.usuario}</li><li>Verificar se o status HTTP é [200, 299]</li><li>Verificar o campo JSON &#39;address.city&#39;</li></ol></td>
+        <td>HTTP 201 com id; GET do post 1 retorna userId 1</td>
+        <td>Status HTTP 201; &#39;id&#39; é do tipo numero; &#39;title&#39; = &#39;Teste do Sentinela QA&#39;; Status 200 dentro de 200–299; Campo &#39;address.city&#39; existe</td>
+        <td><span class="badge APROVADO">APROVADO</span></td>
+        <td><a class="arq" href="data:application/json;base64,ew0KICAicmVxdWlzaWNhbyI6ICJHRVQgaHR0cHM6Ly9qc29ucGxhY2Vob2xkZXIudHlwaWNvZGUuY29tL3VzZXJzLzEiLA0KICAic3RhdHVzIjogMjAwLA0KICAidGVtcG9fbXMiOiAxNjgsDQogICJjYWJlY2FsaG9zIjogew0KICAgICJkYXRlIjogIkZyaSwgMjAgTm92IDIwMjYgMjI6Mzg6MzUgR01UIiwNCiAgICAiY29udGVudC10eXBlIjogImFwcGxpY2F0aW9uL2pzb247IGNoYXJzZXQ9dXRmLTgiLA0KICAgICJjb250ZW50LWxlbmd0aCI6ICI1MDkiLA0KICAgICJjb25uZWN0aW9uIjogImNsb3NlIiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtYWxsb3ctY3JlZGVudGlhbHMiOiAidHJ1ZSIsDQogICAgImNhY2hlLWNvbnRyb2wiOiAibWF4LWFnZT00MzIwMCIsDQogICAgImV0YWciOiAiVy9cIjFmZC0rMlkzRzN3MDQ5aVNadHc1dDFtelNudW5uZ0VcIiIsDQogICAgImV4cGlyZXMiOiAiLTEiLA0KICAgICJwcmFnbWEiOiAibm8tY2FjaGUiLA0KICAgICJ2YXJ5IjogIk9yaWdpbiwgQWNjZXB0LUVuY29kaW5nIiwNCiAgICAieC1jb250ZW50LXR5cGUtb3B0aW9ucyI6ICJub3NuaWZmIiwNCiAgICAieC1wb3dlcmVkLWJ5IjogIkV4cHJlc3MiLA0KICAgICJ4LXJhdGVsaW1pdC1saW1pdCI6ICIzNjAwMDAwIiwNCiAgICAieC1yYXRlbGltaXQtcmVtYWluaW5nIjogIjM1OTk5OTgiLA0KICAgICJ4LXJhdGVsaW1pdC1yZXNldCI6ICIxNzkwODEyODI2IiwNCiAgICAiYWdlIjogIjE0NDg5IiwNCiAgICAiYWNjZXB0LXJhbmdlcyI6ICJieXRlcyIsDQogICAgImNmLWNhY2hlLXN0YXR1cyI6ICJISVQiLA0KICAgICJyZXBvcnQtdG8iOiAie1wiZ3JvdXBcIjpcImNmLW5lbFwiLFwibWF4X2FnZVwiOjYwNDgwMCxcImVuZHBvaW50c1wiOlt7XCJ1cmxcIjpcImh0dHBzOi8vYS5uZWwuY2xvdWRmbGFyZS5jb20vcmVwb3J0L3Y0P3M9QUlRU01GJTJCRE44b1VBUmFFV2dYM3N3QlFBOFN4aEFSVWFZOG1QMTkzbjJlTERwRTZQTlJBNSUyRkFLTXd4S0FQQ0NZWWlNbFFEUjNFdlBiTENJRmpCeFpQV1NpSzNZanMlMkZTV0RDb2tLTng0dHk3ajBDd0RoVmh3NDlGUlFXTGdEY0l0NWI2S3B0OUprJTJCcFVna1B0WXVYXCJ9XX0iLA0KICAgICJuZWwiOiAie1wicmVwb3J0X3RvXCI6XCJjZi1uZWxcIixcInN1Y2Nlc3NfZnJhY3Rpb25cIjowLjAsXCJtYXhfYWdlXCI6NjA0ODAwfSIsDQogICAgInNlcnZlciI6ICJjbG91ZGZsYXJlIiwNCiAgICAiY2YtcmF5IjogImE1ZGFmMjFkZDkyNjY0NmUtR1JVIiwNCiAgICAiYWx0LXN2YyI6ICJoMz1cIjo0NDNcIjsgbWE9ODY0MDAiDQogIH0sDQogICJjb3JwbyI6IHsNCiAgICAiaWQiOiAxLA0KICAgICJuYW1lIjogIkxlYW5uZSBHcmFoYW0iLA0KICAgICJ1c2VybmFtZSI6ICJCcmV0IiwNCiAgICAiZW1haWwiOiAiU2luY2VyZUBhcHJpbC5iaXoiLA0KICAgICJhZGRyZXNzIjogew0KICAgICAgInN0cmVldCI6ICJLdWxhcyBMaWdodCIsDQogICAgICAic3VpdGUiOiAiQXB0LiA1NTYiLA0KICAgICAgImNpdHkiOiAiR3dlbmJvcm91Z2giLA0KICAgICAgInppcGNvZGUiOiAiOTI5OTgtMzg3NCIsDQogICAgICAiZ2VvIjogew0KICAgICAgICAibGF0IjogIi0zNy4zMTU5IiwNCiAgICAgICAgImxuZyI6ICI4MS4xNDk2Ig0KICAgICAgfQ0KICAgIH0sDQogICAgInBob25lIjogIjEtNzcwLTczNi04MDMxIHg1NjQ0MiIsDQogICAgIndlYnNpdGUiOiAiaGlsZGVnYXJkLm9yZyIsDQogICAgImNvbXBhbnkiOiB7DQogICAgICAibmFtZSI6ICJSb21hZ3VlcmEtQ3JvbmEiLA0KICAgICAgImNhdGNoUGhyYXNlIjogIk11bHRpLWxheWVyZWQgY2xpZW50LXNlcnZlciBuZXVyYWwtbmV0IiwNCiAgICAgICJicyI6ICJoYXJuZXNzIHJlYWwtdGltZSBlLW1hcmtldHMiDQogICAgfQ0KICB9DQp9" target="_blank" download="020_CT04_resposta.json">📄 resposta da API</a></td>
+      </tr>
+    
+    </tbody>
+  </table></div>
+</section>
+
+<section id="bugs">
+  <h2>Erros e bugs <span class="n">0</span></h2>
+  
+    <p class="vazio">Nenhum defeito encontrado nesta execução.</p>
+  
+</section>
+
+<section id="encontrado">
+  <h2>O que foi encontrado <span class="n">0</span></h2>
+  <p class="sub">Observações automáticas: acessibilidade básica, erros de console/rede e resultado da exploração de validações.</p>
+  <p class="vazio">Nenhuma observação registrada.</p>
+</section>
+
+<section id="melhorias">
+  <h2>Melhorias e ideias <span class="n">6</span></h2>
+  <p class="sub">Geradas por IA a partir dos prints e do log. São <b>sugestões</b>: avalie com o time antes de transformar em requisito.</p>
+  
+  <div class="cards">
+    
+      <div class="card-sug">
+        <span class="badge sug">Sugestão · Usabilidade</span>
+        <span class="badge sev-Média">Prioridade Média</span>
+        <h3>Exibição do tempo de resposta em todos os passos de requisição</h3>
+        <p>Adicionar o tempo exato de resposta em milissegundos para todas as requisições HTTP no log de execução (e não apenas na validação do CT01), facilitando a identificação de gargalos de performance e diagnósticos rápidos pelo time de QA.</p>
+        <p style="margin-top:6px;font-size:12px">Base: Passos 1, 9, 11 e 15 do caminho de execução</p>
+      </div>
+    
+      <div class="card-sug">
+        <span class="badge sug">Sugestão · Texto</span>
+        <span class="badge sev-Média">Prioridade Média</span>
+        <h3>Padronização da casing na validação do atributo booleano de erro</h3>
+        <p>No passo 13, a checagem é descrita como &#39;erro = True&#39; (com maiúscula), enquanto no retorno do JSON original do ViaCEP a chave/valor é representada em minúsculo (&#39;erro&#39; = &#39;true&#39; ou valor booleano true). É importante padronizar a escrita no log para refletir a especificação real da API.</p>
+        <p style="margin-top:6px;font-size:12px">Base: Passo 13 (&#39;Verificar o campo JSON erro = True&#39;)</p>
+      </div>
+    
+      <div class="card-sug">
+        <span class="badge sug">Sugestão · Funcionalidade</span>
+        <span class="badge sev-Alta">Prioridade Alta</span>
+        <h3>Restrição do código de status HTTP na consulta de usuários</h3>
+        <p>No passo 21 do CT04, a asserção aceita qualquer status no intervalo [200, 299]. Para consultas GET de recursos existentes, deve-se validar estritamente o status HTTP 200 OK, evitando que respostas como 204 (No Content) ou 202 (Accepted) passem indevidamente como sucesso de busca.</p>
+        <p style="margin-top:6px;font-size:12px">Base: Passo 21 (&#39;Verificar se o status HTTP é [200, 299]&#39;)</p>
+      </div>
+    
+      <div class="card-sug">
+        <span class="badge sug">Sugestão · Funcionalidade</span>
+        <span class="badge sev-Média">Prioridade Média</span>
+        <h3>Ajuste do SLA de tempo de resposta para consultas de API</h3>
+        <p>O CT01 utiliza um limite máximo de tolerância de 5000 ms. Para requisições de consulta de CEP em microsserviços, recomenda-se reduzir o threshold de tempo limite para 1000 ms ou 2000 ms, garantindo a detecção precoce de degradação de desempenho.</p>
+        <p style="margin-top:6px;font-size:12px">Base: Passo 8 (&#39;Verificar se respondeu em até 5000 ms&#39;)</p>
+      </div>
+    
+      <div class="card-sug">
+        <span class="badge sug">Sugestão · Funcionalidade</span>
+        <span class="badge sev-Média">Prioridade Média</span>
+        <h3>Validação completa de schema JSON (JSON Schema Validation)</h3>
+        <p>Substituir ou complementar a verificação pontual de campos isolados (ex: &#39;cep&#39;, &#39;localidade&#39;, &#39;address.city&#39;) por uma validação completa baseada em JSON Schema, garantindo a verificação rigorosa de tipos, campos obrigatórios e estrutura de contrato das APIs.</p>
+        <p style="margin-top:6px;font-size:12px">Base: Passos 4, 5, 6, 7, 17, 18 e 22</p>
+      </div>
+    
+      <div class="card-sug">
+        <span class="badge sug">Sugestão · Acessibilidade</span>
+        <span class="badge sev-Baixa">Prioridade Baixa</span>
+        <h3>Padronização de corpos de resposta de erro HTTP 400 (Problem Details)</h3>
+        <p>Garantir que a resposta da API para CEP com formato inválido (HTTP 400) retorne um payload estruturado no padrão RFC 7807 (Problem Details), fornecendo mensagens claras e descritivas legíveis por leitores de tela em painéis/dashboards que consomem a API.</p>
+        <p style="margin-top:6px;font-size:12px">Base: Passo 10 (&#39;Verificar se o status HTTP é 400&#39;)</p>
+      </div>
+    
+  </div>
+  
+</section>
+
+<section id="caminho">
+  <h2>Caminho percorrido <span class="n">22</span></h2>
+  <div class="tabela"><table>
+    <thead><tr><th>#</th><th>Horário</th><th>Caso</th><th>Ação</th><th>Resultado</th><th>Tempo</th><th>Print</th></tr></thead>
+    <tbody>
+    
+      <tr class="">
+        <td>1</td><td>19:38:33</td><td>CT01</td>
+        <td>Requisição GET /ws/01001000/json/<br><span class="sub">GET https://viacep.com.br/ws/01001000/json/ → HTTP 200 em 395 ms</span></td>
+        <td><span class="badge ok">OK</span></td>
+        <td>397 ms</td>
+        <td><a class="arq" href="data:application/json;base64,ew0KICAicmVxdWlzaWNhbyI6ICJHRVQgaHR0cHM6Ly92aWFjZXAuY29tLmJyL3dzLzAxMDAxMDAwL2pzb24vIiwNCiAgInN0YXR1cyI6IDIwMCwNCiAgInRlbXBvX21zIjogMzk1LA0KICAiY2FiZWNhbGhvcyI6IHsNCiAgICAic2VydmVyIjogIm5naW54LzEuMjIuMCIsDQogICAgImRhdGUiOiAiRnJpLCAyMCBOb3YgMjAyNiAyMjozODozMyBHTVQiLA0KICAgICJjb250ZW50LXR5cGUiOiAiYXBwbGljYXRpb24vanNvbjsgY2hhcnNldD11dGYtOCIsDQogICAgInRyYW5zZmVyLWVuY29kaW5nIjogImNodW5rZWQiLA0KICAgICJjb25uZWN0aW9uIjogImNsb3NlIiwNCiAgICAiZXhwaXJlcyI6ICJGcmksIDIwIE5vdiAyMDI2IDIzOjM4OjMzIEdNVCIsDQogICAgImNhY2hlLWNvbnRyb2wiOiAibWF4LWFnZT0zNjAwIiwNCiAgICAicHJhZ21hIjogInB1YmxpYyIsDQogICAgImFjY2Vzcy1jb250cm9sLWFsbG93LW9yaWdpbiI6ICIqIiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtYWxsb3ctbWV0aG9kcyI6ICJHRVQiLA0KICAgICJhY2Nlc3MtY29udHJvbC1hbGxvdy1oZWFkZXJzIjogIkNvbnRlbnQtVHlwZSwgWC1SZXF1ZXN0LVdpdGgsIFgtUmVxdWVzdGVkLUJ5IiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtYWxsb3ctY3JlZGVudGlhbHMiOiAidHJ1ZSIsDQogICAgImFjY2Vzcy1jb250cm9sLW1heC1hZ2UiOiAiODY0MDAiDQogIH0sDQogICJjb3JwbyI6IHsNCiAgICAiY2VwIjogIjAxMDAxLTAwMCIsDQogICAgImxvZ3JhZG91cm8iOiAiUHJhw6dhIGRhIFPDqSIsDQogICAgImNvbXBsZW1lbnRvIjogImxhZG8gw61tcGFyIiwNCiAgICAidW5pZGFkZSI6ICIiLA0KICAgICJiYWlycm8iOiAiU8OpIiwNCiAgICAibG9jYWxpZGFkZSI6ICJTw6NvIFBhdWxvIiwNCiAgICAidWYiOiAiU1AiLA0KICAgICJlc3RhZG8iOiAiU8OjbyBQYXVsbyIsDQogICAgInJlZ2lhbyI6ICJTdWRlc3RlIiwNCiAgICAiaWJnZSI6ICIzNTUwMzA4IiwNCiAgICAiZ2lhIjogIjEwMDQiLA0KICAgICJkZGQiOiAiMTEiLA0KICAgICJzaWFmaSI6ICI3MTA3Ig0KICB9DQp9" target="_blank" download="001_CT01_resposta.json">📄 resposta da API</a></td>
+      </tr>
+    
+      <tr class="">
+        <td>2</td><td>19:38:33</td><td>CT01</td>
+        <td>Verificar se o status HTTP é 200<br><span class="sub">Status HTTP 200</span></td>
+        <td><span class="badge ok">OK</span></td>
+        <td>0 ms</td>
+        <td><a class="arq" href="data:application/json;base64,ew0KICAicmVxdWlzaWNhbyI6ICJHRVQgaHR0cHM6Ly92aWFjZXAuY29tLmJyL3dzLzAxMDAxMDAwL2pzb24vIiwNCiAgInN0YXR1cyI6IDIwMCwNCiAgInRlbXBvX21zIjogMzk1LA0KICAiY2FiZWNhbGhvcyI6IHsNCiAgICAic2VydmVyIjogIm5naW54LzEuMjIuMCIsDQogICAgImRhdGUiOiAiRnJpLCAyMCBOb3YgMjAyNiAyMjozODozMyBHTVQiLA0KICAgICJjb250ZW50LXR5cGUiOiAiYXBwbGljYXRpb24vanNvbjsgY2hhcnNldD11dGYtOCIsDQogICAgInRyYW5zZmVyLWVuY29kaW5nIjogImNodW5rZWQiLA0KICAgICJjb25uZWN0aW9uIjogImNsb3NlIiwNCiAgICAiZXhwaXJlcyI6ICJGcmksIDIwIE5vdiAyMDI2IDIzOjM4OjMzIEdNVCIsDQogICAgImNhY2hlLWNvbnRyb2wiOiAibWF4LWFnZT0zNjAwIiwNCiAgICAicHJhZ21hIjogInB1YmxpYyIsDQogICAgImFjY2Vzcy1jb250cm9sLWFsbG93LW9yaWdpbiI6ICIqIiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtYWxsb3ctbWV0aG9kcyI6ICJHRVQiLA0KICAgICJhY2Nlc3MtY29udHJvbC1hbGxvdy1oZWFkZXJzIjogIkNvbnRlbnQtVHlwZSwgWC1SZXF1ZXN0LVdpdGgsIFgtUmVxdWVzdGVkLUJ5IiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtYWxsb3ctY3JlZGVudGlhbHMiOiAidHJ1ZSIsDQogICAgImFjY2Vzcy1jb250cm9sLW1heC1hZ2UiOiAiODY0MDAiDQogIH0sDQogICJjb3JwbyI6IHsNCiAgICAiY2VwIjogIjAxMDAxLTAwMCIsDQogICAgImxvZ3JhZG91cm8iOiAiUHJhw6dhIGRhIFPDqSIsDQogICAgImNvbXBsZW1lbnRvIjogImxhZG8gw61tcGFyIiwNCiAgICAidW5pZGFkZSI6ICIiLA0KICAgICJiYWlycm8iOiAiU8OpIiwNCiAgICAibG9jYWxpZGFkZSI6ICJTw6NvIFBhdWxvIiwNCiAgICAidWYiOiAiU1AiLA0KICAgICJlc3RhZG8iOiAiU8OjbyBQYXVsbyIsDQogICAgInJlZ2lhbyI6ICJTdWRlc3RlIiwNCiAgICAiaWJnZSI6ICIzNTUwMzA4IiwNCiAgICAiZ2lhIjogIjEwMDQiLA0KICAgICJkZGQiOiAiMTEiLA0KICAgICJzaWFmaSI6ICI3MTA3Ig0KICB9DQp9" target="_blank" download="001_CT01_resposta.json">📄 resposta da API</a></td>
+      </tr>
+    
+      <tr class="">
+        <td>3</td><td>19:38:33</td><td>CT01</td>
+        <td>Verificar o cabeçalho &#39;content-type&#39;<br><span class="sub">Cabeçalho &#39;content-type&#39;: application/json; charset=utf-8</span></td>
+        <td><span class="badge ok">OK</span></td>
+        <td>0 ms</td>
+        <td><a class="arq" href="data:application/json;base64,ew0KICAicmVxdWlzaWNhbyI6ICJHRVQgaHR0cHM6Ly92aWFjZXAuY29tLmJyL3dzLzAxMDAxMDAwL2pzb24vIiwNCiAgInN0YXR1cyI6IDIwMCwNCiAgInRlbXBvX21zIjogMzk1LA0KICAiY2FiZWNhbGhvcyI6IHsNCiAgICAic2VydmVyIjogIm5naW54LzEuMjIuMCIsDQogICAgImRhdGUiOiAiRnJpLCAyMCBOb3YgMjAyNiAyMjozODozMyBHTVQiLA0KICAgICJjb250ZW50LXR5cGUiOiAiYXBwbGljYXRpb24vanNvbjsgY2hhcnNldD11dGYtOCIsDQogICAgInRyYW5zZmVyLWVuY29kaW5nIjogImNodW5rZWQiLA0KICAgICJjb25uZWN0aW9uIjogImNsb3NlIiwNCiAgICAiZXhwaXJlcyI6ICJGcmksIDIwIE5vdiAyMDI2IDIzOjM4OjMzIEdNVCIsDQogICAgImNhY2hlLWNvbnRyb2wiOiAibWF4LWFnZT0zNjAwIiwNCiAgICAicHJhZ21hIjogInB1YmxpYyIsDQogICAgImFjY2Vzcy1jb250cm9sLWFsbG93LW9yaWdpbiI6ICIqIiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtYWxsb3ctbWV0aG9kcyI6ICJHRVQiLA0KICAgICJhY2Nlc3MtY29udHJvbC1hbGxvdy1oZWFkZXJzIjogIkNvbnRlbnQtVHlwZSwgWC1SZXF1ZXN0LVdpdGgsIFgtUmVxdWVzdGVkLUJ5IiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtYWxsb3ctY3JlZGVudGlhbHMiOiAidHJ1ZSIsDQogICAgImFjY2Vzcy1jb250cm9sLW1heC1hZ2UiOiAiODY0MDAiDQogIH0sDQogICJjb3JwbyI6IHsNCiAgICAiY2VwIjogIjAxMDAxLTAwMCIsDQogICAgImxvZ3JhZG91cm8iOiAiUHJhw6dhIGRhIFPDqSIsDQogICAgImNvbXBsZW1lbnRvIjogImxhZG8gw61tcGFyIiwNCiAgICAidW5pZGFkZSI6ICIiLA0KICAgICJiYWlycm8iOiAiU8OpIiwNCiAgICAibG9jYWxpZGFkZSI6ICJTw6NvIFBhdWxvIiwNCiAgICAidWYiOiAiU1AiLA0KICAgICJlc3RhZG8iOiAiU8OjbyBQYXVsbyIsDQogICAgInJlZ2lhbyI6ICJTdWRlc3RlIiwNCiAgICAiaWJnZSI6ICIzNTUwMzA4IiwNCiAgICAiZ2lhIjogIjEwMDQiLA0KICAgICJkZGQiOiAiMTEiLA0KICAgICJzaWFmaSI6ICI3MTA3Ig0KICB9DQp9" target="_blank" download="001_CT01_resposta.json">📄 resposta da API</a></td>
+      </tr>
+    
+      <tr class="">
+        <td>4</td><td>19:38:33</td><td>CT01</td>
+        <td>Verificar o campo JSON &#39;cep&#39; = &#39;01001-000&#39;<br><span class="sub">&#39;cep&#39; = &#39;01001-000&#39;</span></td>
+        <td><span class="badge ok">OK</span></td>
+        <td>0 ms</td>
+        <td><a class="arq" href="data:application/json;base64,ew0KICAicmVxdWlzaWNhbyI6ICJHRVQgaHR0cHM6Ly92aWFjZXAuY29tLmJyL3dzLzAxMDAxMDAwL2pzb24vIiwNCiAgInN0YXR1cyI6IDIwMCwNCiAgInRlbXBvX21zIjogMzk1LA0KICAiY2FiZWNhbGhvcyI6IHsNCiAgICAic2VydmVyIjogIm5naW54LzEuMjIuMCIsDQogICAgImRhdGUiOiAiRnJpLCAyMCBOb3YgMjAyNiAyMjozODozMyBHTVQiLA0KICAgICJjb250ZW50LXR5cGUiOiAiYXBwbGljYXRpb24vanNvbjsgY2hhcnNldD11dGYtOCIsDQogICAgInRyYW5zZmVyLWVuY29kaW5nIjogImNodW5rZWQiLA0KICAgICJjb25uZWN0aW9uIjogImNsb3NlIiwNCiAgICAiZXhwaXJlcyI6ICJGcmksIDIwIE5vdiAyMDI2IDIzOjM4OjMzIEdNVCIsDQogICAgImNhY2hlLWNvbnRyb2wiOiAibWF4LWFnZT0zNjAwIiwNCiAgICAicHJhZ21hIjogInB1YmxpYyIsDQogICAgImFjY2Vzcy1jb250cm9sLWFsbG93LW9yaWdpbiI6ICIqIiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtYWxsb3ctbWV0aG9kcyI6ICJHRVQiLA0KICAgICJhY2Nlc3MtY29udHJvbC1hbGxvdy1oZWFkZXJzIjogIkNvbnRlbnQtVHlwZSwgWC1SZXF1ZXN0LVdpdGgsIFgtUmVxdWVzdGVkLUJ5IiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtYWxsb3ctY3JlZGVudGlhbHMiOiAidHJ1ZSIsDQogICAgImFjY2Vzcy1jb250cm9sLW1heC1hZ2UiOiAiODY0MDAiDQogIH0sDQogICJjb3JwbyI6IHsNCiAgICAiY2VwIjogIjAxMDAxLTAwMCIsDQogICAgImxvZ3JhZG91cm8iOiAiUHJhw6dhIGRhIFPDqSIsDQogICAgImNvbXBsZW1lbnRvIjogImxhZG8gw61tcGFyIiwNCiAgICAidW5pZGFkZSI6ICIiLA0KICAgICJiYWlycm8iOiAiU8OpIiwNCiAgICAibG9jYWxpZGFkZSI6ICJTw6NvIFBhdWxvIiwNCiAgICAidWYiOiAiU1AiLA0KICAgICJlc3RhZG8iOiAiU8OjbyBQYXVsbyIsDQogICAgInJlZ2lhbyI6ICJTdWRlc3RlIiwNCiAgICAiaWJnZSI6ICIzNTUwMzA4IiwNCiAgICAiZ2lhIjogIjEwMDQiLA0KICAgICJkZGQiOiAiMTEiLA0KICAgICJzaWFmaSI6ICI3MTA3Ig0KICB9DQp9" target="_blank" download="001_CT01_resposta.json">📄 resposta da API</a></td>
+      </tr>
+    
+      <tr class="">
+        <td>5</td><td>19:38:33</td><td>CT01</td>
+        <td>Verificar o campo JSON &#39;localidade&#39; = &#39;São Paulo&#39;<br><span class="sub">&#39;localidade&#39; = &#39;São Paulo&#39;</span></td>
+        <td><span class="badge ok">OK</span></td>
+        <td>0 ms</td>
+        <td><a class="arq" href="data:application/json;base64,ew0KICAicmVxdWlzaWNhbyI6ICJHRVQgaHR0cHM6Ly92aWFjZXAuY29tLmJyL3dzLzAxMDAxMDAwL2pzb24vIiwNCiAgInN0YXR1cyI6IDIwMCwNCiAgInRlbXBvX21zIjogMzk1LA0KICAiY2FiZWNhbGhvcyI6IHsNCiAgICAic2VydmVyIjogIm5naW54LzEuMjIuMCIsDQogICAgImRhdGUiOiAiRnJpLCAyMCBOb3YgMjAyNiAyMjozODozMyBHTVQiLA0KICAgICJjb250ZW50LXR5cGUiOiAiYXBwbGljYXRpb24vanNvbjsgY2hhcnNldD11dGYtOCIsDQogICAgInRyYW5zZmVyLWVuY29kaW5nIjogImNodW5rZWQiLA0KICAgICJjb25uZWN0aW9uIjogImNsb3NlIiwNCiAgICAiZXhwaXJlcyI6ICJGcmksIDIwIE5vdiAyMDI2IDIzOjM4OjMzIEdNVCIsDQogICAgImNhY2hlLWNvbnRyb2wiOiAibWF4LWFnZT0zNjAwIiwNCiAgICAicHJhZ21hIjogInB1YmxpYyIsDQogICAgImFjY2Vzcy1jb250cm9sLWFsbG93LW9yaWdpbiI6ICIqIiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtYWxsb3ctbWV0aG9kcyI6ICJHRVQiLA0KICAgICJhY2Nlc3MtY29udHJvbC1hbGxvdy1oZWFkZXJzIjogIkNvbnRlbnQtVHlwZSwgWC1SZXF1ZXN0LVdpdGgsIFgtUmVxdWVzdGVkLUJ5IiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtYWxsb3ctY3JlZGVudGlhbHMiOiAidHJ1ZSIsDQogICAgImFjY2Vzcy1jb250cm9sLW1heC1hZ2UiOiAiODY0MDAiDQogIH0sDQogICJjb3JwbyI6IHsNCiAgICAiY2VwIjogIjAxMDAxLTAwMCIsDQogICAgImxvZ3JhZG91cm8iOiAiUHJhw6dhIGRhIFPDqSIsDQogICAgImNvbXBsZW1lbnRvIjogImxhZG8gw61tcGFyIiwNCiAgICAidW5pZGFkZSI6ICIiLA0KICAgICJiYWlycm8iOiAiU8OpIiwNCiAgICAibG9jYWxpZGFkZSI6ICJTw6NvIFBhdWxvIiwNCiAgICAidWYiOiAiU1AiLA0KICAgICJlc3RhZG8iOiAiU8OjbyBQYXVsbyIsDQogICAgInJlZ2lhbyI6ICJTdWRlc3RlIiwNCiAgICAiaWJnZSI6ICIzNTUwMzA4IiwNCiAgICAiZ2lhIjogIjEwMDQiLA0KICAgICJkZGQiOiAiMTEiLA0KICAgICJzaWFmaSI6ICI3MTA3Ig0KICB9DQp9" target="_blank" download="001_CT01_resposta.json">📄 resposta da API</a></td>
+      </tr>
+    
+      <tr class="">
+        <td>6</td><td>19:38:33</td><td>CT01</td>
+        <td>Verificar o campo JSON &#39;uf&#39; = &#39;SP&#39;<br><span class="sub">&#39;uf&#39; = &#39;SP&#39;</span></td>
+        <td><span class="badge ok">OK</span></td>
+        <td>0 ms</td>
+        <td><a class="arq" href="data:application/json;base64,ew0KICAicmVxdWlzaWNhbyI6ICJHRVQgaHR0cHM6Ly92aWFjZXAuY29tLmJyL3dzLzAxMDAxMDAwL2pzb24vIiwNCiAgInN0YXR1cyI6IDIwMCwNCiAgInRlbXBvX21zIjogMzk1LA0KICAiY2FiZWNhbGhvcyI6IHsNCiAgICAic2VydmVyIjogIm5naW54LzEuMjIuMCIsDQogICAgImRhdGUiOiAiRnJpLCAyMCBOb3YgMjAyNiAyMjozODozMyBHTVQiLA0KICAgICJjb250ZW50LXR5cGUiOiAiYXBwbGljYXRpb24vanNvbjsgY2hhcnNldD11dGYtOCIsDQogICAgInRyYW5zZmVyLWVuY29kaW5nIjogImNodW5rZWQiLA0KICAgICJjb25uZWN0aW9uIjogImNsb3NlIiwNCiAgICAiZXhwaXJlcyI6ICJGcmksIDIwIE5vdiAyMDI2IDIzOjM4OjMzIEdNVCIsDQogICAgImNhY2hlLWNvbnRyb2wiOiAibWF4LWFnZT0zNjAwIiwNCiAgICAicHJhZ21hIjogInB1YmxpYyIsDQogICAgImFjY2Vzcy1jb250cm9sLWFsbG93LW9yaWdpbiI6ICIqIiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtYWxsb3ctbWV0aG9kcyI6ICJHRVQiLA0KICAgICJhY2Nlc3MtY29udHJvbC1hbGxvdy1oZWFkZXJzIjogIkNvbnRlbnQtVHlwZSwgWC1SZXF1ZXN0LVdpdGgsIFgtUmVxdWVzdGVkLUJ5IiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtYWxsb3ctY3JlZGVudGlhbHMiOiAidHJ1ZSIsDQogICAgImFjY2Vzcy1jb250cm9sLW1heC1hZ2UiOiAiODY0MDAiDQogIH0sDQogICJjb3JwbyI6IHsNCiAgICAiY2VwIjogIjAxMDAxLTAwMCIsDQogICAgImxvZ3JhZG91cm8iOiAiUHJhw6dhIGRhIFPDqSIsDQogICAgImNvbXBsZW1lbnRvIjogImxhZG8gw61tcGFyIiwNCiAgICAidW5pZGFkZSI6ICIiLA0KICAgICJiYWlycm8iOiAiU8OpIiwNCiAgICAibG9jYWxpZGFkZSI6ICJTw6NvIFBhdWxvIiwNCiAgICAidWYiOiAiU1AiLA0KICAgICJlc3RhZG8iOiAiU8OjbyBQYXVsbyIsDQogICAgInJlZ2lhbyI6ICJTdWRlc3RlIiwNCiAgICAiaWJnZSI6ICIzNTUwMzA4IiwNCiAgICAiZ2lhIjogIjEwMDQiLA0KICAgICJkZGQiOiAiMTEiLA0KICAgICJzaWFmaSI6ICI3MTA3Ig0KICB9DQp9" target="_blank" download="001_CT01_resposta.json">📄 resposta da API</a></td>
+      </tr>
+    
+      <tr class="">
+        <td>7</td><td>19:38:33</td><td>CT01</td>
+        <td>Verificar o campo JSON &#39;logradouro&#39;<br><span class="sub">&#39;logradouro&#39; contém &#39;Praça da Sé&#39;</span></td>
+        <td><span class="badge ok">OK</span></td>
+        <td>0 ms</td>
+        <td><a class="arq" href="data:application/json;base64,ew0KICAicmVxdWlzaWNhbyI6ICJHRVQgaHR0cHM6Ly92aWFjZXAuY29tLmJyL3dzLzAxMDAxMDAwL2pzb24vIiwNCiAgInN0YXR1cyI6IDIwMCwNCiAgInRlbXBvX21zIjogMzk1LA0KICAiY2FiZWNhbGhvcyI6IHsNCiAgICAic2VydmVyIjogIm5naW54LzEuMjIuMCIsDQogICAgImRhdGUiOiAiRnJpLCAyMCBOb3YgMjAyNiAyMjozODozMyBHTVQiLA0KICAgICJjb250ZW50LXR5cGUiOiAiYXBwbGljYXRpb24vanNvbjsgY2hhcnNldD11dGYtOCIsDQogICAgInRyYW5zZmVyLWVuY29kaW5nIjogImNodW5rZWQiLA0KICAgICJjb25uZWN0aW9uIjogImNsb3NlIiwNCiAgICAiZXhwaXJlcyI6ICJGcmksIDIwIE5vdiAyMDI2IDIzOjM4OjMzIEdNVCIsDQogICAgImNhY2hlLWNvbnRyb2wiOiAibWF4LWFnZT0zNjAwIiwNCiAgICAicHJhZ21hIjogInB1YmxpYyIsDQogICAgImFjY2Vzcy1jb250cm9sLWFsbG93LW9yaWdpbiI6ICIqIiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtYWxsb3ctbWV0aG9kcyI6ICJHRVQiLA0KICAgICJhY2Nlc3MtY29udHJvbC1hbGxvdy1oZWFkZXJzIjogIkNvbnRlbnQtVHlwZSwgWC1SZXF1ZXN0LVdpdGgsIFgtUmVxdWVzdGVkLUJ5IiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtYWxsb3ctY3JlZGVudGlhbHMiOiAidHJ1ZSIsDQogICAgImFjY2Vzcy1jb250cm9sLW1heC1hZ2UiOiAiODY0MDAiDQogIH0sDQogICJjb3JwbyI6IHsNCiAgICAiY2VwIjogIjAxMDAxLTAwMCIsDQogICAgImxvZ3JhZG91cm8iOiAiUHJhw6dhIGRhIFPDqSIsDQogICAgImNvbXBsZW1lbnRvIjogImxhZG8gw61tcGFyIiwNCiAgICAidW5pZGFkZSI6ICIiLA0KICAgICJiYWlycm8iOiAiU8OpIiwNCiAgICAibG9jYWxpZGFkZSI6ICJTw6NvIFBhdWxvIiwNCiAgICAidWYiOiAiU1AiLA0KICAgICJlc3RhZG8iOiAiU8OjbyBQYXVsbyIsDQogICAgInJlZ2lhbyI6ICJTdWRlc3RlIiwNCiAgICAiaWJnZSI6ICIzNTUwMzA4IiwNCiAgICAiZ2lhIjogIjEwMDQiLA0KICAgICJkZGQiOiAiMTEiLA0KICAgICJzaWFmaSI6ICI3MTA3Ig0KICB9DQp9" target="_blank" download="001_CT01_resposta.json">📄 resposta da API</a></td>
+      </tr>
+    
+      <tr class="">
+        <td>8</td><td>19:38:33</td><td>CT01</td>
+        <td>Verificar se respondeu em até 5000 ms<br><span class="sub">Respondeu em 395 ms (≤ 5000)</span></td>
+        <td><span class="badge ok">OK</span></td>
+        <td>0 ms</td>
+        <td><a class="arq" href="data:application/json;base64,ew0KICAicmVxdWlzaWNhbyI6ICJHRVQgaHR0cHM6Ly92aWFjZXAuY29tLmJyL3dzLzAxMDAxMDAwL2pzb24vIiwNCiAgInN0YXR1cyI6IDIwMCwNCiAgInRlbXBvX21zIjogMzk1LA0KICAiY2FiZWNhbGhvcyI6IHsNCiAgICAic2VydmVyIjogIm5naW54LzEuMjIuMCIsDQogICAgImRhdGUiOiAiRnJpLCAyMCBOb3YgMjAyNiAyMjozODozMyBHTVQiLA0KICAgICJjb250ZW50LXR5cGUiOiAiYXBwbGljYXRpb24vanNvbjsgY2hhcnNldD11dGYtOCIsDQogICAgInRyYW5zZmVyLWVuY29kaW5nIjogImNodW5rZWQiLA0KICAgICJjb25uZWN0aW9uIjogImNsb3NlIiwNCiAgICAiZXhwaXJlcyI6ICJGcmksIDIwIE5vdiAyMDI2IDIzOjM4OjMzIEdNVCIsDQogICAgImNhY2hlLWNvbnRyb2wiOiAibWF4LWFnZT0zNjAwIiwNCiAgICAicHJhZ21hIjogInB1YmxpYyIsDQogICAgImFjY2Vzcy1jb250cm9sLWFsbG93LW9yaWdpbiI6ICIqIiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtYWxsb3ctbWV0aG9kcyI6ICJHRVQiLA0KICAgICJhY2Nlc3MtY29udHJvbC1hbGxvdy1oZWFkZXJzIjogIkNvbnRlbnQtVHlwZSwgWC1SZXF1ZXN0LVdpdGgsIFgtUmVxdWVzdGVkLUJ5IiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtYWxsb3ctY3JlZGVudGlhbHMiOiAidHJ1ZSIsDQogICAgImFjY2Vzcy1jb250cm9sLW1heC1hZ2UiOiAiODY0MDAiDQogIH0sDQogICJjb3JwbyI6IHsNCiAgICAiY2VwIjogIjAxMDAxLTAwMCIsDQogICAgImxvZ3JhZG91cm8iOiAiUHJhw6dhIGRhIFPDqSIsDQogICAgImNvbXBsZW1lbnRvIjogImxhZG8gw61tcGFyIiwNCiAgICAidW5pZGFkZSI6ICIiLA0KICAgICJiYWlycm8iOiAiU8OpIiwNCiAgICAibG9jYWxpZGFkZSI6ICJTw6NvIFBhdWxvIiwNCiAgICAidWYiOiAiU1AiLA0KICAgICJlc3RhZG8iOiAiU8OjbyBQYXVsbyIsDQogICAgInJlZ2lhbyI6ICJTdWRlc3RlIiwNCiAgICAiaWJnZSI6ICIzNTUwMzA4IiwNCiAgICAiZ2lhIjogIjEwMDQiLA0KICAgICJkZGQiOiAiMTEiLA0KICAgICJzaWFmaSI6ICI3MTA3Ig0KICB9DQp9" target="_blank" download="001_CT01_resposta.json">📄 resposta da API</a></td>
+      </tr>
+    
+      <tr class="">
+        <td>9</td><td>19:38:33</td><td>CT02</td>
+        <td>Requisição GET /ws/123/json/<br><span class="sub">GET https://viacep.com.br/ws/123/json/ → HTTP 400 em 364 ms</span></td>
+        <td><span class="badge ok">OK</span></td>
+        <td>366 ms</td>
+        <td><a class="arq" href="data:application/json;base64,ew0KICAicmVxdWlzaWNhbyI6ICJHRVQgaHR0cHM6Ly92aWFjZXAuY29tLmJyL3dzLzEyMy9qc29uLyIsDQogICJzdGF0dXMiOiA0MDAsDQogICJ0ZW1wb19tcyI6IDM2NCwNCiAgImNhYmVjYWxob3MiOiB7DQogICAgInNlcnZlciI6ICJuZ2lueC8xLjIyLjAiLA0KICAgICJkYXRlIjogIkZyaSwgMjAgTm92IDIwMjYgMjI6Mzg6MzQgR01UIiwNCiAgICAiY29udGVudC10eXBlIjogInRleHQvaHRtbDsgY2hhcnNldD11dGYtOCIsDQogICAgImNvbnRlbnQtbGVuZ3RoIjogIjQ5NCIsDQogICAgImNvbm5lY3Rpb24iOiAiY2xvc2UiLA0KICAgICJldGFnIjogIlwiNjI0MmY4MTItMWVlXCIiLA0KICAgICJzdHJpY3QtdHJhbnNwb3J0LXNlY3VyaXR5IjogIm1heC1hZ2U9NjMwNzIwMDAiDQogIH0sDQogICJjb3JwbyI6ICI8IURPQ1RZUEUgSFRNTD5cbjxodG1sIGxhbmc9XCJwdC1iclwiPlxuXG48aGVhZD5cbiAgPHRpdGxlPlZpYUNFUCA0MDA8L3RpdGxlPlxuICA8bWV0YSBjaGFyc2V0PVwidXRmLThcIiAvPlxuICA8c3R5bGUgdHlwZT1cInRleHQvY3NzXCI+XG4gICAgICBoMSB7XG4gICAgICAgICAgY29sb3I6ICM1NTU7XG4gICAgICAgICAgdGV4dC1hbGlnbjogY2VudGVyO1xuICAgICAgICAgIGZvbnQtc2l6ZTogNGVtO1xuICAgICAgfVxuICAgICAgaDIsIGgzIHtcbiAgICAgICAgICBjb2xvcjogIzY2NjtcbiAgICAgICAgICB0ZXh0LWFsaWduOiBjZW50ZXI7XG4gICAgICAgICAgZm9udC1zaXplOiAzZW07XG4gICAgICB9XG4gICAgICBoMyB7XG4gICAgICAgICAgZm9udC1zaXplOiAxLjVlbTtcbiAgICAgIH1cbiAgPC9zdHlsZT5cbjwvaGVhZD5cblxuPGJvZHk+XG4gICAgPGgxPkh0dHAgNDAwPC9oMT5cbiAgICA8aDM+VmVyaWZpcXVlIGEgVVJMPC9oMz5cbiAgICA8aDM+e0JhZCBSZXF1ZXN0fTwvaDM+XG48L2JvZHk+XG5cbjwvaHRtbD5cbiINCn0=" target="_blank" download="009_CT02_resposta.json">📄 resposta da API</a></td>
+      </tr>
+    
+      <tr class="">
+        <td>10</td><td>19:38:33</td><td>CT02</td>
+        <td>Verificar se o status HTTP é 400<br><span class="sub">Status HTTP 400</span></td>
+        <td><span class="badge ok">OK</span></td>
+        <td>0 ms</td>
+        <td><a class="arq" href="data:application/json;base64,ew0KICAicmVxdWlzaWNhbyI6ICJHRVQgaHR0cHM6Ly92aWFjZXAuY29tLmJyL3dzLzEyMy9qc29uLyIsDQogICJzdGF0dXMiOiA0MDAsDQogICJ0ZW1wb19tcyI6IDM2NCwNCiAgImNhYmVjYWxob3MiOiB7DQogICAgInNlcnZlciI6ICJuZ2lueC8xLjIyLjAiLA0KICAgICJkYXRlIjogIkZyaSwgMjAgTm92IDIwMjYgMjI6Mzg6MzQgR01UIiwNCiAgICAiY29udGVudC10eXBlIjogInRleHQvaHRtbDsgY2hhcnNldD11dGYtOCIsDQogICAgImNvbnRlbnQtbGVuZ3RoIjogIjQ5NCIsDQogICAgImNvbm5lY3Rpb24iOiAiY2xvc2UiLA0KICAgICJldGFnIjogIlwiNjI0MmY4MTItMWVlXCIiLA0KICAgICJzdHJpY3QtdHJhbnNwb3J0LXNlY3VyaXR5IjogIm1heC1hZ2U9NjMwNzIwMDAiDQogIH0sDQogICJjb3JwbyI6ICI8IURPQ1RZUEUgSFRNTD5cbjxodG1sIGxhbmc9XCJwdC1iclwiPlxuXG48aGVhZD5cbiAgPHRpdGxlPlZpYUNFUCA0MDA8L3RpdGxlPlxuICA8bWV0YSBjaGFyc2V0PVwidXRmLThcIiAvPlxuICA8c3R5bGUgdHlwZT1cInRleHQvY3NzXCI+XG4gICAgICBoMSB7XG4gICAgICAgICAgY29sb3I6ICM1NTU7XG4gICAgICAgICAgdGV4dC1hbGlnbjogY2VudGVyO1xuICAgICAgICAgIGZvbnQtc2l6ZTogNGVtO1xuICAgICAgfVxuICAgICAgaDIsIGgzIHtcbiAgICAgICAgICBjb2xvcjogIzY2NjtcbiAgICAgICAgICB0ZXh0LWFsaWduOiBjZW50ZXI7XG4gICAgICAgICAgZm9udC1zaXplOiAzZW07XG4gICAgICB9XG4gICAgICBoMyB7XG4gICAgICAgICAgZm9udC1zaXplOiAxLjVlbTtcbiAgICAgIH1cbiAgPC9zdHlsZT5cbjwvaGVhZD5cblxuPGJvZHk+XG4gICAgPGgxPkh0dHAgNDAwPC9oMT5cbiAgICA8aDM+VmVyaWZpcXVlIGEgVVJMPC9oMz5cbiAgICA8aDM+e0JhZCBSZXF1ZXN0fTwvaDM+XG48L2JvZHk+XG5cbjwvaHRtbD5cbiINCn0=" target="_blank" download="009_CT02_resposta.json">📄 resposta da API</a></td>
+      </tr>
+    
+      <tr class="">
+        <td>11</td><td>19:38:33</td><td>CT03</td>
+        <td>Requisição GET /ws/99999999/json/<br><span class="sub">GET https://viacep.com.br/ws/99999999/json/ → HTTP 200 em 365 ms</span></td>
+        <td><span class="badge ok">OK</span></td>
+        <td>367 ms</td>
+        <td><a class="arq" href="data:application/json;base64,ew0KICAicmVxdWlzaWNhbyI6ICJHRVQgaHR0cHM6Ly92aWFjZXAuY29tLmJyL3dzLzk5OTk5OTk5L2pzb24vIiwNCiAgInN0YXR1cyI6IDIwMCwNCiAgInRlbXBvX21zIjogMzY1LA0KICAiY2FiZWNhbGhvcyI6IHsNCiAgICAic2VydmVyIjogIm5naW54LzEuMjIuMCIsDQogICAgImRhdGUiOiAiRnJpLCAyMCBOb3YgMjAyNiAyMjozODozNCBHTVQiLA0KICAgICJjb250ZW50LXR5cGUiOiAiYXBwbGljYXRpb24vanNvbjsgY2hhcnNldD11dGYtOCIsDQogICAgInRyYW5zZmVyLWVuY29kaW5nIjogImNodW5rZWQiLA0KICAgICJjb25uZWN0aW9uIjogImNsb3NlIiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtYWxsb3ctb3JpZ2luIjogIioiLA0KICAgICJhY2Nlc3MtY29udHJvbC1hbGxvdy1tZXRob2RzIjogIkdFVCIsDQogICAgImFjY2Vzcy1jb250cm9sLWFsbG93LWhlYWRlcnMiOiAiQ29udGVudC1UeXBlLCBYLVJlcXVlc3QtV2l0aCwgWC1SZXF1ZXN0ZWQtQnkiLA0KICAgICJhY2Nlc3MtY29udHJvbC1hbGxvdy1jcmVkZW50aWFscyI6ICJ0cnVlIiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtbWF4LWFnZSI6ICI4NjQwMCIsDQogICAgInN0cmljdC10cmFuc3BvcnQtc2VjdXJpdHkiOiAibWF4LWFnZT02MzA3MjAwMCINCiAgfSwNCiAgImNvcnBvIjogew0KICAgICJlcnJvIjogInRydWUiDQogIH0NCn0=" target="_blank" download="011_CT03_resposta.json">📄 resposta da API</a></td>
+      </tr>
+    
+      <tr class="">
+        <td>12</td><td>19:38:33</td><td>CT03</td>
+        <td>Verificar se o status HTTP é 200<br><span class="sub">Status HTTP 200</span></td>
+        <td><span class="badge ok">OK</span></td>
+        <td>0 ms</td>
+        <td><a class="arq" href="data:application/json;base64,ew0KICAicmVxdWlzaWNhbyI6ICJHRVQgaHR0cHM6Ly92aWFjZXAuY29tLmJyL3dzLzk5OTk5OTk5L2pzb24vIiwNCiAgInN0YXR1cyI6IDIwMCwNCiAgInRlbXBvX21zIjogMzY1LA0KICAiY2FiZWNhbGhvcyI6IHsNCiAgICAic2VydmVyIjogIm5naW54LzEuMjIuMCIsDQogICAgImRhdGUiOiAiRnJpLCAyMCBOb3YgMjAyNiAyMjozODozNCBHTVQiLA0KICAgICJjb250ZW50LXR5cGUiOiAiYXBwbGljYXRpb24vanNvbjsgY2hhcnNldD11dGYtOCIsDQogICAgInRyYW5zZmVyLWVuY29kaW5nIjogImNodW5rZWQiLA0KICAgICJjb25uZWN0aW9uIjogImNsb3NlIiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtYWxsb3ctb3JpZ2luIjogIioiLA0KICAgICJhY2Nlc3MtY29udHJvbC1hbGxvdy1tZXRob2RzIjogIkdFVCIsDQogICAgImFjY2Vzcy1jb250cm9sLWFsbG93LWhlYWRlcnMiOiAiQ29udGVudC1UeXBlLCBYLVJlcXVlc3QtV2l0aCwgWC1SZXF1ZXN0ZWQtQnkiLA0KICAgICJhY2Nlc3MtY29udHJvbC1hbGxvdy1jcmVkZW50aWFscyI6ICJ0cnVlIiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtbWF4LWFnZSI6ICI4NjQwMCIsDQogICAgInN0cmljdC10cmFuc3BvcnQtc2VjdXJpdHkiOiAibWF4LWFnZT02MzA3MjAwMCINCiAgfSwNCiAgImNvcnBvIjogew0KICAgICJlcnJvIjogInRydWUiDQogIH0NCn0=" target="_blank" download="011_CT03_resposta.json">📄 resposta da API</a></td>
+      </tr>
+    
+      <tr class="">
+        <td>13</td><td>19:38:33</td><td>CT03</td>
+        <td>Verificar o campo JSON &#39;erro&#39; = &#39;True&#39;<br><span class="sub">&#39;erro&#39; = &#39;true&#39;</span></td>
+        <td><span class="badge ok">OK</span></td>
+        <td>0 ms</td>
+        <td><a class="arq" href="data:application/json;base64,ew0KICAicmVxdWlzaWNhbyI6ICJHRVQgaHR0cHM6Ly92aWFjZXAuY29tLmJyL3dzLzk5OTk5OTk5L2pzb24vIiwNCiAgInN0YXR1cyI6IDIwMCwNCiAgInRlbXBvX21zIjogMzY1LA0KICAiY2FiZWNhbGhvcyI6IHsNCiAgICAic2VydmVyIjogIm5naW54LzEuMjIuMCIsDQogICAgImRhdGUiOiAiRnJpLCAyMCBOb3YgMjAyNiAyMjozODozNCBHTVQiLA0KICAgICJjb250ZW50LXR5cGUiOiAiYXBwbGljYXRpb24vanNvbjsgY2hhcnNldD11dGYtOCIsDQogICAgInRyYW5zZmVyLWVuY29kaW5nIjogImNodW5rZWQiLA0KICAgICJjb25uZWN0aW9uIjogImNsb3NlIiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtYWxsb3ctb3JpZ2luIjogIioiLA0KICAgICJhY2Nlc3MtY29udHJvbC1hbGxvdy1tZXRob2RzIjogIkdFVCIsDQogICAgImFjY2Vzcy1jb250cm9sLWFsbG93LWhlYWRlcnMiOiAiQ29udGVudC1UeXBlLCBYLVJlcXVlc3QtV2l0aCwgWC1SZXF1ZXN0ZWQtQnkiLA0KICAgICJhY2Nlc3MtY29udHJvbC1hbGxvdy1jcmVkZW50aWFscyI6ICJ0cnVlIiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtbWF4LWFnZSI6ICI4NjQwMCIsDQogICAgInN0cmljdC10cmFuc3BvcnQtc2VjdXJpdHkiOiAibWF4LWFnZT02MzA3MjAwMCINCiAgfSwNCiAgImNvcnBvIjogew0KICAgICJlcnJvIjogInRydWUiDQogIH0NCn0=" target="_blank" download="011_CT03_resposta.json">📄 resposta da API</a></td>
+      </tr>
+    
+      <tr class="">
+        <td>14</td><td>19:38:33</td><td>CT03</td>
+        <td>Verificar o campo JSON &#39;logradouro&#39;<br><span class="sub">Campo &#39;logradouro&#39; ausente (correto)</span></td>
+        <td><span class="badge ok">OK</span></td>
+        <td>0 ms</td>
+        <td><a class="arq" href="data:application/json;base64,ew0KICAicmVxdWlzaWNhbyI6ICJHRVQgaHR0cHM6Ly92aWFjZXAuY29tLmJyL3dzLzk5OTk5OTk5L2pzb24vIiwNCiAgInN0YXR1cyI6IDIwMCwNCiAgInRlbXBvX21zIjogMzY1LA0KICAiY2FiZWNhbGhvcyI6IHsNCiAgICAic2VydmVyIjogIm5naW54LzEuMjIuMCIsDQogICAgImRhdGUiOiAiRnJpLCAyMCBOb3YgMjAyNiAyMjozODozNCBHTVQiLA0KICAgICJjb250ZW50LXR5cGUiOiAiYXBwbGljYXRpb24vanNvbjsgY2hhcnNldD11dGYtOCIsDQogICAgInRyYW5zZmVyLWVuY29kaW5nIjogImNodW5rZWQiLA0KICAgICJjb25uZWN0aW9uIjogImNsb3NlIiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtYWxsb3ctb3JpZ2luIjogIioiLA0KICAgICJhY2Nlc3MtY29udHJvbC1hbGxvdy1tZXRob2RzIjogIkdFVCIsDQogICAgImFjY2Vzcy1jb250cm9sLWFsbG93LWhlYWRlcnMiOiAiQ29udGVudC1UeXBlLCBYLVJlcXVlc3QtV2l0aCwgWC1SZXF1ZXN0ZWQtQnkiLA0KICAgICJhY2Nlc3MtY29udHJvbC1hbGxvdy1jcmVkZW50aWFscyI6ICJ0cnVlIiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtbWF4LWFnZSI6ICI4NjQwMCIsDQogICAgInN0cmljdC10cmFuc3BvcnQtc2VjdXJpdHkiOiAibWF4LWFnZT02MzA3MjAwMCINCiAgfSwNCiAgImNvcnBvIjogew0KICAgICJlcnJvIjogInRydWUiDQogIH0NCn0=" target="_blank" download="011_CT03_resposta.json">📄 resposta da API</a></td>
+      </tr>
+    
+      <tr class="">
+        <td>15</td><td>19:38:34</td><td>CT04</td>
+        <td>Requisição POST https://jsonplaceholder.typicode.com/posts<br><span class="sub">POST https://jsonplaceholder.typicode.com/posts → HTTP 201 em 316 ms</span></td>
+        <td><span class="badge ok">OK</span></td>
+        <td>318 ms</td>
+        <td><a class="arq" href="data:application/json;base64,ew0KICAicmVxdWlzaWNhbyI6ICJQT1NUIGh0dHBzOi8vanNvbnBsYWNlaG9sZGVyLnR5cGljb2RlLmNvbS9wb3N0cyIsDQogICJzdGF0dXMiOiAyMDEsDQogICJ0ZW1wb19tcyI6IDMxNiwNCiAgImNhYmVjYWxob3MiOiB7DQogICAgImRhdGUiOiAiRnJpLCAyMCBOb3YgMjAyNiAyMjozODozNSBHTVQiLA0KICAgICJjb250ZW50LXR5cGUiOiAiYXBwbGljYXRpb24vanNvbjsgY2hhcnNldD11dGYtOCIsDQogICAgImNvbnRlbnQtbGVuZ3RoIjogIjEyOCIsDQogICAgImNvbm5lY3Rpb24iOiAiY2xvc2UiLA0KICAgICJhY2Nlc3MtY29udHJvbC1hbGxvdy1jcmVkZW50aWFscyI6ICJ0cnVlIiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtZXhwb3NlLWhlYWRlcnMiOiAiTG9jYXRpb24iLA0KICAgICJjYWNoZS1jb250cm9sIjogIm5vLWNhY2hlIiwNCiAgICAiZXRhZyI6ICJXL1wiODAtRGltNGs5QVJMNUhTTzZLYlhLdzNLS1A3NVV3XCIiLA0KICAgICJleHBpcmVzIjogIi0xIiwNCiAgICAibG9jYXRpb24iOiAiaHR0cHM6Ly9qc29ucGxhY2Vob2xkZXIudHlwaWNvZGUuY29tL3Bvc3RzLzEwMSIsDQogICAgInByYWdtYSI6ICJuby1jYWNoZSIsDQogICAgInZhcnkiOiAiT3JpZ2luLCBYLUhUVFAtTWV0aG9kLU92ZXJyaWRlLCBBY2NlcHQtRW5jb2RpbmciLA0KICAgICJ4LWNvbnRlbnQtdHlwZS1vcHRpb25zIjogIm5vc25pZmYiLA0KICAgICJ4LXBvd2VyZWQtYnkiOiAiRXhwcmVzcyIsDQogICAgIngtcmF0ZWxpbWl0LWxpbWl0IjogIjM2MDAwMDAiLA0KICAgICJ4LXJhdGVsaW1pdC1yZW1haW5pbmciOiAiMzU5OTk5OCIsDQogICAgIngtcmF0ZWxpbWl0LXJlc2V0IjogIjE3OTUyMTQ3NjUiLA0KICAgICJjZi1jYWNoZS1zdGF0dXMiOiAiRFlOQU1JQyIsDQogICAgInJlcG9ydC10byI6ICJ7XCJncm91cFwiOlwiY2YtbmVsXCIsXCJtYXhfYWdlXCI6NjA0ODAwLFwiZW5kcG9pbnRzXCI6W3tcInVybFwiOlwiaHR0cHM6Ly9hLm5lbC5jbG91ZGZsYXJlLmNvbS9yZXBvcnQvdjQ/cz13bEFHcm5KVjZibHpkNHZtVFJlRHQyTTdyd2VUVjF3ZEZ4Q0xKNGZsNjglMkIwV0RGM1lYMFJGeVlScUNRaDhOWjh1c0lDNnlRWUJaTDJpdWYycmdZcjFwRm56MFUlMkJaZU1mRUVUZGpuVGtGQWcyRm4wczR5UGNFdXpPb215SGUxdGVDTENwQzFZMnhVcEVlJTJGSjltM3dRXCJ9XX0iLA0KICAgICJuZWwiOiAie1wicmVwb3J0X3RvXCI6XCJjZi1uZWxcIixcInN1Y2Nlc3NfZnJhY3Rpb25cIjowLjAsXCJtYXhfYWdlXCI6NjA0ODAwfSIsDQogICAgInNlcnZlciI6ICJjbG91ZGZsYXJlIiwNCiAgICAiY2YtcmF5IjogImE1ZGFmMjFiZTgzYWIyYzItR1JVIiwNCiAgICAiYWx0LXN2YyI6ICJoMz1cIjo0NDNcIjsgbWE9ODY0MDAiDQogIH0sDQogICJjb3JwbyI6IHsNCiAgICAidGl0bGUiOiAiVGVzdGUgZG8gU2VudGluZWxhIFFBIiwNCiAgICAiYm9keSI6ICJFeHBlZGl0YSBkaWduaXNzaW1vcyByZW0gb21uaXMgYXNwZXJuYXR1ciB0b3RhbS4iLA0KICAgICJ1c2VySWQiOiAxLA0KICAgICJpZCI6IDEwMQ0KICB9DQp9" target="_blank" download="015_CT04_resposta.json">📄 resposta da API</a></td>
+      </tr>
+    
+      <tr class="">
+        <td>16</td><td>19:38:34</td><td>CT04</td>
+        <td>Verificar se o status HTTP é 201<br><span class="sub">Status HTTP 201</span></td>
+        <td><span class="badge ok">OK</span></td>
+        <td>0 ms</td>
+        <td><a class="arq" href="data:application/json;base64,ew0KICAicmVxdWlzaWNhbyI6ICJQT1NUIGh0dHBzOi8vanNvbnBsYWNlaG9sZGVyLnR5cGljb2RlLmNvbS9wb3N0cyIsDQogICJzdGF0dXMiOiAyMDEsDQogICJ0ZW1wb19tcyI6IDMxNiwNCiAgImNhYmVjYWxob3MiOiB7DQogICAgImRhdGUiOiAiRnJpLCAyMCBOb3YgMjAyNiAyMjozODozNSBHTVQiLA0KICAgICJjb250ZW50LXR5cGUiOiAiYXBwbGljYXRpb24vanNvbjsgY2hhcnNldD11dGYtOCIsDQogICAgImNvbnRlbnQtbGVuZ3RoIjogIjEyOCIsDQogICAgImNvbm5lY3Rpb24iOiAiY2xvc2UiLA0KICAgICJhY2Nlc3MtY29udHJvbC1hbGxvdy1jcmVkZW50aWFscyI6ICJ0cnVlIiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtZXhwb3NlLWhlYWRlcnMiOiAiTG9jYXRpb24iLA0KICAgICJjYWNoZS1jb250cm9sIjogIm5vLWNhY2hlIiwNCiAgICAiZXRhZyI6ICJXL1wiODAtRGltNGs5QVJMNUhTTzZLYlhLdzNLS1A3NVV3XCIiLA0KICAgICJleHBpcmVzIjogIi0xIiwNCiAgICAibG9jYXRpb24iOiAiaHR0cHM6Ly9qc29ucGxhY2Vob2xkZXIudHlwaWNvZGUuY29tL3Bvc3RzLzEwMSIsDQogICAgInByYWdtYSI6ICJuby1jYWNoZSIsDQogICAgInZhcnkiOiAiT3JpZ2luLCBYLUhUVFAtTWV0aG9kLU92ZXJyaWRlLCBBY2NlcHQtRW5jb2RpbmciLA0KICAgICJ4LWNvbnRlbnQtdHlwZS1vcHRpb25zIjogIm5vc25pZmYiLA0KICAgICJ4LXBvd2VyZWQtYnkiOiAiRXhwcmVzcyIsDQogICAgIngtcmF0ZWxpbWl0LWxpbWl0IjogIjM2MDAwMDAiLA0KICAgICJ4LXJhdGVsaW1pdC1yZW1haW5pbmciOiAiMzU5OTk5OCIsDQogICAgIngtcmF0ZWxpbWl0LXJlc2V0IjogIjE3OTUyMTQ3NjUiLA0KICAgICJjZi1jYWNoZS1zdGF0dXMiOiAiRFlOQU1JQyIsDQogICAgInJlcG9ydC10byI6ICJ7XCJncm91cFwiOlwiY2YtbmVsXCIsXCJtYXhfYWdlXCI6NjA0ODAwLFwiZW5kcG9pbnRzXCI6W3tcInVybFwiOlwiaHR0cHM6Ly9hLm5lbC5jbG91ZGZsYXJlLmNvbS9yZXBvcnQvdjQ/cz13bEFHcm5KVjZibHpkNHZtVFJlRHQyTTdyd2VUVjF3ZEZ4Q0xKNGZsNjglMkIwV0RGM1lYMFJGeVlScUNRaDhOWjh1c0lDNnlRWUJaTDJpdWYycmdZcjFwRm56MFUlMkJaZU1mRUVUZGpuVGtGQWcyRm4wczR5UGNFdXpPb215SGUxdGVDTENwQzFZMnhVcEVlJTJGSjltM3dRXCJ9XX0iLA0KICAgICJuZWwiOiAie1wicmVwb3J0X3RvXCI6XCJjZi1uZWxcIixcInN1Y2Nlc3NfZnJhY3Rpb25cIjowLjAsXCJtYXhfYWdlXCI6NjA0ODAwfSIsDQogICAgInNlcnZlciI6ICJjbG91ZGZsYXJlIiwNCiAgICAiY2YtcmF5IjogImE1ZGFmMjFiZTgzYWIyYzItR1JVIiwNCiAgICAiYWx0LXN2YyI6ICJoMz1cIjo0NDNcIjsgbWE9ODY0MDAiDQogIH0sDQogICJjb3JwbyI6IHsNCiAgICAidGl0bGUiOiAiVGVzdGUgZG8gU2VudGluZWxhIFFBIiwNCiAgICAiYm9keSI6ICJFeHBlZGl0YSBkaWduaXNzaW1vcyByZW0gb21uaXMgYXNwZXJuYXR1ciB0b3RhbS4iLA0KICAgICJ1c2VySWQiOiAxLA0KICAgICJpZCI6IDEwMQ0KICB9DQp9" target="_blank" download="015_CT04_resposta.json">📄 resposta da API</a></td>
+      </tr>
+    
+      <tr class="">
+        <td>17</td><td>19:38:34</td><td>CT04</td>
+        <td>Verificar o campo JSON &#39;id&#39;<br><span class="sub">&#39;id&#39; é do tipo numero</span></td>
+        <td><span class="badge ok">OK</span></td>
+        <td>0 ms</td>
+        <td><a class="arq" href="data:application/json;base64,ew0KICAicmVxdWlzaWNhbyI6ICJQT1NUIGh0dHBzOi8vanNvbnBsYWNlaG9sZGVyLnR5cGljb2RlLmNvbS9wb3N0cyIsDQogICJzdGF0dXMiOiAyMDEsDQogICJ0ZW1wb19tcyI6IDMxNiwNCiAgImNhYmVjYWxob3MiOiB7DQogICAgImRhdGUiOiAiRnJpLCAyMCBOb3YgMjAyNiAyMjozODozNSBHTVQiLA0KICAgICJjb250ZW50LXR5cGUiOiAiYXBwbGljYXRpb24vanNvbjsgY2hhcnNldD11dGYtOCIsDQogICAgImNvbnRlbnQtbGVuZ3RoIjogIjEyOCIsDQogICAgImNvbm5lY3Rpb24iOiAiY2xvc2UiLA0KICAgICJhY2Nlc3MtY29udHJvbC1hbGxvdy1jcmVkZW50aWFscyI6ICJ0cnVlIiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtZXhwb3NlLWhlYWRlcnMiOiAiTG9jYXRpb24iLA0KICAgICJjYWNoZS1jb250cm9sIjogIm5vLWNhY2hlIiwNCiAgICAiZXRhZyI6ICJXL1wiODAtRGltNGs5QVJMNUhTTzZLYlhLdzNLS1A3NVV3XCIiLA0KICAgICJleHBpcmVzIjogIi0xIiwNCiAgICAibG9jYXRpb24iOiAiaHR0cHM6Ly9qc29ucGxhY2Vob2xkZXIudHlwaWNvZGUuY29tL3Bvc3RzLzEwMSIsDQogICAgInByYWdtYSI6ICJuby1jYWNoZSIsDQogICAgInZhcnkiOiAiT3JpZ2luLCBYLUhUVFAtTWV0aG9kLU92ZXJyaWRlLCBBY2NlcHQtRW5jb2RpbmciLA0KICAgICJ4LWNvbnRlbnQtdHlwZS1vcHRpb25zIjogIm5vc25pZmYiLA0KICAgICJ4LXBvd2VyZWQtYnkiOiAiRXhwcmVzcyIsDQogICAgIngtcmF0ZWxpbWl0LWxpbWl0IjogIjM2MDAwMDAiLA0KICAgICJ4LXJhdGVsaW1pdC1yZW1haW5pbmciOiAiMzU5OTk5OCIsDQogICAgIngtcmF0ZWxpbWl0LXJlc2V0IjogIjE3OTUyMTQ3NjUiLA0KICAgICJjZi1jYWNoZS1zdGF0dXMiOiAiRFlOQU1JQyIsDQogICAgInJlcG9ydC10byI6ICJ7XCJncm91cFwiOlwiY2YtbmVsXCIsXCJtYXhfYWdlXCI6NjA0ODAwLFwiZW5kcG9pbnRzXCI6W3tcInVybFwiOlwiaHR0cHM6Ly9hLm5lbC5jbG91ZGZsYXJlLmNvbS9yZXBvcnQvdjQ/cz13bEFHcm5KVjZibHpkNHZtVFJlRHQyTTdyd2VUVjF3ZEZ4Q0xKNGZsNjglMkIwV0RGM1lYMFJGeVlScUNRaDhOWjh1c0lDNnlRWUJaTDJpdWYycmdZcjFwRm56MFUlMkJaZU1mRUVUZGpuVGtGQWcyRm4wczR5UGNFdXpPb215SGUxdGVDTENwQzFZMnhVcEVlJTJGSjltM3dRXCJ9XX0iLA0KICAgICJuZWwiOiAie1wicmVwb3J0X3RvXCI6XCJjZi1uZWxcIixcInN1Y2Nlc3NfZnJhY3Rpb25cIjowLjAsXCJtYXhfYWdlXCI6NjA0ODAwfSIsDQogICAgInNlcnZlciI6ICJjbG91ZGZsYXJlIiwNCiAgICAiY2YtcmF5IjogImE1ZGFmMjFiZTgzYWIyYzItR1JVIiwNCiAgICAiYWx0LXN2YyI6ICJoMz1cIjo0NDNcIjsgbWE9ODY0MDAiDQogIH0sDQogICJjb3JwbyI6IHsNCiAgICAidGl0bGUiOiAiVGVzdGUgZG8gU2VudGluZWxhIFFBIiwNCiAgICAiYm9keSI6ICJFeHBlZGl0YSBkaWduaXNzaW1vcyByZW0gb21uaXMgYXNwZXJuYXR1ciB0b3RhbS4iLA0KICAgICJ1c2VySWQiOiAxLA0KICAgICJpZCI6IDEwMQ0KICB9DQp9" target="_blank" download="015_CT04_resposta.json">📄 resposta da API</a></td>
+      </tr>
+    
+      <tr class="">
+        <td>18</td><td>19:38:34</td><td>CT04</td>
+        <td>Verificar o campo JSON &#39;title&#39; = &#39;Teste do Sentinela QA&#39;<br><span class="sub">&#39;title&#39; = &#39;Teste do Sentinela QA&#39;</span></td>
+        <td><span class="badge ok">OK</span></td>
+        <td>0 ms</td>
+        <td><a class="arq" href="data:application/json;base64,ew0KICAicmVxdWlzaWNhbyI6ICJQT1NUIGh0dHBzOi8vanNvbnBsYWNlaG9sZGVyLnR5cGljb2RlLmNvbS9wb3N0cyIsDQogICJzdGF0dXMiOiAyMDEsDQogICJ0ZW1wb19tcyI6IDMxNiwNCiAgImNhYmVjYWxob3MiOiB7DQogICAgImRhdGUiOiAiRnJpLCAyMCBOb3YgMjAyNiAyMjozODozNSBHTVQiLA0KICAgICJjb250ZW50LXR5cGUiOiAiYXBwbGljYXRpb24vanNvbjsgY2hhcnNldD11dGYtOCIsDQogICAgImNvbnRlbnQtbGVuZ3RoIjogIjEyOCIsDQogICAgImNvbm5lY3Rpb24iOiAiY2xvc2UiLA0KICAgICJhY2Nlc3MtY29udHJvbC1hbGxvdy1jcmVkZW50aWFscyI6ICJ0cnVlIiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtZXhwb3NlLWhlYWRlcnMiOiAiTG9jYXRpb24iLA0KICAgICJjYWNoZS1jb250cm9sIjogIm5vLWNhY2hlIiwNCiAgICAiZXRhZyI6ICJXL1wiODAtRGltNGs5QVJMNUhTTzZLYlhLdzNLS1A3NVV3XCIiLA0KICAgICJleHBpcmVzIjogIi0xIiwNCiAgICAibG9jYXRpb24iOiAiaHR0cHM6Ly9qc29ucGxhY2Vob2xkZXIudHlwaWNvZGUuY29tL3Bvc3RzLzEwMSIsDQogICAgInByYWdtYSI6ICJuby1jYWNoZSIsDQogICAgInZhcnkiOiAiT3JpZ2luLCBYLUhUVFAtTWV0aG9kLU92ZXJyaWRlLCBBY2NlcHQtRW5jb2RpbmciLA0KICAgICJ4LWNvbnRlbnQtdHlwZS1vcHRpb25zIjogIm5vc25pZmYiLA0KICAgICJ4LXBvd2VyZWQtYnkiOiAiRXhwcmVzcyIsDQogICAgIngtcmF0ZWxpbWl0LWxpbWl0IjogIjM2MDAwMDAiLA0KICAgICJ4LXJhdGVsaW1pdC1yZW1haW5pbmciOiAiMzU5OTk5OCIsDQogICAgIngtcmF0ZWxpbWl0LXJlc2V0IjogIjE3OTUyMTQ3NjUiLA0KICAgICJjZi1jYWNoZS1zdGF0dXMiOiAiRFlOQU1JQyIsDQogICAgInJlcG9ydC10byI6ICJ7XCJncm91cFwiOlwiY2YtbmVsXCIsXCJtYXhfYWdlXCI6NjA0ODAwLFwiZW5kcG9pbnRzXCI6W3tcInVybFwiOlwiaHR0cHM6Ly9hLm5lbC5jbG91ZGZsYXJlLmNvbS9yZXBvcnQvdjQ/cz13bEFHcm5KVjZibHpkNHZtVFJlRHQyTTdyd2VUVjF3ZEZ4Q0xKNGZsNjglMkIwV0RGM1lYMFJGeVlScUNRaDhOWjh1c0lDNnlRWUJaTDJpdWYycmdZcjFwRm56MFUlMkJaZU1mRUVUZGpuVGtGQWcyRm4wczR5UGNFdXpPb215SGUxdGVDTENwQzFZMnhVcEVlJTJGSjltM3dRXCJ9XX0iLA0KICAgICJuZWwiOiAie1wicmVwb3J0X3RvXCI6XCJjZi1uZWxcIixcInN1Y2Nlc3NfZnJhY3Rpb25cIjowLjAsXCJtYXhfYWdlXCI6NjA0ODAwfSIsDQogICAgInNlcnZlciI6ICJjbG91ZGZsYXJlIiwNCiAgICAiY2YtcmF5IjogImE1ZGFmMjFiZTgzYWIyYzItR1JVIiwNCiAgICAiYWx0LXN2YyI6ICJoMz1cIjo0NDNcIjsgbWE9ODY0MDAiDQogIH0sDQogICJjb3JwbyI6IHsNCiAgICAidGl0bGUiOiAiVGVzdGUgZG8gU2VudGluZWxhIFFBIiwNCiAgICAiYm9keSI6ICJFeHBlZGl0YSBkaWduaXNzaW1vcyByZW0gb21uaXMgYXNwZXJuYXR1ciB0b3RhbS4iLA0KICAgICJ1c2VySWQiOiAxLA0KICAgICJpZCI6IDEwMQ0KICB9DQp9" target="_blank" download="015_CT04_resposta.json">📄 resposta da API</a></td>
+      </tr>
+    
+      <tr class="">
+        <td>19</td><td>19:38:34</td><td>CT04</td>
+        <td>Guardar &#39;userId&#39; como {dados.usuario}<br><span class="sub">Guardado {dados.usuario} = 1</span></td>
+        <td><span class="badge ok">OK</span></td>
+        <td>0 ms</td>
+        <td><a class="arq" href="data:application/json;base64,ew0KICAicmVxdWlzaWNhbyI6ICJQT1NUIGh0dHBzOi8vanNvbnBsYWNlaG9sZGVyLnR5cGljb2RlLmNvbS9wb3N0cyIsDQogICJzdGF0dXMiOiAyMDEsDQogICJ0ZW1wb19tcyI6IDMxNiwNCiAgImNhYmVjYWxob3MiOiB7DQogICAgImRhdGUiOiAiRnJpLCAyMCBOb3YgMjAyNiAyMjozODozNSBHTVQiLA0KICAgICJjb250ZW50LXR5cGUiOiAiYXBwbGljYXRpb24vanNvbjsgY2hhcnNldD11dGYtOCIsDQogICAgImNvbnRlbnQtbGVuZ3RoIjogIjEyOCIsDQogICAgImNvbm5lY3Rpb24iOiAiY2xvc2UiLA0KICAgICJhY2Nlc3MtY29udHJvbC1hbGxvdy1jcmVkZW50aWFscyI6ICJ0cnVlIiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtZXhwb3NlLWhlYWRlcnMiOiAiTG9jYXRpb24iLA0KICAgICJjYWNoZS1jb250cm9sIjogIm5vLWNhY2hlIiwNCiAgICAiZXRhZyI6ICJXL1wiODAtRGltNGs5QVJMNUhTTzZLYlhLdzNLS1A3NVV3XCIiLA0KICAgICJleHBpcmVzIjogIi0xIiwNCiAgICAibG9jYXRpb24iOiAiaHR0cHM6Ly9qc29ucGxhY2Vob2xkZXIudHlwaWNvZGUuY29tL3Bvc3RzLzEwMSIsDQogICAgInByYWdtYSI6ICJuby1jYWNoZSIsDQogICAgInZhcnkiOiAiT3JpZ2luLCBYLUhUVFAtTWV0aG9kLU92ZXJyaWRlLCBBY2NlcHQtRW5jb2RpbmciLA0KICAgICJ4LWNvbnRlbnQtdHlwZS1vcHRpb25zIjogIm5vc25pZmYiLA0KICAgICJ4LXBvd2VyZWQtYnkiOiAiRXhwcmVzcyIsDQogICAgIngtcmF0ZWxpbWl0LWxpbWl0IjogIjM2MDAwMDAiLA0KICAgICJ4LXJhdGVsaW1pdC1yZW1haW5pbmciOiAiMzU5OTk5OCIsDQogICAgIngtcmF0ZWxpbWl0LXJlc2V0IjogIjE3OTUyMTQ3NjUiLA0KICAgICJjZi1jYWNoZS1zdGF0dXMiOiAiRFlOQU1JQyIsDQogICAgInJlcG9ydC10byI6ICJ7XCJncm91cFwiOlwiY2YtbmVsXCIsXCJtYXhfYWdlXCI6NjA0ODAwLFwiZW5kcG9pbnRzXCI6W3tcInVybFwiOlwiaHR0cHM6Ly9hLm5lbC5jbG91ZGZsYXJlLmNvbS9yZXBvcnQvdjQ/cz13bEFHcm5KVjZibHpkNHZtVFJlRHQyTTdyd2VUVjF3ZEZ4Q0xKNGZsNjglMkIwV0RGM1lYMFJGeVlScUNRaDhOWjh1c0lDNnlRWUJaTDJpdWYycmdZcjFwRm56MFUlMkJaZU1mRUVUZGpuVGtGQWcyRm4wczR5UGNFdXpPb215SGUxdGVDTENwQzFZMnhVcEVlJTJGSjltM3dRXCJ9XX0iLA0KICAgICJuZWwiOiAie1wicmVwb3J0X3RvXCI6XCJjZi1uZWxcIixcInN1Y2Nlc3NfZnJhY3Rpb25cIjowLjAsXCJtYXhfYWdlXCI6NjA0ODAwfSIsDQogICAgInNlcnZlciI6ICJjbG91ZGZsYXJlIiwNCiAgICAiY2YtcmF5IjogImE1ZGFmMjFiZTgzYWIyYzItR1JVIiwNCiAgICAiYWx0LXN2YyI6ICJoMz1cIjo0NDNcIjsgbWE9ODY0MDAiDQogIH0sDQogICJjb3JwbyI6IHsNCiAgICAidGl0bGUiOiAiVGVzdGUgZG8gU2VudGluZWxhIFFBIiwNCiAgICAiYm9keSI6ICJFeHBlZGl0YSBkaWduaXNzaW1vcyByZW0gb21uaXMgYXNwZXJuYXR1ciB0b3RhbS4iLA0KICAgICJ1c2VySWQiOiAxLA0KICAgICJpZCI6IDEwMQ0KICB9DQp9" target="_blank" download="015_CT04_resposta.json">📄 resposta da API</a></td>
+      </tr>
+    
+      <tr class="">
+        <td>20</td><td>19:38:34</td><td>CT04</td>
+        <td>Requisição GET https://jsonplaceholder.typicode.com/users/{dados.usuario}<br><span class="sub">GET https://jsonplaceholder.typicode.com/users/1 → HTTP 200 em 168 ms</span></td>
+        <td><span class="badge ok">OK</span></td>
+        <td>169 ms</td>
+        <td><a class="arq" href="data:application/json;base64,ew0KICAicmVxdWlzaWNhbyI6ICJHRVQgaHR0cHM6Ly9qc29ucGxhY2Vob2xkZXIudHlwaWNvZGUuY29tL3VzZXJzLzEiLA0KICAic3RhdHVzIjogMjAwLA0KICAidGVtcG9fbXMiOiAxNjgsDQogICJjYWJlY2FsaG9zIjogew0KICAgICJkYXRlIjogIkZyaSwgMjAgTm92IDIwMjYgMjI6Mzg6MzUgR01UIiwNCiAgICAiY29udGVudC10eXBlIjogImFwcGxpY2F0aW9uL2pzb247IGNoYXJzZXQ9dXRmLTgiLA0KICAgICJjb250ZW50LWxlbmd0aCI6ICI1MDkiLA0KICAgICJjb25uZWN0aW9uIjogImNsb3NlIiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtYWxsb3ctY3JlZGVudGlhbHMiOiAidHJ1ZSIsDQogICAgImNhY2hlLWNvbnRyb2wiOiAibWF4LWFnZT00MzIwMCIsDQogICAgImV0YWciOiAiVy9cIjFmZC0rMlkzRzN3MDQ5aVNadHc1dDFtelNudW5uZ0VcIiIsDQogICAgImV4cGlyZXMiOiAiLTEiLA0KICAgICJwcmFnbWEiOiAibm8tY2FjaGUiLA0KICAgICJ2YXJ5IjogIk9yaWdpbiwgQWNjZXB0LUVuY29kaW5nIiwNCiAgICAieC1jb250ZW50LXR5cGUtb3B0aW9ucyI6ICJub3NuaWZmIiwNCiAgICAieC1wb3dlcmVkLWJ5IjogIkV4cHJlc3MiLA0KICAgICJ4LXJhdGVsaW1pdC1saW1pdCI6ICIzNjAwMDAwIiwNCiAgICAieC1yYXRlbGltaXQtcmVtYWluaW5nIjogIjM1OTk5OTgiLA0KICAgICJ4LXJhdGVsaW1pdC1yZXNldCI6ICIxNzkwODEyODI2IiwNCiAgICAiYWdlIjogIjE0NDg5IiwNCiAgICAiYWNjZXB0LXJhbmdlcyI6ICJieXRlcyIsDQogICAgImNmLWNhY2hlLXN0YXR1cyI6ICJISVQiLA0KICAgICJyZXBvcnQtdG8iOiAie1wiZ3JvdXBcIjpcImNmLW5lbFwiLFwibWF4X2FnZVwiOjYwNDgwMCxcImVuZHBvaW50c1wiOlt7XCJ1cmxcIjpcImh0dHBzOi8vYS5uZWwuY2xvdWRmbGFyZS5jb20vcmVwb3J0L3Y0P3M9QUlRU01GJTJCRE44b1VBUmFFV2dYM3N3QlFBOFN4aEFSVWFZOG1QMTkzbjJlTERwRTZQTlJBNSUyRkFLTXd4S0FQQ0NZWWlNbFFEUjNFdlBiTENJRmpCeFpQV1NpSzNZanMlMkZTV0RDb2tLTng0dHk3ajBDd0RoVmh3NDlGUlFXTGdEY0l0NWI2S3B0OUprJTJCcFVna1B0WXVYXCJ9XX0iLA0KICAgICJuZWwiOiAie1wicmVwb3J0X3RvXCI6XCJjZi1uZWxcIixcInN1Y2Nlc3NfZnJhY3Rpb25cIjowLjAsXCJtYXhfYWdlXCI6NjA0ODAwfSIsDQogICAgInNlcnZlciI6ICJjbG91ZGZsYXJlIiwNCiAgICAiY2YtcmF5IjogImE1ZGFmMjFkZDkyNjY0NmUtR1JVIiwNCiAgICAiYWx0LXN2YyI6ICJoMz1cIjo0NDNcIjsgbWE9ODY0MDAiDQogIH0sDQogICJjb3JwbyI6IHsNCiAgICAiaWQiOiAxLA0KICAgICJuYW1lIjogIkxlYW5uZSBHcmFoYW0iLA0KICAgICJ1c2VybmFtZSI6ICJCcmV0IiwNCiAgICAiZW1haWwiOiAiU2luY2VyZUBhcHJpbC5iaXoiLA0KICAgICJhZGRyZXNzIjogew0KICAgICAgInN0cmVldCI6ICJLdWxhcyBMaWdodCIsDQogICAgICAic3VpdGUiOiAiQXB0LiA1NTYiLA0KICAgICAgImNpdHkiOiAiR3dlbmJvcm91Z2giLA0KICAgICAgInppcGNvZGUiOiAiOTI5OTgtMzg3NCIsDQogICAgICAiZ2VvIjogew0KICAgICAgICAibGF0IjogIi0zNy4zMTU5IiwNCiAgICAgICAgImxuZyI6ICI4MS4xNDk2Ig0KICAgICAgfQ0KICAgIH0sDQogICAgInBob25lIjogIjEtNzcwLTczNi04MDMxIHg1NjQ0MiIsDQogICAgIndlYnNpdGUiOiAiaGlsZGVnYXJkLm9yZyIsDQogICAgImNvbXBhbnkiOiB7DQogICAgICAibmFtZSI6ICJSb21hZ3VlcmEtQ3JvbmEiLA0KICAgICAgImNhdGNoUGhyYXNlIjogIk11bHRpLWxheWVyZWQgY2xpZW50LXNlcnZlciBuZXVyYWwtbmV0IiwNCiAgICAgICJicyI6ICJoYXJuZXNzIHJlYWwtdGltZSBlLW1hcmtldHMiDQogICAgfQ0KICB9DQp9" target="_blank" download="020_CT04_resposta.json">📄 resposta da API</a></td>
+      </tr>
+    
+      <tr class="">
+        <td>21</td><td>19:38:34</td><td>CT04</td>
+        <td>Verificar se o status HTTP é [200, 299]<br><span class="sub">Status 200 dentro de 200–299</span></td>
+        <td><span class="badge ok">OK</span></td>
+        <td>0 ms</td>
+        <td><a class="arq" href="data:application/json;base64,ew0KICAicmVxdWlzaWNhbyI6ICJHRVQgaHR0cHM6Ly9qc29ucGxhY2Vob2xkZXIudHlwaWNvZGUuY29tL3VzZXJzLzEiLA0KICAic3RhdHVzIjogMjAwLA0KICAidGVtcG9fbXMiOiAxNjgsDQogICJjYWJlY2FsaG9zIjogew0KICAgICJkYXRlIjogIkZyaSwgMjAgTm92IDIwMjYgMjI6Mzg6MzUgR01UIiwNCiAgICAiY29udGVudC10eXBlIjogImFwcGxpY2F0aW9uL2pzb247IGNoYXJzZXQ9dXRmLTgiLA0KICAgICJjb250ZW50LWxlbmd0aCI6ICI1MDkiLA0KICAgICJjb25uZWN0aW9uIjogImNsb3NlIiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtYWxsb3ctY3JlZGVudGlhbHMiOiAidHJ1ZSIsDQogICAgImNhY2hlLWNvbnRyb2wiOiAibWF4LWFnZT00MzIwMCIsDQogICAgImV0YWciOiAiVy9cIjFmZC0rMlkzRzN3MDQ5aVNadHc1dDFtelNudW5uZ0VcIiIsDQogICAgImV4cGlyZXMiOiAiLTEiLA0KICAgICJwcmFnbWEiOiAibm8tY2FjaGUiLA0KICAgICJ2YXJ5IjogIk9yaWdpbiwgQWNjZXB0LUVuY29kaW5nIiwNCiAgICAieC1jb250ZW50LXR5cGUtb3B0aW9ucyI6ICJub3NuaWZmIiwNCiAgICAieC1wb3dlcmVkLWJ5IjogIkV4cHJlc3MiLA0KICAgICJ4LXJhdGVsaW1pdC1saW1pdCI6ICIzNjAwMDAwIiwNCiAgICAieC1yYXRlbGltaXQtcmVtYWluaW5nIjogIjM1OTk5OTgiLA0KICAgICJ4LXJhdGVsaW1pdC1yZXNldCI6ICIxNzkwODEyODI2IiwNCiAgICAiYWdlIjogIjE0NDg5IiwNCiAgICAiYWNjZXB0LXJhbmdlcyI6ICJieXRlcyIsDQogICAgImNmLWNhY2hlLXN0YXR1cyI6ICJISVQiLA0KICAgICJyZXBvcnQtdG8iOiAie1wiZ3JvdXBcIjpcImNmLW5lbFwiLFwibWF4X2FnZVwiOjYwNDgwMCxcImVuZHBvaW50c1wiOlt7XCJ1cmxcIjpcImh0dHBzOi8vYS5uZWwuY2xvdWRmbGFyZS5jb20vcmVwb3J0L3Y0P3M9QUlRU01GJTJCRE44b1VBUmFFV2dYM3N3QlFBOFN4aEFSVWFZOG1QMTkzbjJlTERwRTZQTlJBNSUyRkFLTXd4S0FQQ0NZWWlNbFFEUjNFdlBiTENJRmpCeFpQV1NpSzNZanMlMkZTV0RDb2tLTng0dHk3ajBDd0RoVmh3NDlGUlFXTGdEY0l0NWI2S3B0OUprJTJCcFVna1B0WXVYXCJ9XX0iLA0KICAgICJuZWwiOiAie1wicmVwb3J0X3RvXCI6XCJjZi1uZWxcIixcInN1Y2Nlc3NfZnJhY3Rpb25cIjowLjAsXCJtYXhfYWdlXCI6NjA0ODAwfSIsDQogICAgInNlcnZlciI6ICJjbG91ZGZsYXJlIiwNCiAgICAiY2YtcmF5IjogImE1ZGFmMjFkZDkyNjY0NmUtR1JVIiwNCiAgICAiYWx0LXN2YyI6ICJoMz1cIjo0NDNcIjsgbWE9ODY0MDAiDQogIH0sDQogICJjb3JwbyI6IHsNCiAgICAiaWQiOiAxLA0KICAgICJuYW1lIjogIkxlYW5uZSBHcmFoYW0iLA0KICAgICJ1c2VybmFtZSI6ICJCcmV0IiwNCiAgICAiZW1haWwiOiAiU2luY2VyZUBhcHJpbC5iaXoiLA0KICAgICJhZGRyZXNzIjogew0KICAgICAgInN0cmVldCI6ICJLdWxhcyBMaWdodCIsDQogICAgICAic3VpdGUiOiAiQXB0LiA1NTYiLA0KICAgICAgImNpdHkiOiAiR3dlbmJvcm91Z2giLA0KICAgICAgInppcGNvZGUiOiAiOTI5OTgtMzg3NCIsDQogICAgICAiZ2VvIjogew0KICAgICAgICAibGF0IjogIi0zNy4zMTU5IiwNCiAgICAgICAgImxuZyI6ICI4MS4xNDk2Ig0KICAgICAgfQ0KICAgIH0sDQogICAgInBob25lIjogIjEtNzcwLTczNi04MDMxIHg1NjQ0MiIsDQogICAgIndlYnNpdGUiOiAiaGlsZGVnYXJkLm9yZyIsDQogICAgImNvbXBhbnkiOiB7DQogICAgICAibmFtZSI6ICJSb21hZ3VlcmEtQ3JvbmEiLA0KICAgICAgImNhdGNoUGhyYXNlIjogIk11bHRpLWxheWVyZWQgY2xpZW50LXNlcnZlciBuZXVyYWwtbmV0IiwNCiAgICAgICJicyI6ICJoYXJuZXNzIHJlYWwtdGltZSBlLW1hcmtldHMiDQogICAgfQ0KICB9DQp9" target="_blank" download="020_CT04_resposta.json">📄 resposta da API</a></td>
+      </tr>
+    
+      <tr class="">
+        <td>22</td><td>19:38:34</td><td>CT04</td>
+        <td>Verificar o campo JSON &#39;address.city&#39;<br><span class="sub">Campo &#39;address.city&#39; existe</span></td>
+        <td><span class="badge ok">OK</span></td>
+        <td>0 ms</td>
+        <td><a class="arq" href="data:application/json;base64,ew0KICAicmVxdWlzaWNhbyI6ICJHRVQgaHR0cHM6Ly9qc29ucGxhY2Vob2xkZXIudHlwaWNvZGUuY29tL3VzZXJzLzEiLA0KICAic3RhdHVzIjogMjAwLA0KICAidGVtcG9fbXMiOiAxNjgsDQogICJjYWJlY2FsaG9zIjogew0KICAgICJkYXRlIjogIkZyaSwgMjAgTm92IDIwMjYgMjI6Mzg6MzUgR01UIiwNCiAgICAiY29udGVudC10eXBlIjogImFwcGxpY2F0aW9uL2pzb247IGNoYXJzZXQ9dXRmLTgiLA0KICAgICJjb250ZW50LWxlbmd0aCI6ICI1MDkiLA0KICAgICJjb25uZWN0aW9uIjogImNsb3NlIiwNCiAgICAiYWNjZXNzLWNvbnRyb2wtYWxsb3ctY3JlZGVudGlhbHMiOiAidHJ1ZSIsDQogICAgImNhY2hlLWNvbnRyb2wiOiAibWF4LWFnZT00MzIwMCIsDQogICAgImV0YWciOiAiVy9cIjFmZC0rMlkzRzN3MDQ5aVNadHc1dDFtelNudW5uZ0VcIiIsDQogICAgImV4cGlyZXMiOiAiLTEiLA0KICAgICJwcmFnbWEiOiAibm8tY2FjaGUiLA0KICAgICJ2YXJ5IjogIk9yaWdpbiwgQWNjZXB0LUVuY29kaW5nIiwNCiAgICAieC1jb250ZW50LXR5cGUtb3B0aW9ucyI6ICJub3NuaWZmIiwNCiAgICAieC1wb3dlcmVkLWJ5IjogIkV4cHJlc3MiLA0KICAgICJ4LXJhdGVsaW1pdC1saW1pdCI6ICIzNjAwMDAwIiwNCiAgICAieC1yYXRlbGltaXQtcmVtYWluaW5nIjogIjM1OTk5OTgiLA0KICAgICJ4LXJhdGVsaW1pdC1yZXNldCI6ICIxNzkwODEyODI2IiwNCiAgICAiYWdlIjogIjE0NDg5IiwNCiAgICAiYWNjZXB0LXJhbmdlcyI6ICJieXRlcyIsDQogICAgImNmLWNhY2hlLXN0YXR1cyI6ICJISVQiLA0KICAgICJyZXBvcnQtdG8iOiAie1wiZ3JvdXBcIjpcImNmLW5lbFwiLFwibWF4X2FnZVwiOjYwNDgwMCxcImVuZHBvaW50c1wiOlt7XCJ1cmxcIjpcImh0dHBzOi8vYS5uZWwuY2xvdWRmbGFyZS5jb20vcmVwb3J0L3Y0P3M9QUlRU01GJTJCRE44b1VBUmFFV2dYM3N3QlFBOFN4aEFSVWFZOG1QMTkzbjJlTERwRTZQTlJBNSUyRkFLTXd4S0FQQ0NZWWlNbFFEUjNFdlBiTENJRmpCeFpQV1NpSzNZanMlMkZTV0RDb2tLTng0dHk3ajBDd0RoVmh3NDlGUlFXTGdEY0l0NWI2S3B0OUprJTJCcFVna1B0WXVYXCJ9XX0iLA0KICAgICJuZWwiOiAie1wicmVwb3J0X3RvXCI6XCJjZi1uZWxcIixcInN1Y2Nlc3NfZnJhY3Rpb25cIjowLjAsXCJtYXhfYWdlXCI6NjA0ODAwfSIsDQogICAgInNlcnZlciI6ICJjbG91ZGZsYXJlIiwNCiAgICAiY2YtcmF5IjogImE1ZGFmMjFkZDkyNjY0NmUtR1JVIiwNCiAgICAiYWx0LXN2YyI6ICJoMz1cIjo0NDNcIjsgbWE9ODY0MDAiDQogIH0sDQogICJjb3JwbyI6IHsNCiAgICAiaWQiOiAxLA0KICAgICJuYW1lIjogIkxlYW5uZSBHcmFoYW0iLA0KICAgICJ1c2VybmFtZSI6ICJCcmV0IiwNCiAgICAiZW1haWwiOiAiU2luY2VyZUBhcHJpbC5iaXoiLA0KICAgICJhZGRyZXNzIjogew0KICAgICAgInN0cmVldCI6ICJLdWxhcyBMaWdodCIsDQogICAgICAic3VpdGUiOiAiQXB0LiA1NTYiLA0KICAgICAgImNpdHkiOiAiR3dlbmJvcm91Z2giLA0KICAgICAgInppcGNvZGUiOiAiOTI5OTgtMzg3NCIsDQogICAgICAiZ2VvIjogew0KICAgICAgICAibGF0IjogIi0zNy4zMTU5IiwNCiAgICAgICAgImxuZyI6ICI4MS4xNDk2Ig0KICAgICAgfQ0KICAgIH0sDQogICAgInBob25lIjogIjEtNzcwLTczNi04MDMxIHg1NjQ0MiIsDQogICAgIndlYnNpdGUiOiAiaGlsZGVnYXJkLm9yZyIsDQogICAgImNvbXBhbnkiOiB7DQogICAgICAibmFtZSI6ICJSb21hZ3VlcmEtQ3JvbmEiLA0KICAgICAgImNhdGNoUGhyYXNlIjogIk11bHRpLWxheWVyZWQgY2xpZW50LXNlcnZlciBuZXVyYWwtbmV0IiwNCiAgICAgICJicyI6ICJoYXJuZXNzIHJlYWwtdGltZSBlLW1hcmtldHMiDQogICAgfQ0KICB9DQp9" target="_blank" download="020_CT04_resposta.json">📄 resposta da API</a></td>
+      </tr>
+    
+    </tbody>
+  </table></div>
+</section>
+
+</main>
+<footer>Gerado por Sentinela QA v1.0.0 · clique em um print para ampliar</footer>
+<div id="lupa" role="dialog" aria-label="Print ampliado"><img alt=""></div>
+<script>
+  // Clique em qualquer print para ver em tamanho grande
+  const lupa = document.getElementById('lupa');
+  document.querySelectorAll('img.mini').forEach(i => i.addEventListener('click', () => {
+    lupa.querySelector('img').src = i.src; lupa.querySelector('img').alt = i.alt; lupa.classList.add('on');
+  }));
+  lupa.addEventListener('click', () => lupa.classList.remove('on'));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') lupa.classList.remove('on'); });
+</script>
+</body>
+</html>

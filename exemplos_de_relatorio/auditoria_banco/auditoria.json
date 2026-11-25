@@ -1,0 +1,631 @@
+{
+  "host": "127.0.0.1:3306",
+  "banco": "sentinela_loja",
+  "versao": "10.4.32-MariaDB",
+  "quando": "20/11/2026 22:13",
+  "tabelas": [
+    {
+      "nome": "categorias",
+      "engine": "MyISAM",
+      "linhas": 3,
+      "tamanho_kb": 2.1,
+      "collation": "latin1_swedish_ci",
+      "colunas": [
+        {
+          "nome": "id",
+          "tipo": "int(11)",
+          "nulo": false,
+          "chave": "PRI",
+          "extra": "auto_increment"
+        },
+        {
+          "nome": "nome",
+          "tipo": "varchar(80)",
+          "nulo": false,
+          "chave": "",
+          "extra": ""
+        }
+      ]
+    },
+    {
+      "nome": "log_acessos",
+      "engine": "InnoDB",
+      "linhas": 1,
+      "tamanho_kb": 16.0,
+      "collation": "utf8mb4_unicode_ci",
+      "colunas": [
+        {
+          "nome": "usuario_id",
+          "tipo": "int(11)",
+          "nulo": true,
+          "chave": "",
+          "extra": ""
+        },
+        {
+          "nome": "acao",
+          "tipo": "varchar(60)",
+          "nulo": true,
+          "chave": "",
+          "extra": ""
+        },
+        {
+          "nome": "quando",
+          "tipo": "datetime",
+          "nulo": true,
+          "chave": "",
+          "extra": ""
+        }
+      ]
+    },
+    {
+      "nome": "produtos",
+      "engine": "InnoDB",
+      "linhas": 4,
+      "tamanho_kb": 16.0,
+      "collation": "utf8mb4_unicode_ci",
+      "colunas": [
+        {
+          "nome": "id",
+          "tipo": "int(11)",
+          "nulo": false,
+          "chave": "PRI",
+          "extra": "auto_increment"
+        },
+        {
+          "nome": "nome",
+          "tipo": "varchar(120)",
+          "nulo": false,
+          "chave": "",
+          "extra": ""
+        },
+        {
+          "nome": "preco",
+          "tipo": "float",
+          "nulo": false,
+          "chave": "",
+          "extra": ""
+        },
+        {
+          "nome": "estoque",
+          "tipo": "int(11)",
+          "nulo": false,
+          "chave": "",
+          "extra": ""
+        },
+        {
+          "nome": "categoria_id",
+          "tipo": "int(11)",
+          "nulo": true,
+          "chave": "",
+          "extra": ""
+        },
+        {
+          "nome": "criado_em",
+          "tipo": "timestamp",
+          "nulo": false,
+          "chave": "",
+          "extra": ""
+        }
+      ]
+    },
+    {
+      "nome": "usuarios",
+      "engine": "InnoDB",
+      "linhas": 2,
+      "tamanho_kb": 16.0,
+      "collation": "utf8mb4_unicode_ci",
+      "colunas": [
+        {
+          "nome": "id",
+          "tipo": "int(11)",
+          "nulo": false,
+          "chave": "PRI",
+          "extra": "auto_increment"
+        },
+        {
+          "nome": "nome",
+          "tipo": "varchar(100)",
+          "nulo": true,
+          "chave": "",
+          "extra": ""
+        },
+        {
+          "nome": "email",
+          "tipo": "varchar(150)",
+          "nulo": false,
+          "chave": "",
+          "extra": ""
+        },
+        {
+          "nome": "senha",
+          "tipo": "varchar(255)",
+          "nulo": false,
+          "chave": "",
+          "extra": ""
+        },
+        {
+          "nome": "perfil",
+          "tipo": "varchar(20)",
+          "nulo": false,
+          "chave": "",
+          "extra": ""
+        },
+        {
+          "nome": "criado_em",
+          "tipo": "timestamp",
+          "nulo": false,
+          "chave": "",
+          "extra": ""
+        }
+      ]
+    },
+    {
+      "nome": "vendas",
+      "engine": "InnoDB",
+      "linhas": 3,
+      "tamanho_kb": 16.0,
+      "collation": "utf8mb4_unicode_ci",
+      "colunas": [
+        {
+          "nome": "id",
+          "tipo": "int(11)",
+          "nulo": false,
+          "chave": "PRI",
+          "extra": "auto_increment"
+        },
+        {
+          "nome": "produto_id",
+          "tipo": "int(11)",
+          "nulo": false,
+          "chave": "",
+          "extra": ""
+        },
+        {
+          "nome": "usuario_id",
+          "tipo": "int(11)",
+          "nulo": false,
+          "chave": "",
+          "extra": ""
+        },
+        {
+          "nome": "quantidade",
+          "tipo": "int(11)",
+          "nulo": false,
+          "chave": "",
+          "extra": ""
+        },
+        {
+          "nome": "total",
+          "tipo": "float",
+          "nulo": false,
+          "chave": "",
+          "extra": ""
+        },
+        {
+          "nome": "data_venda",
+          "tipo": "varchar(20)",
+          "nulo": false,
+          "chave": "",
+          "extra": ""
+        }
+      ]
+    }
+  ],
+  "relacoes": [],
+  "achados": [
+    {
+      "id": "C001",
+      "categoria": "Servidor",
+      "severidade": "Média",
+      "objeto": "servidor",
+      "problema": "MariaDB 10.4 já saiu de suporte (sem correções de segurança).",
+      "impacto": "Falhas de segurança descobertas não serão mais corrigidas nesta versão.",
+      "previsao": "Incompatibilidade com bibliotecas novas e risco de vulnerabilidades conhecidas.",
+      "onde_agir": "Configuração do servidor",
+      "como_corrigir": "Atualize o XAMPP (ou o MariaDB) para uma versão LTS atual (10.11 ou 11.4). Faça backup antes.",
+      "sql": "",
+      "aplicavel": false
+    },
+    {
+      "id": "C002",
+      "categoria": "Servidor",
+      "severidade": "Média",
+      "objeto": "servidor",
+      "problema": "O sql_mode não está em modo estrito (STRICT_TRANS_TABLES).",
+      "impacto": "Valores inválidos são aceitos em silêncio: textos cortados, datas '0000-00-00', números truncados.",
+      "previsao": "Dados corrompidos sem nenhum erro aparecer na aplicação — difícil de descobrir depois.",
+      "onde_agir": "Configuração do servidor",
+      "como_corrigir": "No my.ini, em [mysqld]: sql_mode=STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION — teste a aplicação antes.",
+      "sql": "SET GLOBAL sql_mode = 'STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';",
+      "aplicavel": false
+    },
+    {
+      "id": "C003",
+      "categoria": "Servidor",
+      "severidade": "Baixa",
+      "objeto": "servidor",
+      "problema": "O log de consultas lentas (slow_query_log) está desligado.",
+      "impacto": "Não há como descobrir quais consultas deixam o sistema lento.",
+      "previsao": "Quando o sistema ficar lento com mais dados, não haverá pistas de onde agir.",
+      "onde_agir": "Configuração do servidor",
+      "como_corrigir": "Ligue o log de consultas lentas (acima de 1 segundo).",
+      "sql": "SET GLOBAL slow_query_log = 'ON';\nSET GLOBAL long_query_time = 1;",
+      "aplicavel": false
+    },
+    {
+      "id": "C004",
+      "categoria": "Segurança",
+      "severidade": "Crítica",
+      "objeto": "servidor",
+      "problema": "O usuário 'root' não tem senha (hosts: localhost, 127.0.0.1, ::1).",
+      "impacto": "Qualquer programa no computador (ou na rede, se a porta 3306 estiver aberta) acessa e apaga tudo.",
+      "previsao": "Perda ou vazamento total dos dados se o PC for exposto na rede ou infectado.",
+      "onde_agir": "Configuração do servidor + código da aplicação (atualizar a senha na conexão)",
+      "como_corrigir": "Defina uma senha forte e crie um usuário só para a aplicação, com permissão apenas no banco dela (não use root na aplicação). No XAMPP, atualize também o phpMyAdmin (config.inc.php).",
+      "sql": "-- troque SENHA_FORTE antes de rodar; atualize também o PHP/aplicação\nALTER USER 'root'@'localhost' IDENTIFIED BY 'SENHA_FORTE';\nALTER USER 'root'@'127.0.0.1' IDENTIFIED BY 'SENHA_FORTE';\nALTER USER 'root'@'::1' IDENTIFIED BY 'SENHA_FORTE';\nCREATE USER IF NOT EXISTS 'app_sentinela_loja'@'localhost' IDENTIFIED BY 'OUTRA_SENHA_FORTE';\nGRANT SELECT, INSERT, UPDATE, DELETE ON `sentinela_loja`.* TO 'app_sentinela_loja'@'localhost';",
+      "aplicavel": false
+    },
+    {
+      "id": "C005",
+      "categoria": "Segurança",
+      "severidade": "Alta",
+      "objeto": "servidor",
+      "problema": "O usuário 'pma' não tem senha (hosts: localhost).",
+      "impacto": "Qualquer programa no computador (ou na rede, se a porta 3306 estiver aberta) acessa e apaga tudo.",
+      "previsao": "Perda ou vazamento total dos dados se o PC for exposto na rede ou infectado.",
+      "onde_agir": "Configuração do servidor + código da aplicação (atualizar a senha na conexão)",
+      "como_corrigir": "Defina uma senha forte e crie um usuário só para a aplicação, com permissão apenas no banco dela (não use root na aplicação). No XAMPP, atualize também o phpMyAdmin (config.inc.php).",
+      "sql": "-- troque SENHA_FORTE antes de rodar; atualize também o PHP/aplicação\nALTER USER 'pma'@'localhost' IDENTIFIED BY 'SENHA_FORTE';\nCREATE USER IF NOT EXISTS 'app_sentinela_loja'@'localhost' IDENTIFIED BY 'OUTRA_SENHA_FORTE';\nGRANT SELECT, INSERT, UPDATE, DELETE ON `sentinela_loja`.* TO 'app_sentinela_loja'@'localhost';",
+      "aplicavel": false
+    },
+    {
+      "id": "C006",
+      "categoria": "Estrutura",
+      "severidade": "Média",
+      "objeto": "categorias",
+      "problema": "Tabela usa o engine MyISAM.",
+      "impacto": "MyISAM não tem transações nem chaves estrangeiras e trava a tabela inteira a cada escrita.",
+      "previsao": "Tabela corrompida após queda de energia e lentidão com vários usuários ao mesmo tempo.",
+      "onde_agir": "Banco de dados",
+      "como_corrigir": "Converta para InnoDB.",
+      "sql": "ALTER TABLE `categorias` ENGINE=InnoDB;",
+      "aplicavel": true
+    },
+    {
+      "id": "C007",
+      "categoria": "Tipos de dados",
+      "severidade": "Média",
+      "objeto": "categorias",
+      "problema": "Tabela com collation latin1_swedish_ci (não é utf8mb4).",
+      "impacto": "Não guarda emojis e alguns caracteres; mistura de charsets causa erros em JOINs.",
+      "previsao": "Erro 'Incorrect string value' ou textos com '???' quando entrarem caracteres especiais.",
+      "onde_agir": "Banco de dados",
+      "como_corrigir": "Converta a tabela para utf8mb4.",
+      "sql": "ALTER TABLE `categorias` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;",
+      "aplicavel": true
+    },
+    {
+      "id": "C008",
+      "categoria": "Estrutura",
+      "severidade": "Baixa",
+      "objeto": "categorias",
+      "problema": "Tabela sem coluna de data de criação (auditoria).",
+      "impacto": "Não dá para saber quando cada registro entrou — atrapalha investigar problemas e relatórios.",
+      "previsao": "Em um incidente, não será possível descobrir desde quando os dados estão errados.",
+      "onde_agir": "Banco de dados",
+      "como_corrigir": "Adicione criado_em com valor automático (não quebra o código que já existe).",
+      "sql": "ALTER TABLE `categorias` ADD COLUMN criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;",
+      "aplicavel": true
+    },
+    {
+      "id": "C009",
+      "categoria": "Estrutura",
+      "severidade": "Alta",
+      "objeto": "log_acessos",
+      "problema": "Tabela sem chave primária (PRIMARY KEY).",
+      "impacto": "Não há como identificar um registro com segurança; atualizações podem atingir linhas erradas.",
+      "previsao": "Registros duplicados, lentidão em UPDATE/DELETE e problemas de replicação/backup.",
+      "onde_agir": "Banco de dados",
+      "como_corrigir": "Crie uma chave primária (normalmente uma coluna id).",
+      "sql": "ALTER TABLE `log_acessos` ADD COLUMN id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY FIRST;",
+      "aplicavel": true
+    },
+    {
+      "id": "C010",
+      "categoria": "Estrutura",
+      "severidade": "Baixa",
+      "objeto": "log_acessos",
+      "problema": "Tabela sem coluna de data de criação (auditoria).",
+      "impacto": "Não dá para saber quando cada registro entrou — atrapalha investigar problemas e relatórios.",
+      "previsao": "Em um incidente, não será possível descobrir desde quando os dados estão errados.",
+      "onde_agir": "Banco de dados",
+      "como_corrigir": "Adicione criado_em com valor automático (não quebra o código que já existe).",
+      "sql": "ALTER TABLE `log_acessos` ADD COLUMN criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;",
+      "aplicavel": true
+    },
+    {
+      "id": "C011",
+      "categoria": "Desempenho",
+      "severidade": "Média",
+      "objeto": "log_acessos.usuario_id",
+      "problema": "Coluna de relacionamento 'usuario_id' sem índice.",
+      "impacto": "Todo JOIN ou filtro por essa coluna lê a tabela inteira.",
+      "previsao": "O sistema fica cada vez mais lento conforme a tabela cresce (telas de listagem e relatórios).",
+      "onde_agir": "Banco de dados",
+      "como_corrigir": "Crie um índice na coluna.",
+      "sql": "ALTER TABLE `log_acessos` ADD INDEX `idx_usuario_id` (`usuario_id`);",
+      "aplicavel": true
+    },
+    {
+      "id": "C012",
+      "categoria": "Integridade",
+      "severidade": "Média",
+      "objeto": "log_acessos.usuario_id",
+      "problema": "'usuario_id' aponta para 'usuarios', mas não há chave estrangeira.",
+      "impacto": "O banco permite apagar o registro pai e deixar filhos apontando para o nada.",
+      "previsao": "Telas com erro ao abrir itens sem dono e totais que não batem.",
+      "onde_agir": "Banco de dados",
+      "como_corrigir": "Crie a FOREIGN KEY.",
+      "sql": "ALTER TABLE `log_acessos` ADD CONSTRAINT `fk_log_acessos_usuario_id` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT;",
+      "aplicavel": true
+    },
+    {
+      "id": "C013",
+      "categoria": "Tipos de dados",
+      "severidade": "Alta",
+      "objeto": "produtos.preco",
+      "problema": "Valor em dinheiro guardado como FLOAT.",
+      "impacto": "FLOAT/DOUBLE são aproximados: 0,1 + 0,2 vira 0,30000000000000004.",
+      "previsao": "Centavos sumindo ou sobrando em totais, troco e relatórios financeiros.",
+      "onde_agir": "Banco de dados",
+      "como_corrigir": "Use DECIMAL(12,2) para valores monetários.",
+      "sql": "ALTER TABLE `produtos` MODIFY `preco` DECIMAL(12,2) NOT NULL;",
+      "aplicavel": true
+    },
+    {
+      "id": "C014",
+      "categoria": "Desempenho",
+      "severidade": "Média",
+      "objeto": "produtos.categoria_id",
+      "problema": "Coluna de relacionamento 'categoria_id' sem índice.",
+      "impacto": "Todo JOIN ou filtro por essa coluna lê a tabela inteira.",
+      "previsao": "O sistema fica cada vez mais lento conforme a tabela cresce (telas de listagem e relatórios).",
+      "onde_agir": "Banco de dados",
+      "como_corrigir": "Crie um índice na coluna.",
+      "sql": "ALTER TABLE `produtos` ADD INDEX `idx_categoria_id` (`categoria_id`);",
+      "aplicavel": true
+    },
+    {
+      "id": "C015",
+      "categoria": "Integridade",
+      "severidade": "Média",
+      "objeto": "produtos.categoria_id",
+      "problema": "'categoria_id' aponta para 'categorias', mas não há chave estrangeira.",
+      "impacto": "O banco permite apagar o registro pai e deixar filhos apontando para o nada.",
+      "previsao": "Telas com erro ao abrir itens sem dono e totais que não batem.",
+      "onde_agir": "Banco de dados",
+      "como_corrigir": "Crie a FOREIGN KEY (converta as tabelas para InnoDB antes).",
+      "sql": "ALTER TABLE `produtos` ADD CONSTRAINT `fk_produtos_categoria_id` FOREIGN KEY (`categoria_id`) REFERENCES `categorias` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT;",
+      "aplicavel": false
+    },
+    {
+      "id": "C016",
+      "categoria": "Integridade",
+      "severidade": "Baixa",
+      "objeto": "usuarios.nome",
+      "problema": "'nome' aceita NULL, mas parece ser um campo obrigatório.",
+      "impacto": "Registros podem ficar sem informação essencial.",
+      "previsao": "Telas e relatórios quebrando ou mostrando campos vazios.",
+      "onde_agir": "Banco de dados + validação na aplicação",
+      "como_corrigir": "Preencha os vazios e torne a coluna NOT NULL.",
+      "sql": "-- preencha os NULL antes\nALTER TABLE `usuarios` MODIFY `nome` varchar(100) NOT NULL;",
+      "aplicavel": false
+    },
+    {
+      "id": "C017",
+      "categoria": "Integridade",
+      "severidade": "Média",
+      "objeto": "usuarios.email",
+      "problema": "'email' não tem índice UNIQUE.",
+      "impacto": "O banco aceita dois cadastros com o mesmo valor (ex.: mesmo CPF ou e-mail).",
+      "previsao": "Clientes duplicados, login ambíguo e relatórios com números inflados.",
+      "onde_agir": "Banco de dados",
+      "como_corrigir": "Crie um índice único.",
+      "sql": "ALTER TABLE `usuarios` ADD UNIQUE INDEX `uk_email` (`email`);",
+      "aplicavel": true
+    },
+    {
+      "id": "C018",
+      "categoria": "Segurança",
+      "severidade": "Crítica",
+      "objeto": "usuarios.senha",
+      "problema": "1 de 2 senha(s) sem hash seguro (1 parecem MD5).",
+      "impacto": "Se o banco vazar, as senhas dos usuários ficam expostas (e muitos repetem a senha em outros sites).",
+      "previsao": "Vazamento de contas e problemas com a LGPD.",
+      "onde_agir": "Código da aplicação + banco de dados",
+      "como_corrigir": "No PHP use password_hash() ao salvar e password_verify() no login; peça troca de senha aos usuários antigos. A coluna precisa ter VARCHAR(255).",
+      "sql": "",
+      "aplicavel": false
+    },
+    {
+      "id": "C019",
+      "categoria": "Estrutura",
+      "severidade": "Baixa",
+      "objeto": "vendas",
+      "problema": "Tabela sem coluna de data de criação (auditoria).",
+      "impacto": "Não dá para saber quando cada registro entrou — atrapalha investigar problemas e relatórios.",
+      "previsao": "Em um incidente, não será possível descobrir desde quando os dados estão errados.",
+      "onde_agir": "Banco de dados",
+      "como_corrigir": "Adicione criado_em com valor automático (não quebra o código que já existe).",
+      "sql": "ALTER TABLE `vendas` ADD COLUMN criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;",
+      "aplicavel": true
+    },
+    {
+      "id": "C020",
+      "categoria": "Desempenho",
+      "severidade": "Média",
+      "objeto": "vendas.produto_id",
+      "problema": "Coluna de relacionamento 'produto_id' sem índice.",
+      "impacto": "Todo JOIN ou filtro por essa coluna lê a tabela inteira.",
+      "previsao": "O sistema fica cada vez mais lento conforme a tabela cresce (telas de listagem e relatórios).",
+      "onde_agir": "Banco de dados",
+      "como_corrigir": "Crie um índice na coluna.",
+      "sql": "ALTER TABLE `vendas` ADD INDEX `idx_produto_id` (`produto_id`);",
+      "aplicavel": true
+    },
+    {
+      "id": "C021",
+      "categoria": "Integridade",
+      "severidade": "Alta",
+      "objeto": "vendas.produto_id",
+      "problema": "'produto_id' aponta para 'produtos', mas não há chave estrangeira — já existem 1 registro(s) órfão(s).",
+      "impacto": "O banco permite apagar o registro pai e deixar filhos apontando para o nada.",
+      "previsao": "Telas com erro ao abrir itens sem dono e totais que não batem.",
+      "onde_agir": "Banco de dados (corrija os órfãos antes)",
+      "como_corrigir": "Crie a FOREIGN KEY.",
+      "sql": "ALTER TABLE `vendas` ADD CONSTRAINT `fk_vendas_produto_id` FOREIGN KEY (`produto_id`) REFERENCES `produtos` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT;",
+      "aplicavel": false
+    },
+    {
+      "id": "C022",
+      "categoria": "Desempenho",
+      "severidade": "Média",
+      "objeto": "vendas.usuario_id",
+      "problema": "Coluna de relacionamento 'usuario_id' sem índice.",
+      "impacto": "Todo JOIN ou filtro por essa coluna lê a tabela inteira.",
+      "previsao": "O sistema fica cada vez mais lento conforme a tabela cresce (telas de listagem e relatórios).",
+      "onde_agir": "Banco de dados",
+      "como_corrigir": "Crie um índice na coluna.",
+      "sql": "ALTER TABLE `vendas` ADD INDEX `idx_usuario_id` (`usuario_id`);",
+      "aplicavel": true
+    },
+    {
+      "id": "C023",
+      "categoria": "Integridade",
+      "severidade": "Média",
+      "objeto": "vendas.usuario_id",
+      "problema": "'usuario_id' aponta para 'usuarios', mas não há chave estrangeira.",
+      "impacto": "O banco permite apagar o registro pai e deixar filhos apontando para o nada.",
+      "previsao": "Telas com erro ao abrir itens sem dono e totais que não batem.",
+      "onde_agir": "Banco de dados",
+      "como_corrigir": "Crie a FOREIGN KEY.",
+      "sql": "ALTER TABLE `vendas` ADD CONSTRAINT `fk_vendas_usuario_id` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT;",
+      "aplicavel": true
+    },
+    {
+      "id": "C024",
+      "categoria": "Tipos de dados",
+      "severidade": "Alta",
+      "objeto": "vendas.total",
+      "problema": "Valor em dinheiro guardado como FLOAT.",
+      "impacto": "FLOAT/DOUBLE são aproximados: 0,1 + 0,2 vira 0,30000000000000004.",
+      "previsao": "Centavos sumindo ou sobrando em totais, troco e relatórios financeiros.",
+      "onde_agir": "Banco de dados",
+      "como_corrigir": "Use DECIMAL(12,2) para valores monetários.",
+      "sql": "ALTER TABLE `vendas` MODIFY `total` DECIMAL(12,2) NOT NULL;",
+      "aplicavel": true
+    },
+    {
+      "id": "C025",
+      "categoria": "Tipos de dados",
+      "severidade": "Média",
+      "objeto": "vendas.data_venda",
+      "problema": "Data guardada como texto (varchar(20)).",
+      "impacto": "O banco não valida a data e não consegue ordenar/filtrar por período corretamente.",
+      "previsao": "Datas inválidas ('31/02/2025'), formatos misturados e relatórios por mês errados.",
+      "onde_agir": "Banco de dados + código da aplicação",
+      "como_corrigir": "Converta para DATE ou DATETIME depois de padronizar os valores existentes (teste em uma cópia primeiro — valores fora do padrão viram NULL).",
+      "sql": "-- revise os valores antes!\nALTER TABLE `vendas` MODIFY `data_venda` DATETIME NULL;",
+      "aplicavel": false
+    }
+  ],
+  "resumo": {
+    "nota": 35,
+    "tabelas": 5,
+    "achados": 25,
+    "por_severidade": {
+      "Média": 13,
+      "Baixa": 5,
+      "Crítica": 2,
+      "Alta": 5
+    },
+    "aplicaveis": 15,
+    "linhas": 13,
+    "tamanho_mb": 0.06
+  },
+  "previsoes": [
+    {
+      "tabela": "produtos",
+      "linhas": 4,
+      "tamanho_mb": 0.02,
+      "linhas_por_dia": 4.0,
+      "linhas_em_1_ano": 1464,
+      "mb_em_1_ano": 5.7
+    },
+    {
+      "tabela": "categorias",
+      "linhas": 3,
+      "tamanho_mb": 0.0,
+      "linhas_por_dia": 3.0,
+      "linhas_em_1_ano": 1098,
+      "mb_em_1_ano": 0.7
+    },
+    {
+      "tabela": "vendas",
+      "linhas": 3,
+      "tamanho_mb": 0.02,
+      "linhas_por_dia": 3.0,
+      "linhas_em_1_ano": 1098,
+      "mb_em_1_ano": 5.7
+    },
+    {
+      "tabela": "usuarios",
+      "linhas": 2,
+      "tamanho_mb": 0.02,
+      "linhas_por_dia": 2.0,
+      "linhas_em_1_ano": 732,
+      "mb_em_1_ano": 5.7
+    },
+    {
+      "tabela": "log_acessos",
+      "linhas": 1,
+      "tamanho_mb": 0.02,
+      "linhas_por_dia": 1.0,
+      "linhas_em_1_ano": 366,
+      "mb_em_1_ano": 5.7
+    }
+  ],
+  "sugestoes_ia": [
+    {
+      "titulo": "Modelagem de vendas engessada (1 produto por venda)",
+      "descricao": "A tabela 'vendas' possui 'produto_id' direto, o que restringe cada venda a conter exatamente um tipo de produto. O ideal é separar a modelagem em duas tabelas: 'pedidos' (cabeçalho da venda) e 'itens_pedido' (múltiplos produtos por pedido), permitindo um carrinho de compras real.",
+      "onde_agir": "Banco de dados",
+      "prioridade": "Alta"
+    },
+    {
+      "titulo": "Ausência do histórico de preço unitário praticado na venda",
+      "descricao": "A tabela 'vendas' guarda apenas o 'total', sem congelar o valor unitário cobrado no momento do checkout. Caso o preço do produto mude na tabela 'produtos', o histórico financeiro passará a ter inconsistências auditáveis.",
+      "onde_agir": "Banco de dados",
+      "prioridade": "Alta"
+    },
+    {
+      "titulo": "Risco de concorrência e vendas com estoque negativo (Race Condition)",
+      "descricao": "Falta uma estratégia de bloqueio de linhas (SELECT FOR UPDATE) ou controle otimista/pessimista durante a atualização da coluna 'estoque'. Em acessos simultâneos, a aplicação permitirá vender itens sem estoque real.",
+      "onde_agir": "Código da aplicação",
+      "prioridade": "Alta"
+    },
+    {
+      "titulo": "Falta de controle de estado/ciclo de vida do pedido",
+      "descricao": "A tabela 'vendas' não possui coluna de status (ex: pendente, pago, cancelado, estornado). Isso inviabiliza a integração segura com gateways de pagamento assíncronos e o rastreamento da logística.",
+      "onde_agir": "Banco de dados",
+      "prioridade": "Média"
+    },
+    {
+      "titulo": "Crescimento descontrolado e degradação da tabela 'log_acessos'",
+      "descricao": "Tabelas de log sem política de expurgo (TTL), particionamento por data ou arquivamento assíncrono tendem a crescer indefinidamente, afetando o I/O do servidor e tornando backups excessivamente demorados.",
+      "onde_agir": "Banco de dados",
+      "prioridade": "Média"
+    }
+  ],
+  "avisos": []
+}

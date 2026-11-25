@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Sentinela QA">
+  <defs>
+    <linearGradient id="sq-escudo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3d6ef0"/>
+      <stop offset="1" stop-color="#13348f"/>
+    </linearGradient>
+    <linearGradient id="sq-brilho" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".35"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <!-- escudo -->
+  <path d="M64 6 L112 22 V60 C112 90 92 110 64 122 C36 110 16 90 16 60 V22 Z" fill="url(#sq-escudo)"/>
+  <path d="M64 6 L112 22 V60 C112 66 111 72 109 77 C94 52 40 40 18 52 L16 22 Z" fill="url(#sq-brilho)"/>
+  <!-- olho / radar -->
+  <path d="M30 64 C40 48 52 41 64 41 C76 41 88 48 98 64 C88 80 76 87 64 87 C52 87 40 80 30 64 Z"
+        fill="none" stroke="#ffffff" stroke-width="6" stroke-linejoin="round"/>
+  <circle cx="64" cy="64" r="15" fill="#ffffff"/>
+  <!-- check dentro da pupila -->
+  <path d="M57 64.5 L62 69.5 L72 58.5" fill="none" stroke="#1d4bd0" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- ondas do radar -->
+  <path d="M93 34 A40 40 0 0 1 104 46" fill="none" stroke="#9fe3c4" stroke-width="5" stroke-linecap="round"/>
+  <path d="M87 42 A30 30 0 0 1 95 51" fill="none" stroke="#9fe3c4" stroke-width="5" stroke-linecap="round" opacity=".8"/>
+</svg>

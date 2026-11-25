@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block titulo %}Roteiros{% endblock %}
+{% block cabecalho %}Roteiros de teste{% endblock %}
+{% block subtitulo %}Casos de teste escritos em YAML ({{ roteiros|length }}){% endblock %}
+{% block acoes %}<a class="btn" href="{{ url_for('ajuda') }}">{{ icone('ajuda', 16) }} Guia de comandos</a>
+<a class="btn prim" href="{{ url_for('roteiro_editor') }}">{{ icone('mais', 16) }} Novo roteiro</a>{% endblock %}
+{% block conteudo %}
+<section class="card">
+{% if roteiros %}
+<div class="tabela"><table>
+  <thead><tr><th>Roteiro</th><th>Projeto</th><th>Casos</th><th>Recursos</th><th>Execuções</th><th>Atualizado</th><th></th></tr></thead>
+  <tbody>
+  {% for r in roteiros %}
+  <tr class="clicavel" data-href="{{ url_for('roteiro_editor', rid=r.id) }}">
+    <td><b>{{ r.nome }}</b><div class="pequeno suave">{{ r.descricao or '' }}</div></td>
+    <td><div class="flex"><span class="bolinha" style="background:{{ r.cor }}"></span>{{ r.projeto }}</div></td>
+    <td>{% if r.valido %}{{ r.casos }}{% else %}<span class="selo vermelho">com erro</span>{% endif %}</td>
+    <td><span class="selo {{ 'laranja' if r.tipo == 'desktop' else ('roxo' if r.tipo == 'api' else 'azul') }}">{{ TIPOS[r.tipo] }}</span>{% if r.arquivo.endswith('.feature') %} <span class="selo verde">Gherkin</span>{% endif %}
+      {% if r.exploracao %}<span class="selo laranja">exploração</span>{% endif %}</td>
+    <td>{{ r.execs }}</td>
+    <td class="pequeno suave">{{ r.atualizado_em|relativo }}</td>
+    <td><a class="btn peq prim" href="{{ url_for('executar', projeto=r.projeto_id, roteiro=r.id) }}">{{ icone('executar', 13) }} Executar</a></td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% else %}
+<div class="vazio"><div class="ic c-verde">{{ icone('roteiros', 28) }}</div><b>Nenhum roteiro ainda.</b>
+  <p>Um roteiro descreve os casos de teste: passos (abrir, preencher, clicar...) e verificações (texto, URL, mensagem).</p>
+  <a class="btn prim" href="{{ url_for('roteiro_editor') }}">{{ icone('mais', 16) }} Criar roteiro</a></div>
+{% endif %}
+</section>
+{% endblock %}

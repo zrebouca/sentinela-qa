@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% set rodando = ex.status in ('Na fila', 'Executando') %}
+{% block titulo %}Execução #{{ ex.id }}{% endblock %}
+{% block cabecalho %}Execução #{{ ex.id }} <span class="selo {{ ex.status }}" id="selo-status" style="font-size:13px;vertical-align:middle">{{ ex.status }}</span>{% endblock %}
+{% block subtitulo %}{{ ex.projeto }} · {{ ex.roteiro or 'roteiro excluído' }} · {{ ex.criado_em|data_br }}{% endblock %}
+{% block acoes %}
+<a class="btn" href="{{ url_for('execucoes') }}">{{ icone('voltar', 16) }} Histórico</a>
+{% if ex.pasta_relatorio %}<a class="btn" href="{{ url_for('execucao_arquivo', eid=ex.id, arquivo='relatorio.html') }}" target="_blank">{{ icone('abrir', 16) }} Relatório completo</a>{% endif %}
+{% if not rodando and ex.roteiro_id %}<form method="post" action="{{ url_for('execucao_repetir', eid=ex.id) }}"><button class="btn prim">{{ icone('repetir', 16) }} Executar de novo</button></form>{% endif %}
+{% endblock %}
+{% block conteudo %}
+<div class="grade g4">
+  <div class="card metrica"><div class="topo-m"><span class="ic c-azul">{{ icone('roteiros', 20) }}</span></div>
+    <div class="v" id="m-total">{{ ex.total }}</div><div class="l">Casos executados</div></div>
+  <div class="card metrica"><div class="topo-m"><span class="ic c-verde">{{ icone('check', 20) }}</span></div>
+    <div class="v" id="m-aprov">{{ ex.aprovados }}</div><div class="l">Aprovados</div></div>
+  <div class="card metrica"><div class="topo-m"><span class="ic c-vermelho">{{ icone('x', 20) }}</span></div>
+    <div class="v" id="m-reprov">{{ ex.reprovados }}</div><div class="l">Reprovados</div></div>
+  <div class="card metrica"><div class="topo-m"><span class="ic c-laranja">{{ icone('defeitos', 20) }}</span></div>
+    <div class="v" id="m-def">{{ ex.defeitos }}</div><div class="l">Defeitos</div></div>
+</div>
+
+<div class="grade g-2-1 mt">
+  <section class="card">
+    <div class="cab"><div><h2>{{ 'Acompanhando ao vivo' if rodando else 'Log da execução' }}</h2>
+      <div class="sub">{{ 'Atualiza sozinho a cada segundo' if rodando else 'Duração: ' ~ ex.duracao_s ~ 's' }}</div></div></div>
+    <div class="terminal" id="terminal">Carregando...</div>
+  </section>
+  <aside>
+    <section class="card">
+      <h2>Configuração usada</h2>
+      <dl class="ficha mt" style="grid-template-columns:110px 1fr">
+        <dt>Finalidade</dt><dd>{{ ex.finalidade or '-' }}</dd>
+        <dt>Alvo</dt><dd>{{ ex.alvo }}</dd>
+        <dt>IA</dt><dd>{{ 'Sim' if ex.usar_ia else 'Não' }}{% if ex.sugestoes %} ({{ ex.sugestoes }} sugestões){% endif %}</dd>
+        <dt>Exploração</dt><dd>{{ 'Sim' if ex.explorar else 'Não' }}</dd>
+        <dt>Navegador</dt><dd>{{ 'Visível' if ex.visivel else 'Invisível' }}</dd>
+        {% if ex.observacoes %}<dt>Observações</dt><dd style="font-weight:400">{{ ex.observacoes }}</dd>{% endif %}
+      </dl>
+    </section>
+    <section class="card mt">
+      <h2>Comando equivalente</h2>
+      <p class="suave pequeno">Para rodar o mesmo teste pelo terminal ou num pipeline de CI:</p>
+      <div class="comando">{{ comando }}</div>
+    </section>
+    {% if not rodando %}
+    <form method="post" action="{{ url_for('execucao_excluir', eid=ex.id) }}" class="mt" data-confirmar="Excluir esta execução, os defeitos e o relatório dela?">
+      <button class="btn perigo">{{ icone('lixo', 16) }} Excluir execução</button></form>
+    {% endif %}
+  </aside>
+</div>
+
+{% if defeitos %}
+<section class="card mt">
+  <div class="cab"><div><h2>Defeitos desta execução</h2></div><a class="dir pequeno" href="{{ url_for('defeitos') }}">Todos os defeitos</a></div>
+  <div class="tabela"><table><thead><tr><th>Código</th><th>Descrição</th><th>Origem</th><th>Severidade</th><th>Status</th><th>Evidência</th></tr></thead><tbody>
+  {% for d in defeitos %}
+  <tr class="clicavel" data-href="{{ url_for('defeito_detalhe', did=d.id) }}">
+    <td><b>{{ d.codigo }}</b></td><td>{{ d.descricao }}</td><td>{{ d.origem }}</td>
+    <td><span class="selo sev-{{ d.severidade }}">{{ d.severidade }}</span></td><td><span class="selo {{ d.status }}">{{ d.status }}</span></td>
+    <td>{% if d.evidencia and not d.evidencia.endswith(".png") %}<a href="{{ url_for('execucao_arquivo', eid=ex.id, arquivo=d.evidencia) }}" target="_blank">📄 resposta</a>{% elif d.evidencia %}<img src="{{ url_for('execucao_arquivo', eid=ex.id, arquivo=d.evidencia) }}" alt="Evidência {{ d.codigo }}" style="width:110px;border-radius:6px;border:1px solid var(--linha)">{% endif %}</td>
+  </tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% endif %}
+
+{% if sugestoes %}
+<section class="card mt">
+  <div class="cab"><div><h2>{{ icone('ia') }} Melhorias e ideias da IA</h2><div class="sub">Sugestões — avalie com o time antes de virar requisito</div></div></div>
+  <div class="grade g3">
+    {% for s in sugestoes %}
+    <div class="sugestao"><span class="selo roxo">{{ s.categoria }}</span> <span class="selo sev-{{ s.prioridade }}">Prioridade {{ s.prioridade }}</span>
+      <h3>{{ s.titulo }}</h3><p>{{ s.descricao }}</p></div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if observacoes %}
+<section class="card mt">
+  <div class="cab"><div><h2>O que foi encontrado</h2><div class="sub">Acessibilidade, console, rede e exploração</div></div></div>
+  <ul class="atividade">
+    {% for o in observacoes %}<li><span class="selo azul" style="align-self:flex-start">{{ o.categoria }}</span><span>{{ o.texto }}</span></li>{% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% if ex.pasta_relatorio %}
+<section class="card mt">
+  <div class="cab"><div><h2>Relatório</h2><div class="sub">Mesmo relatório salvo em HTML, JSON e TXT na pasta dados</div></div>
+    <div class="dir flex">
+      <a class="btn peq" href="{{ url_for('execucao_arquivo', eid=ex.id, arquivo='relatorio.json') }}" target="_blank">JSON</a>
+      <a class="btn peq" href="{{ url_for('execucao_arquivo', eid=ex.id, arquivo='relatorio.txt') }}" target="_blank">TXT</a>
+    </div></div>
+  <iframe class="relatorio" src="{{ url_for('execucao_arquivo', eid=ex.id, arquivo='relatorio.html') }}" title="Relatório da execução"></iframe>
+</section>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+  const term = document.getElementById('terminal');
+  function pintar(linhas) {
+    term.innerHTML = '';
+    linhas.forEach(l => {
+      const s = document.createElement('div');
+      s.className = l.includes('✔') ? 'ok' : l.includes('✘') ? 'falha' : l.includes('▶') ? 'caso' : l.includes('⚠') ? 'aviso-t' : '';
+      s.textContent = l || ' '; term.append(s);
+    });
+    term.scrollTop = term.scrollHeight;
+  }
+  async function atualizar() {
+    const r = await fetch('{{ url_for("api_execucao", eid=ex.id) }}').then(r => r.json());
+    pintar(r.log);
+    document.getElementById('m-total').textContent = r.total;
+    document.getElementById('m-aprov').textContent = r.aprovados;
+    document.getElementById('m-reprov').textContent = r.reprovados;
+    document.getElementById('m-def').textContent = r.defeitos;
+    const selo = document.getElementById('selo-status');
+    if (selo.textContent !== r.status) { selo.textContent = r.status; selo.className = 'selo ' + r.status; }
+    if (r.status === 'Na fila' || r.status === 'Executando') setTimeout(atualizar, 1000);
+    else if ({{ rodando|tojson }}) location.reload();   // terminou: recarrega para mostrar relatório e defeitos
+  }
+  atualizar();
+</script>
+{% endblock %}

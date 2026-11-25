@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Pokémon (contrato mínimo esperado da PokeAPI)",
+  "type": "object",
+  "required": ["id", "name", "height", "weight", "types", "abilities"],
+  "properties": {
+    "id": { "type": "integer", "minimum": 1 },
+    "name": { "type": "string", "minLength": 1 },
+    "height": { "type": "integer" },
+    "weight": { "type": "integer" },
+    "types": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["slot", "type"],
+        "properties": {
+          "slot": { "type": "integer" },
+          "type": { "type": "object", "required": ["name"], "properties": { "name": { "type": "string" } } }
+        }
+      }
+    },
+    "abilities": { "type": "array" }
+  }
+}

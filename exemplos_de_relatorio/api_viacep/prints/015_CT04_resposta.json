@@ -1,0 +1,36 @@
+{
+  "requisicao": "POST https://jsonplaceholder.typicode.com/posts",
+  "status": 201,
+  "tempo_ms": 316,
+  "cabecalhos": {
+    "date": "Fri, 20 Nov 2026 22:38:35 GMT",
+    "content-type": "application/json; charset=utf-8",
+    "content-length": "128",
+    "connection": "close",
+    "access-control-allow-credentials": "true",
+    "access-control-expose-headers": "Location",
+    "cache-control": "no-cache",
+    "etag": "W/\"80-Dim4k9ARL5HSO6KbXKw3KKP75Uw\"",
+    "expires": "-1",
+    "location": "https://jsonplaceholder.typicode.com/posts/101",
+    "pragma": "no-cache",
+    "vary": "Origin, X-HTTP-Method-Override, Accept-Encoding",
+    "x-content-type-options": "nosniff",
+    "x-powered-by": "Express",
+    "x-ratelimit-limit": "3600000",
+    "x-ratelimit-remaining": "3599998",
+    "x-ratelimit-reset": "1795214765",
+    "cf-cache-status": "DYNAMIC",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=wlAGrnJV6blzd4vmTReDt2M7rweTV1wdFxCLJ4fl68%2B0WDF3YX0RFyYRqCQh8NZ8usIC6yQYBZL2iuf2rgYr1pFnz0U%2BZeMfEETdjnTkFAg2Fn0s4yPcEuzOomyHe1teCLCpC1Y2xUpEe%2FJ9m3wQ\"}]}",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "server": "cloudflare",
+    "cf-ray": "a5daf21be83ab2c2-GRU",
+    "alt-svc": "h3=\":443\"; ma=86400"
+  },
+  "corpo": {
+    "title": "Teste do Sentinela QA",
+    "body": "Expedita dignissimos rem omnis aspernatur totam.",
+    "userId": 1,
+    "id": 101
+  }
+}

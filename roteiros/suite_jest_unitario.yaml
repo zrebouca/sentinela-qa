@@ -1,0 +1,10 @@
+# Roteiro do tipo SUITE: o Sentinela roda uma suíte de outro framework e lê o resultado (JUnit XML)
+# para colocar no mesmo relatório, histórico e gestão de defeitos.
+sistema: "Carrinho — testes unitários (Jest)"
+versao: "framework: jest"
+responsavel: Mateus
+ambiente: Local
+objetivo: "Testes unitários do carrinho em JavaScript (com um bug plantado no cupom vencido)"
+tipo: suite
+ferramenta: jest
+pasta: ../exemplos_frameworks/jest_unitario

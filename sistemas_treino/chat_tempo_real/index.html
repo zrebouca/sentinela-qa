@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chat de treino</title>
+<style>
+ body{font-family:system-ui,sans-serif;margin:0 auto;max-width:560px;padding:12px;box-sizing:border-box}
+ #lista{list-style:none;padding:0;min-height:120px} #lista li{background:#eef2ff;border-radius:8px;padding:8px;margin:6px 0;overflow-wrap:anywhere}
+ input,button{font:inherit;padding:10px;box-sizing:border-box;width:100%;margin:4px 0;min-height:44px}
+ video{width:48%;background:#222}
+</style>
+</head>
+<body>
+<h1>Chat de treino</h1>
+<p>Conexão: <b id="estado" role="status">conectando</b></p>
+<ul id="lista" aria-label="Mensagens"></ul>
+<label for="texto">Mensagem</label><input id="texto" maxlength="200">
+<button id="enviar">Enviar</button>
+<button id="avisos">Ativar notificações</button> <span id="estado-avisos"></span>
+<button id="ligar">Ligar (áudio e vídeo)</button> <span id="estado-chamada">sem chamada</span>
+<div><video id="local" autoplay muted playsinline></video> <video id="remoto" autoplay muted playsinline></video></div>
+<script>
+const $ = id => document.getElementById(id);
+const eu = new URLSearchParams(location.search).get('usuario') || 'Visitante';
+const fonte = new EventSource('/eventos');
+fonte.onopen = () => $('estado').textContent = 'online';
+fonte.onerror = () => $('estado').textContent = 'reconectando';
+fonte.onmessage = e => {
+  const m = JSON.parse(e.data), li = document.createElement('li');
+  li.textContent = m.autor + ': ' + m.texto;   // textContent: não executa HTML
+  $('lista').appendChild(li);
+};
+$('enviar').onclick = async () => {
+  try {
+    const r = await fetch('/mensagens', {method: 'POST', body: JSON.stringify({autor: eu, texto: $('texto').value})});
+    if (r.ok) $('texto').value = '';
+  } catch (_) { $('estado').textContent = 'sem conexão: mensagem não enviada'; }
+};
+$('avisos').onclick = async () => {
+  await navigator.serviceWorker.register('/sw.js');
+  await navigator.serviceWorker.ready;
+  $('estado-avisos').textContent = 'notificações: ' + Notification.permission;
+};
+// Chamada de treino: duas pontas WebRTC na mesma página (sem servidor de sinalização)
+$('ligar').onclick = async () => {
+  try {
+    const midia = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+    $('local').srcObject = midia;
+    const a = new RTCPeerConnection(), b = new RTCPeerConnection();
+    a.onicecandidate = e => e.candidate && b.addIceCandidate(e.candidate);
+    b.onicecandidate = e => e.candidate && a.addIceCandidate(e.candidate);
+    b.ontrack = e => $('remoto').srcObject = e.streams[0];
+    b.onconnectionstatechange = () => $('estado-chamada').textContent = b.connectionState;
+    midia.getTracks().forEach(t => a.addTrack(t, midia));
+    window.ligacao = {a, b};
+    await a.setLocalDescription(await a.createOffer());
+    await b.setRemoteDescription(a.localDescription);
+    await b.setLocalDescription(await b.createAnswer());
+    await a.setRemoteDescription(b.localDescription);
+  } catch (erro) { $('estado-chamada').textContent = 'erro: ' + erro.name; }
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+appId: com.android.chrome
+name: "CT01 - Login com usuário válido"
+---
+- openLink: "http://10.0.2.2:8000/index.html"
+- tapOn: "Usuário"
+- inputText: "qa"
+- tapOn: "Senha"
+- inputText: "${TREINO_SENHA}"
+- tapOn: "Entrar"
+# TODO: 'verificar_url' não tem equivalente direto no Maestro
+- assertVisible: "Bem-vindo, qa!"

@@ -1,0 +1,28 @@
+{% set lista = ultimas if ultimas is defined else execucoes %}
+{% if lista %}
+<div class="tabela"><table>
+  <thead><tr><th>#</th><th>Projeto / roteiro</th><th>Finalidade</th><th>Opções</th><th>Resultado</th><th>Status</th><th>Quando</th></tr></thead>
+  <tbody>
+  {% for e in lista %}
+  <tr class="clicavel" data-href="{{ url_for('execucao_detalhe', eid=e.id) }}">
+    <td><b>#{{ e.id }}</b></td>
+    <td><div class="flex"><span class="bolinha" style="background:{{ e.cor }}"></span><div><b>{{ e.projeto }}</b><div class="pequeno suave">{{ e.roteiro or 'roteiro excluído' }}</div></div></div></td>
+    <td>{{ e.finalidade or '-' }}</td>
+    <td class="pequeno">
+      {% if e.usar_ia %}<span class="selo roxo" title="Análise por IA">{{ icone('ia', 12) }} IA</span>{% endif %}
+      {% if e.explorar %}<span class="selo laranja" title="Exploração de validações">{{ icone('lupa', 12) }} Exploração</span>{% endif %}
+      {% if not e.usar_ia and not e.explorar %}<span class="suave">padrão</span>{% endif %}
+    </td>
+    <td>{% if e.status == 'Concluída' %}<b>{{ e.aprovados }}/{{ e.total }}</b> aprovados
+      {% if e.defeitos %}<br><span class="pequeno" style="color:var(--vermelho)">{{ e.defeitos }} defeito(s)</span>{% endif %}{% else %}<span class="suave">—</span>{% endif %}</td>
+    <td>{% if e.status == 'Concluída' %}<span class="selo {{ 'APROVADO' if e.reprovados == 0 and e.defeitos == 0 else 'REPROVADO' }}">{{ 'APROVADO' if e.reprovados == 0 and e.defeitos == 0 else 'COM FALHAS' }}</span>
+      {% else %}<span class="selo {{ e.status }}">{{ e.status }}</span>{% endif %}</td>
+    <td class="pequeno suave">{{ e.criado_em|relativo }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% else %}
+<div class="vazio"><div class="ic c-azul">{{ icone('executar', 28) }}</div>Nenhuma execução ainda.
+  <div class="mt-p"><a class="btn prim" href="{{ url_for('executar') }}">Executar primeiro teste</a></div></div>
+{% endif %}

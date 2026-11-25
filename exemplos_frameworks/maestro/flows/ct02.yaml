@@ -1,0 +1,13 @@
+appId: com.android.chrome
+name: "CT02 - Login com senha errada"
+---
+- openLink: "http://10.0.2.2:8000/index.html"
+- tapOn: "Usuário"
+- eraseText
+- inputText: "qa"
+- tapOn: "Senha"
+- eraseText
+- inputText: "errada"
+- pressKey: Enter
+- assertVisible: "Usuário ou senha inválidos."
+# TODO: 'verificar_url' não tem equivalente direto no Maestro

@@ -1,0 +1,12 @@
+{
+  "name": "sentinela-exemplo-jest",
+  "private": true,
+  "description": "Testes unitários em Jest rodados pelo Sentinela QA (resultado em JUnit XML)",
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-junit": "^16.0.0"
+  }
+}

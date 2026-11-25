@@ -1,0 +1,61 @@
+# Roteiro de exemplo — Calculadora do Windows 11 (teste de programa desktop).
+# Os botões são encontrados pelo AutomationId (ex.: num7Button), que é o mesmo
+# em qualquer idioma do Windows e não depende da posição da janela.
+# Deixe a calculadora no modo "Padrão" antes de rodar.
+
+sistema: Calculadora do Windows
+versao: "Windows 11"
+responsavel: Mateus
+ambiente: Desktop local
+objetivo: Validar as operações básicas e o tratamento de divisão por zero da Calculadora.
+alvo: calc.exe
+janela: "^(Calculadora|Calculator)$"   # título da janela (o app abre outro processo)
+tempo_limite: 8
+
+funcionalidades:
+  - id: F01
+    nome: Operações básicas
+    criterios:
+      - 7 + 8 resulta em 15
+      - 12 × 9 resulta em 108 (digitando pelo teclado)
+  - id: F02
+    nome: Tratamento de erro
+    criterios:
+      - Dividir por zero mostra mensagem de erro em vez de um número
+
+antes_de_cada:
+  - clicar: "id=clearButton"          # botão C: começa cada caso do zero
+
+casos:
+  - id: CT01
+    funcionalidade: F01
+    descricao: Soma clicando nos botões
+    esperado: O visor mostra 15
+    passos:
+      - clicar: "id=num7Button"
+      - clicar: "id=plusButton"
+      - clicar: "id=num8Button"
+      - clicar: "id=equalButton"
+      - verificar_texto: { elemento: "id=CalculatorResults", texto: "15" }
+
+  - id: CT02
+    funcionalidade: F01
+    descricao: Multiplicação digitando pelo teclado
+    esperado: O visor mostra 108
+    passos:
+      - digitar: "12*9"
+      - apertar_tecla: Enter
+      - verificar_texto: { elemento: "id=CalculatorResults", texto: "108" }
+
+  - id: CT03
+    funcionalidade: F02
+    descricao: Divisão por zero
+    esperado: "Mensagem de erro (ex.: Não é possível dividir por zero)"
+    severidade: Alta
+    passos:
+      - clicar: "id=num5Button"
+      - clicar: "id=divideButton"
+      - clicar: "id=num0Button"
+      - clicar: "id=equalButton"
+      - verificar_texto: { elemento: "id=CalculatorResults", texto: "zero" }
+      - clicar: "id=clearButton"

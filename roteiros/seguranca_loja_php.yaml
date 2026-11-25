@@ -1,0 +1,55 @@
+# Varredura de SEGURANÇA da Loja PHP (sistema de treino no XAMPP).
+# Antes:  sentinela xampp instalar      (liga Apache/MySQL e copia o sistema para o htdocs)
+# Testa os 14 pontos que um atacante tentaria num app feito às pressas (ver sentinela/seguranca.py):
+#   painel admin sem login, .env/.git expostos, segredo no front-end, SQL injection, XSS,
+#   login que devolve o papel, força bruta, upload de .php, IDOR e preço vindo do cliente.
+#
+# IMPORTANTE: rode SÓ contra sistemas de treino ou seus, com autorização. A varredura manda
+# entradas "malcriadas" de propósito (aspas, <script>, arquivo .php). Nunca aponte para terceiros.
+
+sistema: Loja PHP (XAMPP) — segurança
+versao: "treino"
+responsavel: Mateus
+ambiente: XAMPP local (Apache + PHP 8 + MariaDB)
+objetivo: Procurar as falhas de segurança mais comuns de um app web, só na loja de treino.
+alvo: http://localhost/sentinela-loja
+tempo_limite: 12
+
+funcionalidades:
+  - id: S01
+    nome: Segurança da aplicação (OWASP)
+    criterios:
+      - Áreas restritas exigem login e nenhum arquivo sensível (.env/.git) abre pela web
+      - Nenhum segredo (chave de API, token) vai no HTML/JS do navegador
+      - Busca e formulários não são vulneráveis a SQL injection nem XSS
+      - Login não vaza o papel do usuário e limita tentativas; upload recusa .php
+
+casos:
+  - id: CT01
+    funcionalidade: S01
+    descricao: Varredura de segurança nos 14 pontos
+    esperado: Nenhuma falha de segurança — tudo vira observação positiva
+    severidade: Alta
+    passos:
+      - varredura_seguranca:
+          # base: usa o alvo do roteiro por padrão
+          rotas_extras: [relatorio.php]
+          injecao:
+            - { url: /produtos.php, parametro: busca }        # ponto 14 (SQLi) + 11 (XSS)
+          login:                                              # pontos 8 (papel) e 9 (força bruta)
+            url: /login.php
+            metodo: POST
+            campos: { email: "qa@loja.test", senha: "errada" }
+            campo_senha: senha
+          # Descomente conforme o seu endpoint real:
+          # preco: { url: /api/produtos.php, metodo: POST, campo: preco, valor: 0.01 }   # ponto 4
+          # upload: { url: /perfil.php, campo: foto }                                      # ponto 12
+          # idor:  { url: "/pedido.php?id={id}", ids: [1, 2] }                             # ponto 2
+          falhar_se_vulneravel: false
+      - verificar_seguranca: {}                               # cabeçalhos HTTP e cookies
+
+# Lógica de negócio (pontos 5, 6, 7, 10) é específica do app — teste com requisitar + verificar:
+#   - requisitar: { metodo: POST, url: /api/pedido.php, corpo: { itens: [...], total: 0.01 } }
+#   - verificar_status: { entre: [400, 422] }        # servidor recusa total vindo do cliente
+#   - requisitar: { metodo: POST, url: /api/cupom.php, corpo: { codigo: "PROMO10" } }  # 2ª vez
+#   - verificar_json: { campo: erro, valor: "cupom já usado" }                          # reuso

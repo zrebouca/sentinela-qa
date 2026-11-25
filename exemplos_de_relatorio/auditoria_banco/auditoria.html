@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Auditoria do banco sentinela_loja — Sentinela QA</title>
+<style>
+  :root { --bg:#f5f6f8; --card:#fff; --text:#1d2330; --muted:#5d6678; --line:#e3e6ec; --accent:#2554d4;
+          --ok:#15803d; --ok-bg:#e7f6ec; --bad:#c62828; --bad-bg:#fdecec; --warn:#a15c00; --warn-bg:#fff4e0;
+          --info:#2d5fa8; --info-bg:#e9f0fb; --ia:#6b3fc4; --ia-bg:#f1ebfd; --code:#0f1729; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#12151b; --card:#1b1f27; --text:#e6e9ef; --muted:#9aa3b5; --line:#2c323d; --accent:#7b9cff;
+            --ok:#5fd08a; --ok-bg:#173323; --bad:#ff7b7b; --bad-bg:#3a1c1f; --warn:#ffb74d; --warn-bg:#3a2c14;
+            --info:#8fb6ff; --info-bg:#1c2a40; --ia:#b99bff; --ia-bg:#2a2142; }
+  }
+  * { box-sizing:border-box; } body { margin:0; background:var(--bg); color:var(--text); font:15px/1.55 "Segoe UI",system-ui,sans-serif; }
+  .wrap { max-width:1180px; margin:0 auto; padding:0 16px; }
+  header.topo { background:var(--card); border-bottom:1px solid var(--line); padding:22px 0; }
+  h1 { margin:0; font-size:25px; } h2 { font-size:19px; margin:0 0 14px; } h3 { font-size:15.5px; margin:0 0 4px; }
+  .sub { color:var(--muted); margin:0; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; margin:18px 0; overflow:hidden; }
+  .tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
+  .tile { border:1px solid var(--line); border-radius:10px; padding:12px 14px; } .tile .v { font-size:27px; font-weight:700; }
+  .tile .l { color:var(--muted); font-size:13px; }
+  .nota { display:flex; align-items:center; gap:22px; flex-wrap:wrap; }
+  .anel { width:120px; height:120px; border-radius:50%; display:grid; place-items:center; flex:none;
+          background:conic-gradient(var(--cor) calc(var(--p)*1%), var(--line) 0); }
+  .anel span { width:92px; height:92px; border-radius:50%; background:var(--card); display:grid; place-items:center; font-size:30px; font-weight:800; }
+  .badge { display:inline-block; font-size:12px; font-weight:700; padding:2px 9px; border-radius:999px; white-space:nowrap; margin-right:4px; }
+  .s-Crítica, .s-Alta { background:var(--bad-bg); color:var(--bad); } .s-Média { background:var(--warn-bg); color:var(--warn); }
+  .s-Baixa, .s-Info { background:var(--info-bg); color:var(--info); } .cat { background:var(--info-bg); color:var(--info); }
+  .auto { background:var(--ok-bg); color:var(--ok); } .ia { background:var(--ia-bg); color:var(--ia); }
+  .achado { border:1px solid var(--line); border-left:4px solid var(--info); border-radius:10px; padding:14px 16px; margin:10px 0; }
+  .achado.b-Crítica, .achado.b-Alta { border-left-color:var(--bad); } .achado.b-Média { border-left-color:var(--warn); }
+  .grade2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:10px 18px; margin-top:8px; font-size:14px; }
+  .k { color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+  pre { background:var(--code); color:#d5def5; padding:12px 14px; border-radius:10px; overflow-x:auto; font:12.5px/1.55 Consolas,monospace; margin:8px 0 0; }
+  table { width:100%; border-collapse:collapse; min-width:620px; } .tabela { overflow-x:auto; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); font-size:14px; vertical-align:top; }
+  th { color:var(--muted); font-size:12px; text-transform:uppercase; }
+  .tabs { display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:12px; }
+  .tab { border:1px solid var(--line); border-radius:10px; overflow:hidden; } .tab h3 { background:var(--info-bg); color:var(--info); padding:8px 12px; margin:0; }
+  .tab ul { list-style:none; margin:0; padding:6px 12px 10px; font-size:13px; } .tab li { padding:2px 0; display:flex; justify-content:space-between; gap:8px; }
+  .tab li span { color:var(--muted); font-family:Consolas,monospace; font-size:12px; }
+  .filtros { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
+  .filtros button { border:1px solid var(--line); background:var(--card); color:var(--text); border-radius:99px; padding:4px 12px; cursor:pointer; font:inherit; font-size:13px; }
+  .filtros button.on { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .aviso { background:var(--warn-bg); color:var(--warn); border-radius:8px; padding:8px 12px; margin:8px 0 0; }
+  footer { color:var(--muted); text-align:center; font-size:13px; padding:10px 0 40px; }
+  .mermaid { background:#fff; border-radius:10px; padding:10px; overflow-x:auto; }
+</style>
+</head>
+<body>
+<header class="topo"><div class="wrap">
+  <div style="display:flex;align-items:center;gap:14px">
+    <svg viewBox="0 0 128 128" width="46" height="46" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3d6ef0"/><stop offset="1" stop-color="#13348f"/></linearGradient></defs><path d="M64 6 L112 22 V60 C112 90 92 110 64 122 C36 110 16 90 16 60 V22 Z" fill="url(#g)"/><path d="M30 64 C40 48 52 41 64 41 C76 41 88 48 98 64 C88 80 76 87 64 87 C52 87 40 80 30 64 Z" fill="none" stroke="#fff" stroke-width="6"/><circle cx="64" cy="64" r="15" fill="#fff"/><path d="M57 64.5 L62 69.5 L72 58.5" fill="none" stroke="#1d4bd0" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div><h1>Auditoria do banco de dados — sentinela_loja</h1>
+      <p class="sub">Servidor 127.0.0.1:3306 · 10.4.32-MariaDB · 20/11/2026 22:13 · Sentinela QA v1.0.0</p></div>
+  </div>
+</div></header>
+
+<main class="wrap">
+<section>
+  <h2>Resumo</h2>
+  
+  <div class="nota">
+    <div class="anel" style="--p:35;--cor:#c62828"><span>35</span></div>
+    <div style="flex:1;min-width:260px">
+      <p style="margin:0 0 10px"><b>Nota de saúde 35/100.</b>
+        Há riscos sérios de segurança, integridade ou desempenho. Priorize os itens Críticos e Altos.</p>
+      <div class="tiles">
+        <div class="tile"><div class="v">5</div><div class="l">tabelas</div></div>
+        <div class="tile"><div class="v">13</div><div class="l">linhas (aprox.)</div></div>
+        <div class="tile"><div class="v">0.06 MB</div><div class="l">tamanho</div></div>
+        <div class="tile"><div class="v">25</div><div class="l">achados</div></div>
+        <div class="tile"><div class="v">15</div><div class="l">corrigíveis pelo Sentinela</div></div>
+      </div>
+      <p style="margin:10px 0 0"><span class="badge s-Crítica">Crítica: 2</span><span class="badge s-Alta">Alta: 5</span><span class="badge s-Média">Média: 13</span><span class="badge s-Baixa">Baixa: 5</span></p>
+    </div>
+  </div>
+  
+  <p class="sub" style="margin-top:12px">A auditoria lê só a estrutura (information_schema) e faz contagens; nenhum dado das tabelas é exibido.</p>
+</section>
+
+<section>
+  <h2>O que mudar, como mudar e onde agir</h2>
+  <div class="filtros" id="filtros">
+    <button class="on" data-f="">Todos</button>
+    <button data-f="Servidor">Servidor</button><button data-f="Segurança">Segurança</button><button data-f="Estrutura">Estrutura</button><button data-f="Tipos de dados">Tipos de dados</button><button data-f="Desempenho">Desempenho</button><button data-f="Integridade">Integridade</button>
+  </div>
+  
+  
+  <div class="achado b-Crítica" data-cat="Segurança">
+    <div><span class="badge s-Crítica">Crítica</span><span class="badge cat">Segurança</span>
+      
+      <span class="sub" style="font-size:13px">C004 · <code>servidor</code></span></div>
+    <h3 style="margin-top:8px">O usuário &#39;root&#39; não tem senha (hosts: localhost, 127.0.0.1, ::1).</h3>
+    <div class="grade2">
+      <div><div class="k">Por que importa</div>Qualquer programa no computador (ou na rede, se a porta 3306 estiver aberta) acessa e apaga tudo.</div>
+      <div><div class="k">🔮 Problema futuro provável</div>Perda ou vazamento total dos dados se o PC for exposto na rede ou infectado.</div>
+      <div><div class="k">Onde agir</div>Configuração do servidor + código da aplicação (atualizar a senha na conexão)</div>
+      <div><div class="k">Como corrigir</div>Defina uma senha forte e crie um usuário só para a aplicação, com permissão apenas no banco dela (não use root na aplicação). No XAMPP, atualize também o phpMyAdmin (config.inc.php).</div>
+    </div>
+    <pre>-- troque SENHA_FORTE antes de rodar; atualize também o PHP/aplicação
+ALTER USER &#39;root&#39;@&#39;localhost&#39; IDENTIFIED BY &#39;SENHA_FORTE&#39;;
+ALTER USER &#39;root&#39;@&#39;127.0.0.1&#39; IDENTIFIED BY &#39;SENHA_FORTE&#39;;
+ALTER USER &#39;root&#39;@&#39;::1&#39; IDENTIFIED BY &#39;SENHA_FORTE&#39;;
+CREATE USER IF NOT EXISTS &#39;app_sentinela_loja&#39;@&#39;localhost&#39; IDENTIFIED BY &#39;OUTRA_SENHA_FORTE&#39;;
+GRANT SELECT, INSERT, UPDATE, DELETE ON `sentinela_loja`.* TO &#39;app_sentinela_loja&#39;@&#39;localhost&#39;;</pre>
+  </div>
+  
+  <div class="achado b-Crítica" data-cat="Segurança">
+    <div><span class="badge s-Crítica">Crítica</span><span class="badge cat">Segurança</span>
+      
+      <span class="sub" style="font-size:13px">C018 · <code>usuarios.senha</code></span></div>
+    <h3 style="margin-top:8px">1 de 2 senha(s) sem hash seguro (1 parecem MD5).</h3>
+    <div class="grade2">
+      <div><div class="k">Por que importa</div>Se o banco vazar, as senhas dos usuários ficam expostas (e muitos repetem a senha em outros sites).</div>
+      <div><div class="k">🔮 Problema futuro provável</div>Vazamento de contas e problemas com a LGPD.</div>
+      <div><div class="k">Onde agir</div>Código da aplicação + banco de dados</div>
+      <div><div class="k">Como corrigir</div>No PHP use password_hash() ao salvar e password_verify() no login; peça troca de senha aos usuários antigos. A coluna precisa ter VARCHAR(255).</div>
+    </div>
+    
+  </div>
+  
+  <div class="achado b-Alta" data-cat="Segurança">
+    <div><span class="badge s-Alta">Alta</span><span class="badge cat">Segurança</span>
+      
+      <span class="sub" style="font-size:13px">C005 · <code>servidor</code></span></div>
+    <h3 style="margin-top:8px">O usuário &#39;pma&#39; não tem senha (hosts: localhost).</h3>
+    <div class="grade2">
+      <div><div class="k">Por que importa</div>Qualquer programa no computador (ou na rede, se a porta 3306 estiver aberta) acessa e apaga tudo.</div>
+      <div><div class="k">🔮 Problema futuro provável</div>Perda ou vazamento total dos dados se o PC for exposto na rede ou infectado.</div>
+      <div><div class="k">Onde agir</div>Configuração do servidor + código da aplicação (atualizar a senha na conexão)</div>
+      <div><div class="k">Como corrigir</div>Defina uma senha forte e crie um usuário só para a aplicação, com permissão apenas no banco dela (não use root na aplicação). No XAMPP, atualize também o phpMyAdmin (config.inc.php).</div>
+    </div>
+    <pre>-- troque SENHA_FORTE antes de rodar; atualize também o PHP/aplicação
+ALTER USER &#39;pma&#39;@&#39;localhost&#39; IDENTIFIED BY &#39;SENHA_FORTE&#39;;
+CREATE USER IF NOT EXISTS &#39;app_sentinela_loja&#39;@&#39;localhost&#39; IDENTIFIED BY &#39;OUTRA_SENHA_FORTE&#39;;
+GRANT SELECT, INSERT, UPDATE, DELETE ON `sentinela_loja`.* TO &#39;app_sentinela_loja&#39;@&#39;localhost&#39;;</pre>
+  </div>
+  
+  <div class="achado b-Alta" data-cat="Estrutura">
+    <div><span class="badge s-Alta">Alta</span><span class="badge cat">Estrutura</span>
+      <span class="badge auto">corrigível pelo Sentinela</span>
+      <span class="sub" style="font-size:13px">C009 · <code>log_acessos</code></span></div>
+    <h3 style="margin-top:8px">Tabela sem chave primária (PRIMARY KEY).</h3>
+    <div class="grade2">
+      <div><div class="k">Por que importa</div>Não há como identificar um registro com segurança; atualizações podem atingir linhas erradas.</div>
+      <div><div class="k">🔮 Problema futuro provável</div>Registros duplicados, lentidão em UPDATE/DELETE e problemas de replicação/backup.</div>
+      <div><div class="k">Onde agir</div>Banco de dados</div>
+      <div><div class="k">Como corrigir</div>Crie uma chave primária (normalmente uma coluna id).</div>
+    </div>
+    <pre>ALTER TABLE `log_acessos` ADD COLUMN id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY FIRST;</pre>
+  </div>
+  
+  <div class="achado b-Alta" data-cat="Tipos de dados">
+    <div><span class="badge s-Alta">Alta</span><span class="badge cat">Tipos de dados</span>
+      <span class="badge auto">corrigível pelo Sentinela</span>
+      <span class="sub" style="font-size:13px">C013 · <code>produtos.preco</code></span></div>
+    <h3 style="margin-top:8px">Valor em dinheiro guardado como FLOAT.</h3>
+    <div class="grade2">
+      <div><div class="k">Por que importa</div>FLOAT/DOUBLE são aproximados: 0,1 + 0,2 vira 0,30000000000000004.</div>
+      <div><div class="k">🔮 Problema futuro provável</div>Centavos sumindo ou sobrando em totais, troco e relatórios financeiros.</div>
+      <div><div class="k">Onde agir</div>Banco de dados</div>
+      <div><div class="k">Como corrigir</div>Use DECIMAL(12,2) para valores monetários.</div>
+    </div>
+    <pre>ALTER TABLE `produtos` MODIFY `preco` DECIMAL(12,2) NOT NULL;</pre>
+  </div>
+  
+  <div class="achado b-Alta" data-cat="Integridade">
+    <div><span class="badge s-Alta">Alta</span><span class="badge cat">Integridade</span>
+      
+      <span class="sub" style="font-size:13px">C021 · <code>vendas.produto_id</code></span></div>
+    <h3 style="margin-top:8px">&#39;produto_id&#39; aponta para &#39;produtos&#39;, mas não há chave estrangeira — já existem 1 registro(s) órfão(s).</h3>
+    <div class="grade2">
+      <div><div class="k">Por que importa</div>O banco permite apagar o registro pai e deixar filhos apontando para o nada.</div>
+      <div><div class="k">🔮 Problema futuro provável</div>Telas com erro ao abrir itens sem dono e totais que não batem.</div>
+      <div><div class="k">Onde agir</div>Banco de dados (corrija os órfãos antes)</div>
+      <div><div class="k">Como corrigir</div>Crie a FOREIGN KEY.</div>
+    </div>
+    <pre>ALTER TABLE `vendas` ADD CONSTRAINT `fk_vendas_produto_id` FOREIGN KEY (`produto_id`) REFERENCES `produtos` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT;</pre>
+  </div>
+  
+  <div class="achado b-Alta" data-cat="Tipos de dados">
+    <div><span class="badge s-Alta">Alta</span><span class="badge cat">Tipos de dados</span>
+      <span class="badge auto">corrigível pelo Sentinela</span>
+      <span class="sub" style="font-size:13px">C024 · <code>vendas.total</code></span></div>
+    <h3 style="margin-top:8px">Valor em dinheiro guardado como FLOAT.</h3>
+    <div class="grade2">
+      <div><div class="k">Por que importa</div>FLOAT/DOUBLE são aproximados: 0,1 + 0,2 vira 0,30000000000000004.</div>
+      <div><div class="k">🔮 Problema futuro provável</div>Centavos sumindo ou sobrando em totais, troco e relatórios financeiros.</div>
+      <div><div class="k">Onde agir</div>Banco de dados</div>
+      <div><div class="k">Como corrigir</div>Use DECIMAL(12,2) para valores monetários.</div>
+    </div>
+    <pre>ALTER TABLE `vendas` MODIFY `total` DECIMAL(12,2) NOT NULL;</pre>
+  </div>
+  
+  <div class="achado b-Média" data-cat="Servidor">
+    <div><span class="badge s-Média">Média</span><span class="badge cat">Servidor</span>
+      
+      <span class="sub" style="font-size:13px">C001 · <code>servidor</code></span></div>
+    <h3 style="margin-top:8px">MariaDB 10.4 já saiu de suporte (sem correções de segurança).</h3>
+    <div class="grade2">
+      <div><div class="k">Por que importa</div>Falhas de segurança descobertas não serão mais corrigidas nesta versão.</div>
+      <div><div class="k">🔮 Problema futuro provável</div>Incompatibilidade com bibliotecas novas e risco de vulnerabilidades conhecidas.</div>
+      <div><div class="k">Onde agir</div>Configuração do servidor</div>
+      <div><div class="k">Como corrigir</div>Atualize o XAMPP (ou o MariaDB) para uma versão LTS atual (10.11 ou 11.4). Faça backup antes.</div>
+    </div>
+    
+  </div>
+  
+  <div class="achado b-Média" data-cat="Servidor">
+    <div><span class="badge s-Média">Média</span><span class="badge cat">Servidor</span>
+      
+      <span class="sub" style="font-size:13px">C002 · <code>servidor</code></span></div>
+    <h3 style="margin-top:8px">O sql_mode não está em modo estrito (STRICT_TRANS_TABLES).</h3>
+    <div class="grade2">
+      <div><div class="k">Por que importa</div>Valores inválidos são aceitos em silêncio: textos cortados, datas &#39;0000-00-00&#39;, números truncados.</div>
+      <div><div class="k">🔮 Problema futuro provável</div>Dados corrompidos sem nenhum erro aparecer na aplicação — difícil de descobrir depois.</div>
+      <div><div class="k">Onde agir</div>Configuração do servidor</div>
+      <div><div class="k">Como corrigir</div>No my.ini, em [mysqld]: sql_mode=STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION — teste a aplicação antes.</div>
+    </div>
+    <pre>SET GLOBAL sql_mode = &#39;STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION&#39;;</pre>
+  </div>
+  
+  <div class="achado b-Média" data-cat="Estrutura">
+    <div><span class="badge s-Média">Média</span><span class="badge cat">Estrutura</span>
+      <span class="badge auto">corrigível pelo Sentinela</span>
+      <span class="sub" style="font-size:13px">C006 · <code>categorias</code></span></div>
+    <h3 style="margin-top:8px">Tabela usa o engine MyISAM.</h3>
+    <div class="grade2">
+      <div><div class="k">Por que importa</div>MyISAM não tem transações nem chaves estrangeiras e trava a tabela inteira a cada escrita.</div>
+      <div><div class="k">🔮 Problema futuro provável</div>Tabela corrompida após queda de energia e lentidão com vários usuários ao mesmo tempo.</div>
+      <div><div class="k">Onde agir</div>Banco de dados</div>
+      <div><div class="k">Como corrigir</div>Converta para InnoDB.</div>
+    </div>
+    <pre>ALTER TABLE `categorias` ENGINE=InnoDB;</pre>
+  </div>
+  
+  <div class="achado b-Média" data-cat="Tipos de dados">
+    <div><span class="badge s-Média">Média</span><span class="badge cat">Tipos de dados</span>
+      <span class="badge auto">corrigível pelo Sentinela</span>
+      <span class="sub" style="font-size:13px">C007 · <code>categorias</code></span></div>
+    <h3 style="margin-top:8px">Tabela com collation latin1_swedish_ci (não é utf8mb4).</h3>
+    <div class="grade2">
+      <div><div class="k">Por que importa</div>Não guarda emojis e alguns caracteres; mistura de charsets causa erros em JOINs.</div>
+      <div><div class="k">🔮 Problema futuro provável</div>Erro &#39;Incorrect string value&#39; ou textos com &#39;???&#39; quando entrarem caracteres especiais.</div>
+      <div><div class="k">Onde agir</div>Banco de dados</div>
+      <div><div class="k">Como corrigir</div>Converta a tabela para utf8mb4.</div>
+    </div>
+    <pre>ALTER TABLE `categorias` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;</pre>
+  </div>
+  
+  <div class="achado b-Média" data-cat="Desempenho">
+    <div><span class="badge s-Média">Média</span><span class="badge cat">Desempenho</span>
+      <span class="badge auto">corrigível pelo Sentinela</span>
+      <span class="sub" style="font-size:13px">C011 · <code>log_acessos.usuario_id</code></span></div>
+    <h3 style="margin-top:8px">Coluna de relacionamento &#39;usuario_id&#39; sem índice.</h3>
+    <div class="grade2">
+      <div><div class="k">Por que importa</div>Todo JOIN ou filtro por essa coluna lê a tabela inteira.</div>
+      <div><div class="k">🔮 Problema futuro provável</div>O sistema fica cada vez mais lento conforme a tabela cresce (telas de listagem e relatórios).</div>
+      <div><div class="k">Onde agir</div>Banco de dados</div>
+      <div><div class="k">Como corrigir</div>Crie um índice na coluna.</div>
+    </div>
+    <pre>ALTER TABLE `log_acessos` ADD INDEX `idx_usuario_id` (`usuario_id`);</pre>
+  </div>
+  
+  <div class="achado b-Média" data-cat="Integridade">
+    <div><span class="badge s-Média">Média</span><span class="badge cat">Integridade</span>
+      <span class="badge auto">corrigível pelo Sentinela</span>
+      <span class="sub" style="font-size:13px">C012 · <code>log_acessos.usuario_id</code></span></div>
+    <h3 style="margin-top:8px">&#39;usuario_id&#39; aponta para &#39;usuarios&#39;, mas não há chave estrangeira.</h3>
+    <div class="grade2">
+      <div><div class="k">Por que importa</div>O banco permite apagar o registro pai e deixar filhos apontando para o nada.</div>
+      <div><div class="k">🔮 Problema futuro provável</div>Telas com erro ao abrir itens sem dono e totais que não batem.</div>
+      <div><div class="k">Onde agir</div>Banco de dados</div>
+      <div><div class="k">Como corrigir</div>Crie a FOREIGN KEY.</div>
+    </div>
+    <pre>ALTER TABLE `log_acessos` ADD CONSTRAINT `fk_log_acessos_usuario_id` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT;</pre>
+  </div>
+  
+  <div class="achado b-Média" data-cat="Desempenho">
+    <div><span class="badge s-Média">Média</span><span class="badge cat">Desempenho</span>
+      <span class="badge auto">corrigível pelo Sentinela</span>
+      <span class="sub" style="font-size:13px">C014 · <code>produtos.categoria_id</code></span></div>
+    <h3 style="margin-top:8px">Coluna de relacionamento &#39;categoria_id&#39; sem índice.</h3>
+    <div class="grade2">
+      <div><div class="k">Por que importa</div>Todo JOIN ou filtro por essa coluna lê a tabela inteira.</div>
+      <div><div class="k">🔮 Problema futuro provável</div>O sistema fica cada vez mais lento conforme a tabela cresce (telas de listagem e relatórios).</div>
+      <div><div class="k">Onde agir</div>Banco de dados</div>
+      <div><div class="k">Como corrigir</div>Crie um índice na coluna.</div>
+    </div>
+    <pre>ALTER TABLE `produtos` ADD INDEX `idx_categoria_id` (`categoria_id`);</pre>
+  </div>
+  
+  <div class="achado b-Média" data-cat="Integridade">
+    <div><span class="badge s-Média">Média</span><span class="badge cat">Integridade</span>
+      
+      <span class="sub" style="font-size:13px">C015 · <code>produtos.categoria_id</code></span></div>
+    <h3 style="margin-top:8px">&#39;categoria_id&#39; aponta para &#39;categorias&#39;, mas não há chave estrangeira.</h3>
+    <div class="grade2">
+      <div><div class="k">Por que importa</div>O banco permite apagar o registro pai e deixar filhos apontando para o nada.</div>
+      <div><div class="k">🔮 Problema futuro provável</div>Telas com erro ao abrir itens sem dono e totais que não batem.</div>
+      <div><div class="k">Onde agir</div>Banco de dados</div>
+      <div><div class="k">Como corrigir</div>Crie a FOREIGN KEY (converta as tabelas para InnoDB antes).</div>
+    </div>
+    <pre>ALTER TABLE `produtos` ADD CONSTRAINT `fk_produtos_categoria_id` FOREIGN KEY (`categoria_id`) REFERENCES `categorias` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT;</pre>
+  </div>
+  
+  <div class="achado b-Média" data-cat="Integridade">
+    <div><span class="badge s-Média">Média</span><span class="badge cat">Integridade</span>
+      <span class="badge auto">corrigível pelo Sentinela</span>
+      <span class="sub" style="font-size:13px">C017 · <code>usuarios.email</code></span></div>
+    <h3 style="margin-top:8px">&#39;email&#39; não tem índice UNIQUE.</h3>
+    <div class="grade2">
+      <div><div class="k">Por que importa</div>O banco aceita dois cadastros com o mesmo valor (ex.: mesmo CPF ou e-mail).</div>
+      <div><div class="k">🔮 Problema futuro provável</div>Clientes duplicados, login ambíguo e relatórios com números inflados.</div>
+      <div><div class="k">Onde agir</div>Banco de dados</div>
+      <div><div class="k">Como corrigir</div>Crie um índice único.</div>
+    </div>
+    <pre>ALTER TABLE `usuarios` ADD UNIQUE INDEX `uk_email` (`email`);</pre>
+  </div>
+  
+  <div class="achado b-Média" data-cat="Desempenho">
+    <div><span class="badge s-Média">Média</span><span class="badge cat">Desempenho</span>
+      <span class="badge auto">corrigível pelo Sentinela</span>
+      <span class="sub" style="font-size:13px">C020 · <code>vendas.produto_id</code></span></div>
+    <h3 style="margin-top:8px">Coluna de relacionamento &#39;produto_id&#39; sem índice.</h3>
+    <div class="grade2">
+      <div><div class="k">Por que importa</div>Todo JOIN ou filtro por essa coluna lê a tabela inteira.</div>
+      <div><div class="k">🔮 Problema futuro provável</div>O sistema fica cada vez mais lento conforme a tabela cresce (telas de listagem e relatórios).</div>
+      <div><div class="k">Onde agir</div>Banco de dados</div>
+      <div><div class="k">Como corrigir</div>Crie um índice na coluna.</div>
+    </div>
+    <pre>ALTER TABLE `vendas` ADD INDEX `idx_produto_id` (`produto_id`);</pre>
+  </div>
+  
+  <div class="achado b-Média" data-cat="Desempenho">
+    <div><span class="badge s-Média">Média</span><span class="badge cat">Desempenho</span>
+      <span class="badge auto">corrigível pelo Sentinela</span>
+      <span class="sub" style="font-size:13px">C022 · <code>vendas.usuario_id</code></span></div>
+    <h3 style="margin-top:8px">Coluna de relacionamento &#39;usuario_id&#39; sem índice.</h3>
+    <div class="grade2">
+      <div><div class="k">Por que importa</div>Todo JOIN ou filtro por essa coluna lê a tabela inteira.</div>
+      <div><div class="k">🔮 Problema futuro provável</div>O sistema fica cada vez mais lento conforme a tabela cresce (telas de listagem e relatórios).</div>
+      <div><div class="k">Onde agir</div>Banco de dados</div>
+      <div><div class="k">Como corrigir</div>Crie um índice na coluna.</div>
+    </div>
+    <pre>ALTER TABLE `vendas` ADD INDEX `idx_usuario_id` (`usuario_id`);</pre>
+  </div>
+  
+  <div class="achado b-Média" data-cat="Integridade">
+    <div><span class="badge s-Média">Média</span><span class="badge cat">Integridade</span>
+      <span class="badge auto">corrigível pelo Sentinela</span>
+      <span class="sub" style="font-size:13px">C023 · <code>vendas.usuario_id</code></span></div>
+    <h3 style="margin-top:8px">&#39;usuario_id&#39; aponta para &#39;usuarios&#39;, mas não há chave estrangeira.</h3>
+    <div class="grade2">
+      <div><div class="k">Por que importa</div>O banco permite apagar o registro pai e deixar filhos apontando para o nada.</div>
+      <div><div class="k">🔮 Problema futuro provável</div>Telas com erro ao abrir itens sem dono e totais que não batem.</div>
+      <div><div class="k">Onde agir</div>Banco de dados</div>
+      <div><div class="k">Como corrigir</div>Crie a FOREIGN KEY.</div>
+    </div>
+    <pre>ALTER TABLE `vendas` ADD CONSTRAINT `fk_vendas_usuario_id` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT;</pre>
+  </div>
+  
+  <div class="achado b-Média" data-cat="Tipos de dados">
+    <div><span class="badge s-Média">Média</span><span class="badge cat">Tipos de dados</span>
+      
+      <span class="sub" style="font-size:13px">C025 · <code>vendas.data_venda</code></span></div>
+    <h3 style="margin-top:8px">Data guardada como texto (varchar(20)).</h3>
+    <div class="grade2">
+      <div><div class="k">Por que importa</div>O banco não valida a data e não consegue ordenar/filtrar por período corretamente.</div>
+      <div><div class="k">🔮 Problema futuro provável</div>Datas inválidas (&#39;31/02/2025&#39;), formatos misturados e relatórios por mês errados.</div>
+      <div><div class="k">Onde agir</div>Banco de dados + código da aplicação</div>
+      <div><div class="k">Como corrigir</div>Converta para DATE ou DATETIME depois de padronizar os valores existentes (teste em uma cópia primeiro — valores fora do padrão viram NULL).</div>
+    </div>
+    <pre>-- revise os valores antes!
+ALTER TABLE `vendas` MODIFY `data_venda` DATETIME NULL;</pre>
+  </div>
+  
+  <div class="achado b-Baixa" data-cat="Servidor">
+    <div><span class="badge s-Baixa">Baixa</span><span class="badge cat">Servidor</span>
+      
+      <span class="sub" style="font-size:13px">C003 · <code>servidor</code></span></div>
+    <h3 style="margin-top:8px">O log de consultas lentas (slow_query_log) está desligado.</h3>
+    <div class="grade2">
+      <div><div class="k">Por que importa</div>Não há como descobrir quais consultas deixam o sistema lento.</div>
+      <div><div class="k">🔮 Problema futuro provável</div>Quando o sistema ficar lento com mais dados, não haverá pistas de onde agir.</div>
+      <div><div class="k">Onde agir</div>Configuração do servidor</div>
+      <div><div class="k">Como corrigir</div>Ligue o log de consultas lentas (acima de 1 segundo).</div>
+    </div>
+    <pre>SET GLOBAL slow_query_log = &#39;ON&#39;;
+SET GLOBAL long_query_time = 1;</pre>
+  </div>
+  
+  <div class="achado b-Baixa" data-cat="Estrutura">
+    <div><span class="badge s-Baixa">Baixa</span><span class="badge cat">Estrutura</span>
+      <span class="badge auto">corrigível pelo Sentinela</span>
+      <span class="sub" style="font-size:13px">C008 · <code>categorias</code></span></div>
+    <h3 style="margin-top:8px">Tabela sem coluna de data de criação (auditoria).</h3>
+    <div class="grade2">
+      <div><div class="k">Por que importa</div>Não dá para saber quando cada registro entrou — atrapalha investigar problemas e relatórios.</div>
+      <div><div class="k">🔮 Problema futuro provável</div>Em um incidente, não será possível descobrir desde quando os dados estão errados.</div>
+      <div><div class="k">Onde agir</div>Banco de dados</div>
+      <div><div class="k">Como corrigir</div>Adicione criado_em com valor automático (não quebra o código que já existe).</div>
+    </div>
+    <pre>ALTER TABLE `categorias` ADD COLUMN criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;</pre>
+  </div>
+  
+  <div class="achado b-Baixa" data-cat="Estrutura">
+    <div><span class="badge s-Baixa">Baixa</span><span class="badge cat">Estrutura</span>
+      <span class="badge auto">corrigível pelo Sentinela</span>
+      <span class="sub" style="font-size:13px">C010 · <code>log_acessos</code></span></div>
+    <h3 style="margin-top:8px">Tabela sem coluna de data de criação (auditoria).</h3>
+    <div class="grade2">
+      <div><div class="k">Por que importa</div>Não dá para saber quando cada registro entrou — atrapalha investigar problemas e relatórios.</div>
+      <div><div class="k">🔮 Problema futuro provável</div>Em um incidente, não será possível descobrir desde quando os dados estão errados.</div>
+      <div><div class="k">Onde agir</div>Banco de dados</div>
+      <div><div class="k">Como corrigir</div>Adicione criado_em com valor automático (não quebra o código que já existe).</div>
+    </div>
+    <pre>ALTER TABLE `log_acessos` ADD COLUMN criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;</pre>
+  </div>
+  
+  <div class="achado b-Baixa" data-cat="Integridade">
+    <div><span class="badge s-Baixa">Baixa</span><span class="badge cat">Integridade</span>
+      
+      <span class="sub" style="font-size:13px">C016 · <code>usuarios.nome</code></span></div>
+    <h3 style="margin-top:8px">&#39;nome&#39; aceita NULL, mas parece ser um campo obrigatório.</h3>
+    <div class="grade2">
+      <div><div class="k">Por que importa</div>Registros podem ficar sem informação essencial.</div>
+      <div><div class="k">🔮 Problema futuro provável</div>Telas e relatórios quebrando ou mostrando campos vazios.</div>
+      <div><div class="k">Onde agir</div>Banco de dados + validação na aplicação</div>
+      <div><div class="k">Como corrigir</div>Preencha os vazios e torne a coluna NOT NULL.</div>
+    </div>
+    <pre>-- preencha os NULL antes
+ALTER TABLE `usuarios` MODIFY `nome` varchar(100) NOT NULL;</pre>
+  </div>
+  
+  <div class="achado b-Baixa" data-cat="Estrutura">
+    <div><span class="badge s-Baixa">Baixa</span><span class="badge cat">Estrutura</span>
+      <span class="badge auto">corrigível pelo Sentinela</span>
+      <span class="sub" style="font-size:13px">C019 · <code>vendas</code></span></div>
+    <h3 style="margin-top:8px">Tabela sem coluna de data de criação (auditoria).</h3>
+    <div class="grade2">
+      <div><div class="k">Por que importa</div>Não dá para saber quando cada registro entrou — atrapalha investigar problemas e relatórios.</div>
+      <div><div class="k">🔮 Problema futuro provável</div>Em um incidente, não será possível descobrir desde quando os dados estão errados.</div>
+      <div><div class="k">Onde agir</div>Banco de dados</div>
+      <div><div class="k">Como corrigir</div>Adicione criado_em com valor automático (não quebra o código que já existe).</div>
+    </div>
+    <pre>ALTER TABLE `vendas` ADD COLUMN criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;</pre>
+  </div>
+  
+  
+</section>
+
+
+<section>
+  <h2>🔮 Previsão de crescimento (próximos 12 meses)</h2>
+  <p class="sub">Estimativa pelo ritmo de cadastro desde a criação de cada tabela — use como alerta, não como certeza.</p>
+  <div class="tabela"><table>
+    <thead><tr><th>Tabela</th><th>Linhas hoje</th><th>Linhas/dia</th><th>Linhas em 1 ano</th><th>Tamanho hoje</th><th>Tamanho em 1 ano</th></tr></thead>
+    <tbody><tr><td><b>produtos</b></td><td>4</td><td>4.0</td>
+      <td>1464</td><td>0.02 MB</td><td>5.7 MB</td></tr><tr><td><b>categorias</b></td><td>3</td><td>3.0</td>
+      <td>1098</td><td>0.0 MB</td><td>0.7 MB</td></tr><tr><td><b>vendas</b></td><td>3</td><td>3.0</td>
+      <td>1098</td><td>0.02 MB</td><td>5.7 MB</td></tr><tr><td><b>usuarios</b></td><td>2</td><td>2.0</td>
+      <td>732</td><td>0.02 MB</td><td>5.7 MB</td></tr><tr><td><b>log_acessos</b></td><td>1</td><td>1.0</td>
+      <td>366</td><td>0.02 MB</td><td>5.7 MB</td></tr></tbody>
+  </table></div>
+</section>
+
+
+
+<section>
+  <h2>Análise da IA sobre a estrutura</h2>
+  <p class="sub">Sugestões geradas a partir da estrutura (sem dados). Avalie antes de aplicar.</p>
+  
+  <div class="achado"><span class="badge ia">Sugestão da IA</span><span class="badge s-Alta">Prioridade Alta</span>
+    <span class="badge cat">Banco de dados</span><h3 style="margin-top:8px">Modelagem de vendas engessada (1 produto por venda)</h3><div>A tabela &#39;vendas&#39; possui &#39;produto_id&#39; direto, o que restringe cada venda a conter exatamente um tipo de produto. O ideal é separar a modelagem em duas tabelas: &#39;pedidos&#39; (cabeçalho da venda) e &#39;itens_pedido&#39; (múltiplos produtos por pedido), permitindo um carrinho de compras real.</div></div>
+  
+  <div class="achado"><span class="badge ia">Sugestão da IA</span><span class="badge s-Alta">Prioridade Alta</span>
+    <span class="badge cat">Banco de dados</span><h3 style="margin-top:8px">Ausência do histórico de preço unitário praticado na venda</h3><div>A tabela &#39;vendas&#39; guarda apenas o &#39;total&#39;, sem congelar o valor unitário cobrado no momento do checkout. Caso o preço do produto mude na tabela &#39;produtos&#39;, o histórico financeiro passará a ter inconsistências auditáveis.</div></div>
+  
+  <div class="achado"><span class="badge ia">Sugestão da IA</span><span class="badge s-Alta">Prioridade Alta</span>
+    <span class="badge cat">Código da aplicação</span><h3 style="margin-top:8px">Risco de concorrência e vendas com estoque negativo (Race Condition)</h3><div>Falta uma estratégia de bloqueio de linhas (SELECT FOR UPDATE) ou controle otimista/pessimista durante a atualização da coluna &#39;estoque&#39;. Em acessos simultâneos, a aplicação permitirá vender itens sem estoque real.</div></div>
+  
+  <div class="achado"><span class="badge ia">Sugestão da IA</span><span class="badge s-Média">Prioridade Média</span>
+    <span class="badge cat">Banco de dados</span><h3 style="margin-top:8px">Falta de controle de estado/ciclo de vida do pedido</h3><div>A tabela &#39;vendas&#39; não possui coluna de status (ex: pendente, pago, cancelado, estornado). Isso inviabiliza a integração segura com gateways de pagamento assíncronos e o rastreamento da logística.</div></div>
+  
+  <div class="achado"><span class="badge ia">Sugestão da IA</span><span class="badge s-Média">Prioridade Média</span>
+    <span class="badge cat">Banco de dados</span><h3 style="margin-top:8px">Crescimento descontrolado e degradação da tabela &#39;log_acessos&#39;</h3><div>Tabelas de log sem política de expurgo (TTL), particionamento por data ou arquivamento assíncrono tendem a crescer indefinidamente, afetando o I/O do servidor e tornando backups excessivamente demorados.</div></div>
+  
+</section>
+
+
+<section>
+  <h2>Estrutura atual</h2>
+  <div class="tabs">
+    
+    <div class="tab"><h3>categorias <span style="font-weight:400;font-size:12px">· MyISAM · 3 linhas · 2.1 KB</span></h3>
+      <ul><li><b>🔑 id</b><span>int(11)</span></li><li><b>nome</b><span>varchar(80)</span></li></ul></div>
+    
+    <div class="tab"><h3>log_acessos <span style="font-weight:400;font-size:12px">· InnoDB · 1 linhas · 16.0 KB</span></h3>
+      <ul><li><b>usuario_id</b><span>int(11) null</span></li><li><b>acao</b><span>varchar(60) null</span></li><li><b>quando</b><span>datetime null</span></li></ul></div>
+    
+    <div class="tab"><h3>produtos <span style="font-weight:400;font-size:12px">· InnoDB · 4 linhas · 16.0 KB</span></h3>
+      <ul><li><b>🔑 id</b><span>int(11)</span></li><li><b>nome</b><span>varchar(120)</span></li><li><b>preco</b><span>float</span></li><li><b>estoque</b><span>int(11)</span></li><li><b>categoria_id</b><span>int(11) null</span></li><li><b>criado_em</b><span>timestamp</span></li></ul></div>
+    
+    <div class="tab"><h3>usuarios <span style="font-weight:400;font-size:12px">· InnoDB · 2 linhas · 16.0 KB</span></h3>
+      <ul><li><b>🔑 id</b><span>int(11)</span></li><li><b>nome</b><span>varchar(100) null</span></li><li><b>email</b><span>varchar(150)</span></li><li><b>senha</b><span>varchar(255)</span></li><li><b>perfil</b><span>varchar(20)</span></li><li><b>criado_em</b><span>timestamp</span></li></ul></div>
+    
+    <div class="tab"><h3>vendas <span style="font-weight:400;font-size:12px">· InnoDB · 3 linhas · 16.0 KB</span></h3>
+      <ul><li><b>🔑 id</b><span>int(11)</span></li><li><b>produto_id</b><span>int(11)</span></li><li><b>usuario_id</b><span>int(11)</span></li><li><b>quantidade</b><span>int(11)</span></li><li><b>total</b><span>float</span></li><li><b>data_venda</b><span>varchar(20)</span></li></ul></div>
+    
+  </div>
+  <h3 style="margin-top:18px">Diagrama de relacionamentos</h3>
+  <p class="sub">Nenhuma chave estrangeira declarada — os relacionamentos existem só no código.</p>
+  <div class="mermaid">erDiagram
+  categorias {
+    int id PK
+    varchar nome
+  }
+  log_acessos {
+    int usuario_id
+    varchar acao
+    datetime quando
+  }
+  produtos {
+    int id PK
+    varchar nome
+    float preco
+    int estoque
+    int categoria_id
+    timestamp criado_em
+  }
+  usuarios {
+    int id PK
+    varchar nome
+    varchar email
+    varchar senha
+    varchar perfil
+    timestamp criado_em
+  }
+  vendas {
+    int id PK
+    int produto_id
+    int usuario_id
+    int quantidade
+    float total
+    varchar data_venda
+  }
+  usuarios ||..o{ log_acessos : &#34;usuario_id sem FK&#34;
+  categorias ||..o{ produtos : &#34;categoria_id sem FK&#34;
+  produtos ||..o{ vendas : &#34;produto_id sem FK&#34;
+  usuarios ||..o{ vendas : &#34;usuario_id sem FK&#34;</div>
+</section>
+
+<section>
+  <h2>Script de correções</h2>
+  <p class="sub">Comandos comentados (com --) precisam de revisão manual antes. Faça backup antes de rodar.</p>
+  <details><summary>Ver correcoes_sugeridas.sql</summary><pre>-- Correções sugeridas pelo Sentinela QA para o banco `sentinela_loja` (20/11/2026 22:13)
+-- FAÇA BACKUP ANTES (o Sentinela faz sozinho quando você aplica pelo painel).
+-- Revise cada comando: alguns exigem limpeza de dados antes (indicado nos comentários).
+
+USE `sentinela_loja`;
+
+-- [C002] Média · servidor: O sql_mode não está em modo estrito (STRICT_TRANS_TABLES).
+-- SET GLOBAL sql_mode = &#39;STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION&#39;;
+
+-- [C003] Baixa · servidor: O log de consultas lentas (slow_query_log) está desligado.
+-- SET GLOBAL slow_query_log = &#39;ON&#39;;
+-- SET GLOBAL long_query_time = 1;
+
+-- [C004] Crítica · servidor: O usuário &#39;root&#39; não tem senha (hosts: localhost, 127.0.0.1, ::1).
+-- -- troque SENHA_FORTE antes de rodar; atualize também o PHP/aplicação
+-- ALTER USER &#39;root&#39;@&#39;localhost&#39; IDENTIFIED BY &#39;SENHA_FORTE&#39;;
+-- ALTER USER &#39;root&#39;@&#39;127.0.0.1&#39; IDENTIFIED BY &#39;SENHA_FORTE&#39;;
+-- ALTER USER &#39;root&#39;@&#39;::1&#39; IDENTIFIED BY &#39;SENHA_FORTE&#39;;
+-- CREATE USER IF NOT EXISTS &#39;app_sentinela_loja&#39;@&#39;localhost&#39; IDENTIFIED BY &#39;OUTRA_SENHA_FORTE&#39;;
+-- GRANT SELECT, INSERT, UPDATE, DELETE ON `sentinela_loja`.* TO &#39;app_sentinela_loja&#39;@&#39;localhost&#39;;
+
+-- [C005] Alta · servidor: O usuário &#39;pma&#39; não tem senha (hosts: localhost).
+-- -- troque SENHA_FORTE antes de rodar; atualize também o PHP/aplicação
+-- ALTER USER &#39;pma&#39;@&#39;localhost&#39; IDENTIFIED BY &#39;SENHA_FORTE&#39;;
+-- CREATE USER IF NOT EXISTS &#39;app_sentinela_loja&#39;@&#39;localhost&#39; IDENTIFIED BY &#39;OUTRA_SENHA_FORTE&#39;;
+-- GRANT SELECT, INSERT, UPDATE, DELETE ON `sentinela_loja`.* TO &#39;app_sentinela_loja&#39;@&#39;localhost&#39;;
+
+-- [C006] Média · categorias: Tabela usa o engine MyISAM.
+ALTER TABLE `categorias` ENGINE=InnoDB;
+
+-- [C007] Média · categorias: Tabela com collation latin1_swedish_ci (não é utf8mb4).
+ALTER TABLE `categorias` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- [C008] Baixa · categorias: Tabela sem coluna de data de criação (auditoria).
+ALTER TABLE `categorias` ADD COLUMN criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+-- [C009] Alta · log_acessos: Tabela sem chave primária (PRIMARY KEY).
+ALTER TABLE `log_acessos` ADD COLUMN id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY FIRST;
+
+-- [C010] Baixa · log_acessos: Tabela sem coluna de data de criação (auditoria).
+ALTER TABLE `log_acessos` ADD COLUMN criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+-- [C011] Média · log_acessos.usuario_id: Coluna de relacionamento &#39;usuario_id&#39; sem índice.
+ALTER TABLE `log_acessos` ADD INDEX `idx_usuario_id` (`usuario_id`);
+
+-- [C012] Média · log_acessos.usuario_id: &#39;usuario_id&#39; aponta para &#39;usuarios&#39;, mas não há chave estrangeira.
+ALTER TABLE `log_acessos` ADD CONSTRAINT `fk_log_acessos_usuario_id` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+-- [C013] Alta · produtos.preco: Valor em dinheiro guardado como FLOAT.
+ALTER TABLE `produtos` MODIFY `preco` DECIMAL(12,2) NOT NULL;
+
+-- [C014] Média · produtos.categoria_id: Coluna de relacionamento &#39;categoria_id&#39; sem índice.
+ALTER TABLE `produtos` ADD INDEX `idx_categoria_id` (`categoria_id`);
+
+-- [C015] Média · produtos.categoria_id: &#39;categoria_id&#39; aponta para &#39;categorias&#39;, mas não há chave estrangeira.
+-- ALTER TABLE `produtos` ADD CONSTRAINT `fk_produtos_categoria_id` FOREIGN KEY (`categoria_id`) REFERENCES `categorias` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+-- [C016] Baixa · usuarios.nome: &#39;nome&#39; aceita NULL, mas parece ser um campo obrigatório.
+-- -- preencha os NULL antes
+-- ALTER TABLE `usuarios` MODIFY `nome` varchar(100) NOT NULL;
+
+-- [C017] Média · usuarios.email: &#39;email&#39; não tem índice UNIQUE.
+ALTER TABLE `usuarios` ADD UNIQUE INDEX `uk_email` (`email`);
+
+-- [C019] Baixa · vendas: Tabela sem coluna de data de criação (auditoria).
+ALTER TABLE `vendas` ADD COLUMN criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+-- [C020] Média · vendas.produto_id: Coluna de relacionamento &#39;produto_id&#39; sem índice.
+ALTER TABLE `vendas` ADD INDEX `idx_produto_id` (`produto_id`);
+
+-- [C021] Alta · vendas.produto_id: &#39;produto_id&#39; aponta para &#39;produtos&#39;, mas não há chave estrangeira — já existem 1 registro(s) órfão(s).
+-- ALTER TABLE `vendas` ADD CONSTRAINT `fk_vendas_produto_id` FOREIGN KEY (`produto_id`) REFERENCES `produtos` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+-- [C022] Média · vendas.usuario_id: Coluna de relacionamento &#39;usuario_id&#39; sem índice.
+ALTER TABLE `vendas` ADD INDEX `idx_usuario_id` (`usuario_id`);
+
+-- [C023] Média · vendas.usuario_id: &#39;usuario_id&#39; aponta para &#39;usuarios&#39;, mas não há chave estrangeira.
+ALTER TABLE `vendas` ADD CONSTRAINT `fk_vendas_usuario_id` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+-- [C024] Alta · vendas.total: Valor em dinheiro guardado como FLOAT.
+ALTER TABLE `vendas` MODIFY `total` DECIMAL(12,2) NOT NULL;
+
+-- [C025] Média · vendas.data_venda: Data guardada como texto (varchar(20)).
+-- -- revise os valores antes!
+-- ALTER TABLE `vendas` MODIFY `data_venda` DATETIME NULL;
+</pre></details>
+</section>
+</main>
+<footer>Gerado pelo Sentinela QA · auditoria somente de estrutura</footer>
+<script type="module">
+  // Filtro por categoria
+  document.querySelectorAll('#filtros button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#filtros button').forEach(x => x.classList.toggle('on', x === b));
+    document.querySelectorAll('.achado[data-cat]').forEach(d => d.style.display = (!b.dataset.f || d.dataset.cat === b.dataset.f) ? '' : 'none');
+  }));
+  // Diagrama (precisa de internet; sem internet aparece o texto do diagrama)
+  try {
+    const { default: mermaid } = await import('https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs');
+    mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'strict' });
+    await mermaid.run();
+  } catch (e) { }
+</script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Lista de produtos da Loja PHP",
+  "type": "object",
+  "required": ["total", "produtos"],
+  "properties": {
+    "total": { "type": "integer", "minimum": 0 },
+    "produtos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "nome", "preco", "estoque"],
+        "properties": {
+          "id": { "type": "integer" },
+          "nome": { "type": "string", "minLength": 1 },
+          "preco": { "type": "number" },
+          "estoque": { "type": "integer" },
+          "categoria_id": { "type": ["integer", "null"] }
+        }
+      }
+    }
+  }
+}

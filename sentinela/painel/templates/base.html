@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block titulo %}Painel{% endblock %} · Sentinela QA</title>
+<link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='estilo.css') }}">
+</head>
+<body>
+<div class="app">
+  <aside class="lateral">
+    <div class="marca">
+      <img class="logo" src="{{ url_for('static', filename='logo.svg') }}" alt="" width="40" height="40">
+      <div><b>Sentinela QA</b><small>Automação de testes</small></div>
+    </div>
+    <nav class="menu" aria-label="Menu principal">
+      <a href="{{ url_for('painel') }}" class="{{ 'ativo' if pagina == 'painel' }}">{{ icone('painel') }} Painel</a>
+      <div class="grupo">Cadastros</div>
+      <a href="{{ url_for('projetos') }}" class="{{ 'ativo' if pagina.startswith('projeto') }}">{{ icone('projetos') }} Projetos</a>
+      <a href="{{ url_for('roteiros') }}" class="{{ 'ativo' if pagina.startswith('roteiro') }}">{{ icone('roteiros') }} Roteiros</a>
+      <div class="grupo">Testes</div>
+      <a href="{{ url_for('executar') }}" class="{{ 'ativo' if pagina == 'executar' }}">{{ icone('executar') }} Executar</a>
+      <a href="{{ url_for('execucoes') }}" class="{{ 'ativo' if pagina.startswith('execuc') }}">{{ icone('execucoes') }} Execuções
+        {% if menu_rodando %}<span class="contador azul">{{ menu_rodando }}</span>{% endif %}</a>
+      <a href="{{ url_for('defeitos') }}" class="{{ 'ativo' if pagina.startswith('defeito') }}">{{ icone('defeitos') }} Defeitos
+        {% if menu_defeitos %}<span class="contador">{{ menu_defeitos }}</span>{% endif %}</a>
+      <a href="{{ url_for('api_tester') }}" class="{{ 'ativo' if pagina.startswith('api_tester') }}">{{ icone('terminal') }} Testar API</a>
+      <a href="{{ url_for('banco_dados') }}" class="{{ 'ativo' if pagina.startswith('banco') }}">{{ icone('banco') }} Banco de dados</a>
+      <a href="{{ url_for('tipos_teste') }}" class="{{ 'ativo' if pagina == 'tipos_teste' }}">{{ icone('camada') }} Tipos de teste</a>
+      <div class="grupo">Sistema</div>
+      <a href="{{ url_for('configuracoes') }}" class="{{ 'ativo' if pagina == 'configuracoes' }}">{{ icone('config') }} Configurações</a>
+      <a href="{{ url_for('ajuda') }}" class="{{ 'ativo' if pagina == 'ajuda' }}">{{ icone('ajuda') }} Guia de comandos</a>
+    </nav>
+    <div class="rodape">
+      <div class="linha-ia"><span class="ponto {{ 'on' if ia.configurada }}"></span>
+        <b>IA {{ 'conectada' if ia.configurada else 'desligada' }}</b></div>
+      <div style="color:#a9bcf5;margin-top:4px">{{ ia.modelo if ia.configurada else 'Configure a chave do Gemini' }}</div>
+      <div style="color:#8fa6e8;margin-top:8px">v{{ versao }}</div>
+    </div>
+  </aside>
+
+  <div class="principal">
+    <header class="topo">
+      <div>
+        <h1>{% block cabecalho %}Painel{% endblock %}</h1>
+        <div class="sub">{% block subtitulo %}{% endblock %}</div>
+      </div>
+      <div class="acoes">{% block acoes %}
+        <a class="btn prim" href="{{ url_for('executar') }}">{{ icone('executar', 16) }} Nova execução</a>{% endblock %}</div>
+    </header>
+    <main class="conteudo">
+      {% with msgs = get_flashed_messages(with_categories=true) %}
+        {% for cat, m in msgs %}<div class="aviso {{ cat }}">{{ icone('check' if cat == 'ok' else 'alerta') }} <span>{{ m }}</span></div>{% endfor %}
+      {% endwith %}
+      {% block conteudo %}{% endblock %}
+    </main>
+  </div>
+</div>
+<script>
+  // Linhas de tabela clicáveis
+  document.querySelectorAll('tr[data-href]').forEach(tr => tr.addEventListener('click', e => {
+    if (!e.target.closest('a,button,form')) location.href = tr.dataset.href;
+  }));
+  // Confirmação antes de excluir
+  document.querySelectorAll('form[data-confirmar]').forEach(f => f.addEventListener('submit', e => {
+    if (!confirm(f.dataset.confirmar)) e.preventDefault();
+  }));
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

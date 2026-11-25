@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block titulo %}Defeitos{% endblock %}
+{% block cabecalho %}Defeitos{% endblock %}
+{% block subtitulo %}Bugs encontrados pelos roteiros e pela exploração{% endblock %}
+{% block acoes %}<a class="btn" href="{{ url_for('defeitos_csv', **filtros) }}">{{ icone('upload', 16) }} Exportar CSV</a>
+<a class="btn" href="{{ url_for('defeitos_azure', **filtros) }}">{{ icone('upload', 16) }} Azure DevOps</a>
+<a class="btn prim" href="{{ url_for('executar') }}">{{ icone('executar', 16) }} Nova execução</a>{% endblock %}
+{% block conteudo %}
+<div class="grade g4">
+  {% for st, cls, ic in [('Aberto', 'c-vermelho', 'alerta'), ('Em análise', 'c-laranja', 'lupa'), ('Corrigido', 'c-verde', 'check'), ('Fechado', 'c-azul', 'escudo')] %}
+  <a class="card metrica" href="{{ url_for('defeitos', status=st) }}" style="color:inherit;text-decoration:none">
+    <div class="topo-m"><span class="ic {{ cls }}">{{ icone(ic, 20) }}</span></div>
+    <div class="v">{{ contagem.get(st, 0) }}</div><div class="l">{{ st }}</div></a>
+  {% endfor %}
+</div>
+<section class="card mt">
+  <form method="get" class="flex wrap" style="margin-bottom:14px">
+    <select name="projeto" style="margin:0;width:auto"><option value="">Todos os projetos</option>
+      {% for p in projetos %}<option value="{{ p.id }}" {{ 'selected' if filtros.projeto == p.id|string }}>{{ p.nome }}</option>{% endfor %}</select>
+    <select name="status" style="margin:0;width:auto"><option value="">Todos os status</option>
+      <option value="pendentes" {{ 'selected' if filtros.status == 'pendentes' }}>Pendentes (aberto + em análise)</option>
+      {% for s in STATUS_DEFEITO %}<option {{ 'selected' if filtros.status == s }}>{{ s }}</option>{% endfor %}</select>
+    <select name="severidade" style="margin:0;width:auto"><option value="">Todas as severidades</option>
+      {% for s in ['Crítica', 'Alta', 'Média', 'Baixa'] %}<option {{ 'selected' if filtros.severidade == s }}>{{ s }}</option>{% endfor %}</select>
+    <select name="origem" style="margin:0;width:auto"><option value="">Qualquer origem</option>
+      {% for s in ['Roteiro', 'Exploração'] %}<option {{ 'selected' if filtros.origem == s }}>{{ s }}</option>{% endfor %}</select>
+    <button class="btn peq prim">{{ icone('lupa', 14) }} Filtrar</button>
+    <a class="btn peq" href="{{ url_for('defeitos') }}">Limpar</a>
+  </form>
+  {% if defeitos %}
+  <div class="tabela"><table>
+    <thead><tr><th>Código</th><th>Descrição</th><th>Projeto</th><th>Origem</th><th>Severidade</th><th>Status</th><th>Registrado</th></tr></thead>
+    <tbody>
+    {% for d in defeitos %}
+    <tr class="clicavel" data-href="{{ url_for('defeito_detalhe', did=d.id) }}">
+      <td><b>{{ d.codigo }}</b><div class="pequeno suave">exec. #{{ d.execucao_id }}</div></td>
+      <td style="max-width:480px">{{ d.descricao }}</td>
+      <td><div class="flex"><span class="bolinha" style="background:{{ d.cor }}"></span>{{ d.projeto }}</div></td>
+      <td>{{ d.origem }}</td>
+      <td><span class="selo sev-{{ d.severidade }}">{{ d.severidade }}</span></td>
+      <td><span class="selo {{ d.status }}">{{ d.status }}</span></td>
+      <td class="pequeno suave">{{ d.criado_em|relativo }}</td>
+    </tr>
+    {% endfor %}
+    </tbody></table></div>
+  {% else %}
+  <div class="vazio"><div class="ic c-verde">{{ icone('escudo', 28) }}</div>Nenhum defeito com esses filtros.</div>
+  {% endif %}
+</section>
+{% endblock %}

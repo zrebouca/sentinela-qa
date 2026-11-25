@@ -1,0 +1,20 @@
+appId: com.android.chrome
+name: "CT04 - Buscar produto e carregar ofertas"
+---
+- openLink: "http://10.0.2.2:8000/index.html"
+- tapOn:
+    id: "usuario"
+- inputText: "qa"
+- tapOn:
+    id: "senha"
+- inputText: "${TREINO_SENHA}"
+- tapOn:
+    id: "entrar"
+# TODO: 'buscar' não tem equivalente direto no Maestro
+- assertVisible: "Mochila escolar"
+# TODO: 'verificar_elemento' não tem equivalente direto no Maestro
+- tapOn: "Carregar ofertas"
+- extendedWaitUntil:
+    visible: "3 ofertas disponíveis hoje!"
+    timeout: 10000
+- assertNotVisible: "Carregando..."
