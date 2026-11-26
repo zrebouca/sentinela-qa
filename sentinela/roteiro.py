@@ -38,6 +38,8 @@ APELIDOS = {
     "verificar_ausente": "verificar_sem_texto",
     "requisicao": "requisitar", "chamar_api": "requisitar", "api": "requisitar",
     "status": "verificar_status", "verificar_resposta": "verificar_json",
+    "ux": "auditoria_ux", "auditar_ux": "auditoria_ux", "auditoria_design": "auditoria_ux",
+    "verificar_ux": "auditoria_ux", "design": "auditoria_ux",
 }
 
 COMANDOS = {
@@ -58,6 +60,8 @@ COMANDOS = {
     "teste_carga", "verificar_seguranca", "verificar_links",
     # segurança de aplicação (OWASP) — só contra sistemas seus
     "varredura_seguranca", "verificar_injecao",
+    # auditoria de UI/UX (mede o design real e sugere a correção)
+    "auditoria_ux",
 }
 
 SEVERIDADES = ["Crítica", "Alta", "Média", "Baixa"]
@@ -169,6 +173,7 @@ def descrever(comando: str, args: Any) -> str:
         "verificar_links": lambda: "Verificar links quebrados da página",
         "varredura_seguranca": lambda: "Varredura de segurança (14 pontos OWASP) — só em sistemas seus",
         "verificar_injecao": lambda: f"Testar SQL injection e XSS em '{txt('parametro', 'parâmetro')}'",
+        "auditoria_ux": lambda: "Auditoria de UI/UX (contraste, tipografia, cores, alvos de toque) com código da correção",
     }
     try:
         return modelos[comando]()

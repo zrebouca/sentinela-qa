@@ -59,6 +59,7 @@ def montar_contexto(registro, roteiro, info: dict) -> dict:
             "defeitos_por_severidade": contagem_sev,
             "observacoes": len(registro.observacoes),
             "sugestoes": len(registro.sugestoes),
+            "melhorias_ux": len(registro.melhorias_ux),
             "acoes": len(registro.acoes),
             "exploracao": info.get("explorou", False),
             "ia": info.get("ia_usada", False),
@@ -67,6 +68,7 @@ def montar_contexto(registro, roteiro, info: dict) -> dict:
         "defeitos": [asdict(d) for d in registro.defeitos],
         "observacoes": [asdict(o) for o in registro.observacoes],
         "sugestoes": [asdict(s) for s in registro.sugestoes],
+        "melhorias_ux": [asdict(m) for m in registro.melhorias_ux],
         "acoes": [asdict(a) for a in registro.acoes],
         "avisos": list(registro.avisos),
     }
@@ -190,6 +192,20 @@ def gerar_txt(ctx: dict) -> str:
     for s in ctx["sugestoes"]:
         add(f"  [{s['categoria']} | prioridade {s['prioridade']}] {s['titulo']}")
         add(f"     {s['descricao']}")
+    add("")
+    add("AUDITORIA DE UI/UX (medido na página — cada item traz o código da correção)")
+    if not ctx["melhorias_ux"]:
+        add("  Auditoria de UI/UX não executada (use o comando 'auditoria_ux' no roteiro).")
+    for m in ctx["melhorias_ux"]:
+        add(f"  [{m['categoria']} | prioridade {m['prioridade']}] {m['titulo']}")
+        add(f"     {m['descricao']}")
+        if m["evidencia"]:
+            add(f"     Onde: {m['evidencia']}")
+        if m["codigo"]:
+            add(f"     Correção ({m['linguagem']}):")
+            for linha in m["codigo"].splitlines():
+                add(f"       {linha}")
+        add("")
     add("")
     add("CAMINHO PERCORRIDO")
     for a in ctx["acoes"]:

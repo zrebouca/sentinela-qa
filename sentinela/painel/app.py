@@ -994,6 +994,7 @@ CATALOGO = [
     ("Regressão visual", "A tela mudou sem querer?", "comparar_visual com linha de base e destaque das diferenças.", "nativo", ["Pillow"], "/ajuda"),
     ("Links quebrados", "Links que levam a erro 404/500.", "verificar_links.", "nativo", ["Sentinela"], "/ajuda"),
     ("Usabilidade (assistida por IA)", "Sugestões de melhoria de texto e fluxo.", "Gemini analisa os prints e o log (opcional, por execução).", "nativo", ["Gemini"], "/configuracoes"),
+    ("Auditoria de UI/UX", "O design da página está bom? O que e como melhorar?", "auditoria_ux: mede na página o contraste (WCAG AA), o tamanho das fontes, as famílias e cores usadas, os alvos de toque e o responsivo — e entrega o código pronto de cada correção. Determinístico, não depende de IA.", "nativo", ["Sentinela"], "/ajuda"),
 ]
 
 

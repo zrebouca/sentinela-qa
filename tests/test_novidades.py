@@ -297,3 +297,67 @@ casos:
     assert os.path.isfile(caminhos["html"])                 # relatório salvo apesar da IA falhar
     assert [c.status for c in reg.casos] == ["APROVADO"]
     assert any("IA falhou" in a for a in reg.avisos)
+
+
+# ------------------------------------------------------------------ auditoria de UI/UX
+def test_contraste_wcag_calcula_e_classifica():
+    from sentinela.ux import avaliar_contraste, _contraste, cor_sugerida
+
+    # Preto sobre branco = contraste máximo (21:1)
+    assert round(_contraste([0, 0, 0], [255, 255, 255]), 1) == 21.0
+    # #777 sobre branco (~4.48:1): reprova em texto normal, passa em texto grande
+    passa, razao, minimo = avaliar_contraste([119, 119, 119, 1], [255, 255, 255], 16, False)
+    assert not passa and minimo == 4.5 and 4.3 < razao < 4.6
+    passa_g, _, minimo_g = avaliar_contraste([119, 119, 119, 1], [255, 255, 255], 24, False)
+    assert passa_g and minimo_g == 3.0
+    # texto semitransparente é composto sobre o fundo antes de medir
+    _, razao_alfa, _ = avaliar_contraste([0, 0, 0, 0.5], [255, 255, 255], 16, False)
+    assert 3.5 < razao_alfa < 5.5
+    # sugestão de cor: fundo claro -> texto escuro; fundo escuro -> texto claro
+    assert cor_sugerida([255, 255, 255]) == "#1a1a1a"
+    assert cor_sugerida([10, 10, 10]) == "#f5f5f5"
+
+
+@pytest.mark.integracao
+def test_auditoria_ux_acha_problemas_plantados(tmp_path):
+    """Abre uma página com defeitos de UI/UX de propósito e confere que a auditoria
+    encontra as categorias certas e entrega o código da correção no relatório."""
+    (tmp_path / "index.html").write_text(
+        # SEM <meta viewport> de propósito (vira melhoria "Responsivo")
+        "<!doctype html><html lang='pt-BR'><head><title>Teste UX</title></head><body>"
+        "<p style='color:#aaaaaa;background:#ffffff'>Texto cinza claro com contraste ruim</p>"
+        "<span style='font-size:9px'>legenda minúscula</span>"
+        "<button style='width:20px;height:18px'>x</button>"
+        "<div style='width:3000px'>bloco muito largo que gera rolagem lateral</div>"
+        "</body></html>", encoding="utf-8")
+    srv, url = _servidor(tmp_path)
+    roteiro = tmp_path / "ux.yaml"
+    roteiro.write_text("""
+sistema: Página com problemas de UX
+tipo: web
+objetivo: auditar a UI/UX
+casos:
+  - id: UX01
+    descricao: Auditoria da página
+    passos:
+      - abrir: /
+      - auditoria_ux
+""", encoding="utf-8")
+    try:
+        reg, caminhos = executar(str(roteiro), alvo=url, usar_ia=False,
+                                 saida=str(tmp_path / "rel"), log=lambda m: None)
+    finally:
+        srv.shutdown()
+
+    categorias = {m.categoria for m in reg.melhorias_ux}
+    assert {"Contraste", "Alvos de toque", "Responsivo"} <= categorias, f"achadas: {categorias}"
+    # a auditoria não derruba o caso (é consultiva)
+    assert reg.casos[0].status == "APROVADO"
+    # todo achado traz o código da correção
+    assert all(m.codigo for m in reg.melhorias_ux)
+    # a melhoria de contraste sugere uma cor concreta no snippet
+    contraste = next(m for m in reg.melhorias_ux if m.categoria == "Contraste")
+    assert "color:" in contraste.codigo
+    # e o relatório HTML mostra a seção com o bloco de código
+    html = open(caminhos["html"], encoding="utf-8").read()
+    assert "Auditoria de UI/UX" in html and "Código da correção" in html

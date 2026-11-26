@@ -1,0 +1,44 @@
+# Exemplo de auditoria de UI/UX — loja de demonstração pública Sauce Demo.
+# O comando 'auditoria_ux' mede o design REAL da página (contraste WCAG, tipografia,
+# cores, alvos de toque, responsivo) e entrega, no relatório, o código de cada correção.
+# É só leitura: não digita nem envia nada. Rode em sites de demonstração ou seus.
+
+sistema: Sauce Demo — Auditoria de UI/UX
+versao: "web"
+responsavel: Mateus
+ambiente: Demonstração pública
+objetivo: >
+  Avaliar a qualidade de UI/UX da loja de demonstração (contraste, legibilidade,
+  consistência visual e alvos de toque) e gerar o código das melhorias.
+alvo: https://www.saucedemo.com
+tempo_limite: 10
+atributo_testid: data-test
+
+dados:
+  usuario: standard_user
+  senha: "{env.SAUCE_SENHA|secret_sauce}"
+
+casos:
+  - id: UX01
+    descricao: Auditoria de UI/UX da tela de login
+    esperado: A tela de login não apresenta problemas graves de contraste ou toque
+    passos:
+      - abrir: /
+      - auditoria_ux
+
+  - id: UX02
+    descricao: Auditoria de UI/UX da vitrine de produtos
+    esperado: A vitrine mantém bom contraste, tipografia e alvos de toque adequados
+    passos:
+      - abrir: /
+      - logar: { usuario: "{dados.usuario}", senha: "{dados.senha}",
+                 campo_usuario: "#user-name", campo_senha: "#password", botao: "#login-button" }
+      - verificar_url: inventory.html
+      # Limites são opcionais; estes são os padrões, deixados aqui como referência.
+      - auditoria_ux:
+          min_contraste: 4.5
+          min_alvo_px: 44
+          min_fonte_px: 12
+          max_fontes: 3
+          max_cores: 12
+          falhar_se_grave: false

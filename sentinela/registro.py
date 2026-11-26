@@ -68,6 +68,18 @@ class Sugestao:
 
 
 @dataclass
+class MelhoriaUx:
+    """Achado da auditoria de UI/UX: medido na página e com o código da correção pronto."""
+    categoria: str              # Contraste, Tipografia, Cores, Alvos de toque, Responsivo
+    prioridade: str             # Alta, Média, Baixa
+    titulo: str
+    descricao: str
+    evidencia: str = ""
+    codigo: str = ""            # trecho pronto para colar
+    linguagem: str = "css"      # css | html | js
+
+
+@dataclass
 class Registro:
     pasta_saida: str
     log: callable = print
@@ -78,6 +90,7 @@ class Registro:
     defeitos: list[Defeito] = field(default_factory=list)
     observacoes: list[Observacao] = field(default_factory=list)
     sugestoes: list[Sugestao] = field(default_factory=list)
+    melhorias_ux: list[MelhoriaUx] = field(default_factory=list)
     avisos: list[str] = field(default_factory=list)
     _chaves_obs: set = field(default_factory=set)
 
@@ -120,6 +133,11 @@ class Registro:
             return
         self._chaves_obs.add(chave)
         self.observacoes.append(Observacao(categoria, texto, print_rel))
+
+    def nova_melhoria_ux(self, **campos) -> MelhoriaUx:
+        m = MelhoriaUx(**campos)
+        self.melhorias_ux.append(m)
+        return m
 
     def avisar(self, texto: str):
         self.avisos.append(texto)

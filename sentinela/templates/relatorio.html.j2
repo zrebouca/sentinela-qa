@@ -44,6 +44,7 @@
   .tile .v { font-size: 28px; font-weight: 700; line-height: 1.1; }
   .tile .l { color: var(--muted); font-size: 13px; }
   .tile.ok .v { color: var(--ok); } .tile.bad .v { color: var(--bad); } .tile.ia .v { color: var(--ia); }
+  .tile.ux .v { color: var(--accent); }
   .barra { height: 12px; border-radius: 99px; background: var(--bad-bg); overflow: hidden; margin: 16px 0 6px; }
   .barra i { display: block; height: 100%; background: var(--ok); }
   .veredito { font-weight: 600; margin: 10px 0 0; }
@@ -77,6 +78,18 @@
   .card-sug { border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
   .card-sug h3 { font-size: 15px; margin: 8px 0 4px; }
   .card-sug p { margin: 0; color: var(--muted); font-size: 14px; }
+  .ux-item { border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 10px; padding: 14px 16px; margin: 12px 0; }
+  .ux-item.pri-Alta { border-left-color: var(--bad); } .ux-item.pri-Baixa { border-left-color: var(--info); }
+  .ux-item h3 { font-size: 15px; margin: 8px 0 4px; }
+  .ux-item p { margin: 0 0 8px; color: var(--muted); font-size: 14px; }
+  .cod { position: relative; }
+  .cod pre { margin: 0; background: #0f141c; color: #e6edf3; border: 1px solid var(--line); border-radius: 8px;
+             padding: 12px 14px; overflow-x: auto; font: 13px/1.55 "Cascadia Code", Consolas, "SFMono-Regular", ui-monospace, monospace; }
+  @media (prefers-color-scheme: light) { .cod pre { background: #0f141c; } }
+  .copiar { position: absolute; top: 8px; right: 8px; font-size: 12px; padding: 3px 9px; border-radius: 6px;
+            border: 1px solid #2c323d; background: #1b212b; color: #e6edf3; cursor: pointer; }
+  .copiar:hover { background: #2a323f; } .copiar.feito { color: var(--ok); border-color: var(--ok); }
+  .ling { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin: 10px 0 4px; }
   .vazio { color: var(--muted); font-style: italic; }
   .func { margin: 0 0 10px; } .func ul { margin: 4px 0 0; }
   tr.falha-linha td { background: color-mix(in srgb, var(--bad-bg) 55%, transparent); }
@@ -99,7 +112,7 @@
     <nav>
       <a href="#resumo">Resumo</a><a href="#objetivo">Objetivo</a><a href="#testes">Testes realizados</a>
       <a href="#bugs">Erros e bugs</a><a href="#encontrado">O que foi encontrado</a>
-      <a href="#melhorias">Melhorias e ideias</a><a href="#caminho">Caminho percorrido</a>
+      <a href="#melhorias">Melhorias e ideias</a><a href="#ux">Auditoria de UI/UX</a><a href="#caminho">Caminho percorrido</a>
     </nav>
   </div>
 </header>
@@ -115,6 +128,7 @@
     <div class="tile bad"><div class="v">{{ resumo.defeitos }}</div><div class="l">defeitos registrados</div></div>
     <div class="tile"><div class="v">{{ resumo.observacoes }}</div><div class="l">observações</div></div>
     <div class="tile ia"><div class="v">{{ resumo.sugestoes }}</div><div class="l">sugestões da IA</div></div>
+    {% if resumo.melhorias_ux %}<div class="tile ux"><div class="v">{{ resumo.melhorias_ux }}</div><div class="l">melhorias de UI/UX</div></div>{% endif %}
   </div>
   <div class="barra" title="{{ resumo.taxa }}% aprovado"><i style="width: {{ resumo.taxa }}%"></i></div>
   <p class="sub">{{ resumo.taxa }}% dos casos aprovados · {{ resumo.acoes }} ações registradas
@@ -214,6 +228,29 @@
   {% else %}<p class="vazio">A análise por IA não foi executada nesta rodada (veja os avisos no Resumo).</p>{% endif %}
 </section>
 
+<section id="ux">
+  <h2>Auditoria de UI/UX <span class="n">{{ melhorias_ux|length }}</span></h2>
+  <p class="sub">Medido na própria página (contraste WCAG, tipografia, cores, alvos de toque, responsivo).
+    Cada item traz o <b>código pronto</b> para corrigir — clique em “Copiar”.</p>
+  {% if melhorias_ux %}
+    {% for m in melhorias_ux %}
+      <div class="ux-item pri-{{ m.prioridade }}">
+        <div class="meta">
+          <span class="badge cat">{{ m.categoria }}</span>
+          <span class="badge sev-{{ m.prioridade }}">Prioridade {{ m.prioridade }}</span>
+          {% if m.evidencia %}<span class="badge cat">{{ m.evidencia }}</span>{% endif %}
+        </div>
+        <h3>{{ m.titulo }}</h3>
+        <p>{{ m.descricao }}</p>
+        {% if m.codigo %}
+          <div class="ling">Código da correção · {{ m.linguagem }}</div>
+          <div class="cod"><button class="copiar" type="button">Copiar</button><pre><code>{{ m.codigo }}</code></pre></div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  {% else %}<p class="vazio">Auditoria de UI/UX não executada nesta rodada (adicione o passo <code>auditoria_ux</code> ao roteiro).</p>{% endif %}
+</section>
+
 <section id="caminho">
   <h2>Caminho percorrido <span class="n">{{ acoes|length }}</span></h2>
   <div class="tabela"><table>
@@ -243,6 +280,14 @@
   }));
   lupa.addEventListener('click', () => lupa.classList.remove('on'));
   document.addEventListener('keydown', e => { if (e.key === 'Escape') lupa.classList.remove('on'); });
+  // Copiar o código de cada melhoria de UI/UX
+  document.querySelectorAll('.copiar').forEach(b => b.addEventListener('click', () => {
+    const cod = b.parentElement.querySelector('code').innerText;
+    navigator.clipboard.writeText(cod).then(() => {
+      b.textContent = 'Copiado!'; b.classList.add('feito');
+      setTimeout(() => { b.textContent = 'Copiar'; b.classList.remove('feito'); }, 1500);
+    });
+  }));
 </script>
 </body>
 </html>

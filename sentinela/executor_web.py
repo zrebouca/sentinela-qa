@@ -31,6 +31,7 @@ from playwright.sync_api import expect, sync_playwright
 from sentinela.executor_api import ComandosApi
 from sentinela.executor_qualidade import ComandosQualidade
 from sentinela.seguranca import ComandosSeguranca
+from sentinela.ux import ComandosUx
 from sentinela.executor_base import ErroPasso, ExecutorBase
 
 # Teclas com nome em português -> nome usado pelo Playwright
@@ -83,7 +84,7 @@ def _eh_css(alvo: str) -> bool:
     return bool(re.search(r"[\[\]>#]|:has\(|:nth|^[a-zA-Z][\w-]*\.[\w-]", alvo))
 
 
-class ExecutorWeb(ComandosQualidade, ComandosSeguranca, ComandosApi, ExecutorBase):
+class ExecutorWeb(ComandosQualidade, ComandosSeguranca, ComandosUx, ComandosApi, ExecutorBase):
     """Também aceita os comandos de API (requisitar, verificar_status...) no mesmo roteiro."""
     tipo = "web"
 
