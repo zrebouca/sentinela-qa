@@ -5,7 +5,8 @@ IA e pede sugestões de usabilidade, texto, acessibilidade e funcionalidades.
 Configuração (variáveis de ambiente ou arquivo .env — NUNCA no código):
     GEMINI_API_KEY=...                 chave da API do Google Gemini
     SENTINELA_IA=gemini                  provedor (gemini | nenhuma)
-    SENTINELA_MODELO_IA=gemini-3.5-flash   modelo a usar
+    SENTINELA_MODELO_IA=                  modelo a usar (vazio = escolhe automaticamente
+                                          o flash mais novo liberado para a sua chave)
 
 As respostas da IA entram no relatório como SUGESTÕES: precisam ser
 avaliadas por uma pessoa antes de virar requisito ou defeito.
@@ -77,25 +78,49 @@ def _versao(nome: str) -> float:
     return float(m.group(1)) if m else 0.0
 
 
-def _candidatos(cliente, erro: str, ja_tentados: set) -> list[str]:
-    """Modelos para tentar quando o configurado não está disponível:
-    1º o que a própria mensagem de erro recomenda; depois os 'flash'
-    liberados para a chave, do mais novo para o mais antigo."""
-    lista = re.findall(r"use models/([\w.-]+)", erro)
+def _modelos_disponiveis(cliente) -> list[str]:
+    """Modelos liberados para a chave que fazem generateContent (sem os de imagem)."""
     try:
-        nomes = [m.name.split("/")[-1] for m in cliente.models.list()
-                 if "generateContent" in (m.supported_actions or [])]
+        return [m.name.split("/")[-1] for m in cliente.models.list()
+                if "generateContent" in (m.supported_actions or [])]
     except Exception:
-        nomes = []
-    flash = [n for n in nomes if n.endswith("flash") and "image" not in n]
-    lite = [n for n in nomes if n.endswith("flash-lite")]
-    lista += sorted(flash, key=_versao, reverse=True) + sorted(lite, key=_versao, reverse=True)
+        return []
+
+
+def _ordenar_flash(nomes: list[str]) -> list[str]:
+    """Flash mais novo primeiro, depois flash-lite, depois os demais gemini."""
+    flash = sorted([n for n in nomes if n.endswith("flash") and "image" not in n], key=_versao, reverse=True)
+    lite = sorted([n for n in nomes if n.endswith("flash-lite")], key=_versao, reverse=True)
+    outros = sorted([n for n in nomes if n.startswith("gemini") and "flash" not in n and "image" not in n],
+                    key=_versao, reverse=True)
+    return flash + lite + outros
+
+
+def _resolver_modelo(cliente, desejado: str, registro) -> str:
+    """Escolhe o modelo a usar: o configurado, se existir para a chave; senão o flash
+    mais novo liberado. Evita começar por um modelo que não existe (que sempre falharia)."""
+    nomes = _modelos_disponiveis(cliente)
+    if not nomes:
+        return desejado or "gemini-flash-latest"
+    if desejado and desejado in nomes:
+        return desejado
+    escolhido = (_ordenar_flash(nomes) or nomes)[0]
+    if desejado:
+        registro.avisar(f"Modelo '{desejado}' indisponível para esta chave; usando '{escolhido}'. "
+                        f"Para fixar, defina SENTINELA_MODELO_IA={escolhido} no .env.")
+    return escolhido
+
+
+def _candidatos(cliente, erro: str, ja_tentados: set) -> list[str]:
+    """Modelos alternativos quando a chamada falha: 1º o que a própria mensagem de erro
+    recomenda; depois os 'flash' liberados para a chave, do mais novo ao mais antigo."""
+    lista = re.findall(r"use models/([\w.-]+)", erro) + _ordenar_flash(_modelos_disponiveis(cliente))
     vistos, saida = set(ja_tentados), []
     for n in lista:
         if n not in vistos:
             vistos.add(n)
             saida.append(n)
-    return saida[:4]
+    return saida[:2]
 
 
 def analisar(registro: Registro, sistema: str, objetivo: str) -> None:
@@ -116,8 +141,8 @@ def analisar(registro: Registro, sistema: str, objetivo: str) -> None:
     from google.genai import types
     from PIL import Image
 
-    modelo = os.getenv("SENTINELA_MODELO_IA", "gemini-3.5-flash")
-    registro.log(f"\n🤖 Pedindo sugestões à IA ({modelo})...")
+    modelo = os.getenv("SENTINELA_MODELO_IA", "").strip()   # vazio = escolher da lista liberada p/ a chave
+    registro.log("\n🤖 Pedindo sugestões à IA...")
     conteudo = [PROMPT.format(sistema=sistema, objetivo=objetivo, resumo=_resumo(registro))]
     for acao in _escolher_prints(registro):
         caminho = os.path.join(registro.pasta_saida, acao.print)
@@ -166,10 +191,13 @@ def analisar(registro: Registro, sistema: str, objetivo: str) -> None:
 
 
 def _chamar_ia(genai, types, chave, modelo, conteudo, registro) -> dict:
-    """Faz a chamada ao Gemini; se o modelo estiver indisponível/lento, tenta outros."""
-    # Limite de 60 s por requisição HTTP
-    cliente = genai.Client(api_key=chave, http_options=types.HttpOptions(timeout=60_000))
+    """Faz a chamada ao Gemini: resolve o modelo pela lista liberada para a chave
+    (não começa por um que não existe) e, se falhar, tenta no máximo mais 2 alternativas."""
+    # Limite de 45 s por requisição HTTP (o prazo total da IA é controlado por quem chama)
+    cliente = genai.Client(api_key=chave, http_options=types.HttpOptions(timeout=45_000))
     config = types.GenerateContentConfig(response_mime_type="application/json", temperature=0.4)
+    modelo = _resolver_modelo(cliente, modelo, registro)
+    registro.log(f"   modelo: {modelo}")
     try:
         resposta = cliente.models.generate_content(model=modelo, contents=conteudo, config=config)
     except Exception as e:
@@ -180,8 +208,7 @@ def _chamar_ia(genai, types, chave, modelo, conteudo, registro) -> dict:
         for alternativo in _candidatos(cliente, str(e), {modelo}):
             try:
                 resposta = cliente.models.generate_content(model=alternativo, contents=conteudo, config=config)
-                registro.avisar(f"Modelo '{modelo}' indisponível para esta chave; usado '{alternativo}'. "
-                                f"Para fixar, defina SENTINELA_MODELO_IA={alternativo} no .env.")
+                registro.avisar(f"Usado o modelo alternativo '{alternativo}'.")
                 break
             except Exception as e2:
                 ultimo_erro = e2

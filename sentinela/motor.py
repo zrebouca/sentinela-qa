@@ -94,13 +94,6 @@ def executar(caminho_roteiro: str, alvo: str | None = None, explorar: bool = Fal
 
     registro.fim = datetime.now()
 
-    ia_usada = False
-    if usar_ia:
-        ia.analisar(registro, roteiro.sistema, roteiro.objetivo)
-        ia_usada = bool(registro.sugestoes)
-    else:
-        registro.avisar("Análise por IA não solicitada (--sem-ia).")
-
     ambiente = roteiro.ambiente or ""
     detalhe_amb = f"{getattr(executor, 'navegador', tipo)} · Windows {platform.release()}"
     info = {
@@ -108,9 +101,21 @@ def executar(caminho_roteiro: str, alvo: str | None = None, explorar: bool = Fal
         "ambiente": f"{ambiente} ({detalhe_amb})" if ambiente else detalhe_amb,
         "explorou": explorou,
         "finalidade": finalidade,
-        "ia_usada": ia_usada,
+        "ia_usada": False,
     }
+    # O relatório é gerado ANTES da análise por IA: se a IA travar, demorar ou for
+    # interrompida, o relatório (casos, defeitos e prints) nunca se perde.
     caminhos = relatorio.gerar(registro, roteiro, info, embutir_prints=embutir_prints)
+    if usar_ia:
+        try:
+            ia.analisar(registro, roteiro.sistema, roteiro.objetivo)
+        except Exception as e:  # a IA nunca pode derrubar a execução nem apagar o relatório
+            registro.avisar(f"Análise por IA falhou e foi ignorada: {str(e)[:200]}")
+        if registro.sugestoes:   # chegou sugestão: regenera o relatório já com a seção da IA
+            info["ia_usada"] = True
+            caminhos = relatorio.gerar(registro, roteiro, info, embutir_prints=embutir_prints)
+    else:
+        registro.avisar("Análise por IA não solicitada (--sem-ia).")
     log("")
     log(f"Resultado: {registro.aprovados} aprovado(s), {registro.reprovados} reprovado(s), "
         f"{len(registro.defeitos)} defeito(s)")

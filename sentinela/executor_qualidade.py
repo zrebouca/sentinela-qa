@@ -45,6 +45,31 @@ def _arquivo_axe() -> str:
     return os.path.join(os.path.dirname(axe_playwright_python.__file__), "axe.min.js")
 
 
+# verificar_links: separa "link quebrado de verdade" de "link que só bloqueia robôs"
+NAVEGADOR_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36")
+# Status que indicam bloqueio a robôs / método não aceito — NÃO é link quebrado
+_LINK_BLOQUEIO = {400, 401, 403, 405, 406, 429}
+# Só erro de rede de DNS ou de certificado/SSL conta como link quebrado;
+# timeout, conexão recusada etc. são tratados como "não verificável" (evita falso positivo)
+_ERRO_REDE_GRAVE = ("name_not_resolved", "err_name_not_resolved", "enotfound", "getaddrinfo",
+                    "name or service not known", "dns", "err_cert", "cert_", "certificate",
+                    "ssl", "err_ssl", "handshake")
+
+
+def _classificar_link(status, erro) -> str:
+    """Devolve 'ok', 'quebrado' ou 'bloqueio' para um link já checado (redirecionamentos seguidos)."""
+    if erro:
+        return "quebrado" if any(s in erro.lower() for s in _ERRO_REDE_GRAVE) else "bloqueio"
+    if status is None:
+        return "bloqueio"
+    if status in (404, 410) or status >= 500:
+        return "quebrado"
+    if status in _LINK_BLOQUEIO:
+        return "bloqueio"
+    return "ok"   # 2xx e 3xx (o redirecionamento já foi seguido)
+
+
 class ComandosQualidade:
     # ------------------------------------------------------------ acessibilidade (axe-core)
     def cmd_verificar_acessibilidade(self, args):
@@ -221,21 +246,41 @@ class ComandosQualidade:
         limite = int(args.get("limite", 40)) if isinstance(args, dict) else 40
         links = page.evaluate("() => [...new Set([...document.querySelectorAll('a[href]')].map(a => a.href)"
                               ".filter(h => h.startsWith('http')))]")[:limite]
-        quebrados = []
+        quebrados, bloqueados = [], []
         for link in links:
-            try:
-                r = page.request.head(link, timeout=8000, fail_on_status_code=False)
-                if r.status in (405, 403):      # alguns servidores não aceitam HEAD
-                    r = page.request.get(link, timeout=8000, fail_on_status_code=False)
-                if r.status >= 400:
-                    quebrados.append(f"{link} ({r.status})")
-            except Exception:
-                quebrados.append(f"{link} (sem resposta)")
-        for q in quebrados:
-            self.registro.observar("Links", f"Link quebrado: {q}")
+            status, erro = self._checar_link(page, link)
+            classe = _classificar_link(status, erro)
+            rotulo = f"{link} ({status})" if status else f"{link} (sem resposta)"
+            if classe == "quebrado":
+                quebrados.append(rotulo)
+                self.registro.observar("Links", f"Link quebrado: {rotulo}")
+            elif classe == "bloqueio":
+                bloqueados.append(rotulo)
+                self.registro.observar("Links", f"Link não verificável (bloqueia robôs): {rotulo}")
         if quebrados:
             raise ErroPasso(f"{len(quebrados)} link(s) quebrado(s) de {len(links)}: {'; '.join(quebrados[:3])}")
-        return f"{len(links)} link(s) verificados, nenhum quebrado"
+        extra = f"; {len(bloqueados)} não verificável(is) (bloqueiam robôs)" if bloqueados else ""
+        return f"{len(links)} link(s) verificados, nenhum quebrado{extra}"
+
+    def _checar_link(self, page, link):
+        """(status, erro) de um link: segue redirecionamentos, usa User-Agent de navegador e
+        cai para GET quando o HEAD é barrado (405/403) ou falha."""
+        heads = {"User-Agent": NAVEGADOR_UA, "Accept": "*/*"}
+
+        def pedir(metodo):
+            fn = page.request.head if metodo == "HEAD" else page.request.get
+            return fn(link, headers=heads, timeout=12000, fail_on_status_code=False, max_redirects=10)
+
+        try:
+            r = pedir("HEAD")
+            if r.status in _LINK_BLOQUEIO or r.status >= 500:   # servidor não gosta de HEAD → tenta GET
+                r = pedir("GET")
+            return r.status, None
+        except Exception:
+            try:
+                return pedir("GET").status, None
+            except Exception as e:
+                return None, str(e)
 
     def _pagina_obrigatoria(self):
         page = getattr(self, "page", None)

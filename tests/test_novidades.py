@@ -216,3 +216,84 @@ def test_varredura_seguranca_acha_vulnerabilidades():
     # rota segura não vira defeito
     assert any("/seguro.php" in o and "sem sinais de SQL" in o for o in ex.registro.obs)
     assert any("/seguro.php" in o and "escapada" in o for o in ex.registro.obs)
+
+
+# ------------------------------------------------------------------ verificar_links (bug dos falsos positivos)
+def test_classificar_link_separa_quebrado_de_bloqueio():
+    from sentinela.executor_qualidade import _classificar_link
+    # redirecionamentos e 200 = ok (links reais que o robô marcava como quebrados)
+    for s in (200, 301, 302, 307):
+        assert _classificar_link(s, None) == "ok", s
+    # bloqueio a robôs / método não aceito = NÃO é link quebrado
+    for s in (400, 401, 403, 405, 429):
+        assert _classificar_link(s, None) == "bloqueio", s
+    # quebrado de verdade (inclui 526 de SSL do Cloudflare e 404)
+    for s in (404, 410, 500, 503, 526):
+        assert _classificar_link(s, None) == "quebrado", s
+    # erros de rede: DNS/SSL = quebrado; timeout/outros = não verificável
+    assert _classificar_link(None, "getaddrinfo ENOTFOUND foo.invalido") == "quebrado"
+    assert _classificar_link(None, "net::ERR_CERT_DATE_INVALID") == "quebrado"
+    assert _classificar_link(None, "Timeout 12000ms exceeded") == "bloqueio"
+
+
+# ------------------------------------------------------------------ IA (escolha de modelo e resiliência)
+def test_resolver_modelo_escolhe_da_lista_liberada():
+    from sentinela import ia
+
+    class _Modelo:
+        def __init__(self, nome):
+            self.name, self.supported_actions = "models/" + nome, ["generateContent"]
+
+    class _Cliente:
+        class models:
+            @staticmethod
+            def list():
+                return [_Modelo("gemini-2.5-flash"), _Modelo("gemini-3.8-flash"),
+                        _Modelo("gemini-3.8-flash-lite"), _Modelo("gemini-pro")]
+
+    class _Reg:
+        def __init__(self):
+            self.avisos = []
+
+        def avisar(self, t):
+            self.avisos.append(t)
+
+    reg = _Reg()
+    # modelo configurado que não existe -> cai para o flash mais novo e avisa
+    assert ia._resolver_modelo(_Cliente(), "gemini-3.5-flash", reg) == "gemini-3.8-flash"
+    assert reg.avisos and "indisponível" in reg.avisos[0]
+    # modelo configurado que existe -> respeita
+    assert ia._resolver_modelo(_Cliente(), "gemini-2.5-flash", _Reg()) == "gemini-2.5-flash"
+    # sem configurar -> flash mais novo da lista
+    assert ia._resolver_modelo(_Cliente(), "", _Reg()) == "gemini-3.8-flash"
+
+
+def test_relatorio_sai_mesmo_quando_ia_falha(tmp_path, monkeypatch):
+    """A falha (ou travamento) da IA nunca pode impedir o relatório de ser salvo."""
+    (tmp_path / "cep.json").write_text(json.dumps({"localidade": "São Paulo"}), encoding="utf-8")
+    srv, url = _servidor(tmp_path)
+    roteiro = tmp_path / "api.yaml"
+    roteiro.write_text(f"""
+sistema: API local
+tipo: api
+alvo: {url}
+objetivo: teste de resiliência
+casos:
+  - id: CT01
+    descricao: Consulta ok
+    passos:
+      - requisitar: GET /cep.json
+      - verificar_status: 200
+""", encoding="utf-8")
+
+    def explode(*a, **k):
+        raise RuntimeError("IA caiu de propósito no teste")
+
+    monkeypatch.setattr("sentinela.ia.analisar", explode)
+    try:
+        reg, caminhos = executar(str(roteiro), usar_ia=True, saida=str(tmp_path / "rel"), log=lambda m: None)
+    finally:
+        srv.shutdown()
+    assert os.path.isfile(caminhos["html"])                 # relatório salvo apesar da IA falhar
+    assert [c.status for c in reg.casos] == ["APROVADO"]
+    assert any("IA falhou" in a for a in reg.avisos)
